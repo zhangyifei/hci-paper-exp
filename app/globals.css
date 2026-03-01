@@ -1,15 +1,122 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+
+html, body {
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
-  background-color: #f3f4f6;
+  min-height: 100dvh;
   overscroll-behavior-y: none;
   touch-action: manipulation;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Desktop: dark bg, center phone frame */
+@media (min-width: 768px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1a1a2e;
+    background-image: radial-gradient(ellipse at 50% 0%, #2d2d4a 0%, #1a1a2e 70%);
+  }
+}
+
+/* Mobile: white bg, no centering needed */
+@media (max-width: 767px) {
+  body {
+    background-color: #ffffff;
+  }
+}
+
+/* Phone device frame (desktop only) */
+.device-frame {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  border-radius: 47px;
+  background: #000;
+  padding: 11px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.1),
+    0 20px 60px rgba(0,0,0,0.5),
+    0 0 120px rgba(100,100,200,0.08);
+}
+
+.device-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 38px;
+  overflow: hidden;
+  overflow-y: auto;
+  background: #fff;
+  position: relative;
+}
+
+/* Dynamic Island */
+.device-frame::after {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 100;
+}
+
+/* Side buttons */
+.device-frame::before {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: 160px;
+  width: 3px;
+  height: 60px;
+  background: #2a2a2a;
+  border-radius: 0 2px 2px 0;
+  box-shadow:
+    0 60px 0 #2a2a2a,
+    -395px -30px 0 #2a2a2a,
+    -395px 20px 0 #2a2a2a;
+}
+
+/* Mobile: no frame, full screen */
+@media (max-width: 767px) {
+  .device-frame {
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+    background: none;
+    padding: 0;
+    box-shadow: none;
+  }
+  .device-frame::after,
+  .device-frame::before {
+    display: none;
+  }
+  .device-screen {
+    border-radius: 0;
+    height: 100dvh;
+  }
+}
+
+/* Hide scrollbar for clean iOS look */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Allow overflow to be visible (for card shadows extending outside scroll) */
+.clip-none {
+  overflow: visible;
 }

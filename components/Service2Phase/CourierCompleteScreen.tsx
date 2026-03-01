@@ -9,7 +9,7 @@ interface CourierCompleteScreenProps {
 
 export default function CourierCompleteScreen({ config, onNext }: CourierCompleteScreenProps) {
   return (
-    <div className="relative w-full min-h-screen bg-white flex flex-col pt-14 pb-8 px-5 animate-fade-in">
+    <div className="relative w-full min-h-full bg-white flex flex-col pt-[59px] pb-8 px-5 animate-fade-in">
       <StatusBar />
 
       {/* Header */}
@@ -57,7 +57,7 @@ export default function CourierCompleteScreen({ config, onNext }: CourierComplet
 
       {/* G2 Only: Popular nearby */}
       {config.autoPopulate && (
-        <div className="mb-6 animate-in slide-in-from-bottom-4 fade-in duration-700">
+        <div className="mb-6 animate-fade-in">
            <div className="flex justify-between items-center mb-4 px-1">
              <h2 className="font-bold text-[19px] tracking-tight">Popular nearby</h2>
              <span className="text-gray-400 text-lg">→</span>

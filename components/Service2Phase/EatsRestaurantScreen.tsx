@@ -18,7 +18,7 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-white flex flex-col pb-[0px] animate-fade-in">
+    <div className="relative w-full min-h-full bg-white flex flex-col pb-[0px] animate-fade-in">
       <StatusBar />
       
       {/* Header Image */}
@@ -26,7 +26,7 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542528180-a1208c5169a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')] bg-cover bg-center"></div>
          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
          
-         <button onClick={onBack} className="absolute top-[52px] left-5 w-10 h-10 bg-white rounded-full shadow-md z-20 flex items-center justify-center active:scale-90 transition-transform">
+         <button onClick={onBack} className="absolute top-[62px] left-5 w-10 h-10 bg-white rounded-full shadow-md z-20 flex items-center justify-center active:scale-90 transition-transform">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
@@ -49,7 +49,7 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
          </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-[100px] -mt-4 bg-white rounded-t-[20px] relative z-10 pt-6 px-5">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[20px] -mt-4 bg-white rounded-t-[20px] relative z-10 pt-6 px-5">
           <h1 className="text-[26px] font-bold mb-1 tracking-tight text-black">Souvlaki Bar</h1>
           <div className="flex items-center text-[15px] text-gray-500 mb-4 font-medium">
               <span className="font-bold text-black mr-1 flex items-center bg-gray-100 rounded-full px-1.5 py-0.5 text-[12px]">4.8 ★</span>
@@ -111,7 +111,7 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
       </div>
 
       {/* Footer Button - Floating */}
-      <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-50 pb-[34px]">
+      <div className="sticky bottom-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-50 pb-[34px]">
            <button
             onClick={handleOrder}
             data-testid="btn-order-food"

@@ -14,7 +14,7 @@ export default function CourierDeliveryScreen({ onNext }: CourierDeliveryScreenP
   }, [onNext])
 
   return (
-    <div className="relative w-full min-h-screen bg-gray-50 flex flex-col pt-14 pb-6 px-5 animate-fade-in">
+    <div className="relative w-full min-h-full bg-gray-50 flex flex-col pt-[59px] pb-6 px-5 animate-fade-in">
       <StatusBar />
       
       {/* Top Row */}

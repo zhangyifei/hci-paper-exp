@@ -26,7 +26,7 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-white flex flex-col pt-14 pb-8 px-5 animate-fade-in">
+    <div className="relative w-full min-h-full bg-white flex flex-col pt-[59px] pb-8 px-5 animate-fade-in">
       <StatusBar />
 
       {/* Header */}

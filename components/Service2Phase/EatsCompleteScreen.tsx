@@ -9,10 +9,10 @@ interface EatsCompleteScreenProps {
 
 export default function EatsCompleteScreen({ config, onNext }: EatsCompleteScreenProps) {
   return (
-    <div className="relative w-full h-full bg-gray-50 flex flex-col overflow-hidden">
+    <div className="relative w-full min-h-full bg-gray-50 flex flex-col overflow-hidden">
       <StatusBar />
 
-      <div className="flex-1 flex flex-col px-4 pt-14 pb-8 overflow-y-auto overscroll-none">
+      <div className="flex-1 flex flex-col px-4 pt-[59px] pb-8 overflow-y-auto overscroll-none">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 animate-fade-in">
           <button 
@@ -39,7 +39,7 @@ export default function EatsCompleteScreen({ config, onNext }: EatsCompleteScree
 
         {/* G4 Only: Explore More Services */}
         {config.autoPopulate && (
-          <div className="mb-8 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300">
+          <div className="mb-8 animate-fade-in">
             <h2 className="font-bold text-xl mb-4 px-1">Explore More</h2>
             <div className="grid grid-cols-4 gap-3">
               {[
@@ -64,7 +64,7 @@ export default function EatsCompleteScreen({ config, onNext }: EatsCompleteScree
           <button
             onClick={onNext}
             data-testid="btn-enjoy-complete"
-            className="w-full h-14 bg-black text-white rounded-full font-bold text-lg shadow-lg shadow-black/10 active:scale-[0.98] transition-all flex items-center justify-center"
+            className="w-full h-14 bg-black text-white rounded-[16px] font-bold text-lg shadow-lg shadow-black/10 active:scale-[0.98] transition-all flex items-center justify-center"
           >
             Done
           </button>

@@ -22,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="w-full max-w-[390px] mx-auto min-h-screen bg-white relative overflow-y-auto shadow-xl">
-          {children}
+        <div className="device-frame">
+          <div className="device-screen">
+            {children}
+          </div>
         </div>
       </body>
     </html>
