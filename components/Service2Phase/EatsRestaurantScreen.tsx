@@ -18,105 +18,108 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
   }
 
   return (
-    <div className="relative w-full h-full bg-white flex flex-col pb-[90px] overflow-y-auto">
+    <div className="relative w-full min-h-screen bg-white flex flex-col pb-[0px] animate-fade-in">
       <StatusBar />
       
       {/* Header Image */}
-      <div className="h-48 bg-green-100 relative w-full">
-         <div className="absolute inset-0 flex items-center justify-center text-8xl opacity-20">🥙</div>
-         <button onClick={onBack} className="absolute top-12 left-4 p-2 bg-white rounded-full shadow-md z-10">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <div className="h-[250px] bg-gray-100 relative w-full overflow-hidden">
+         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542528180-a1208c5169a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')] bg-cover bg-center"></div>
+         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+         
+         <button onClick={onBack} className="absolute top-[52px] left-5 w-10 h-10 bg-white rounded-full shadow-md z-20 flex items-center justify-center active:scale-90 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
          </button>
+
+         <div className="absolute bottom-4 right-4 flex space-x-2">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+            </div>
+             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+            </div>
+         </div>
       </div>
 
-      {/* Info */}
-      <div className="px-4 py-4 border-b border-gray-100">
-          <h1 className="text-2xl font-bold mb-1">Souvlaki Bar</h1>
-          <div className="flex items-center text-sm text-gray-500 mb-2">
-              <span className="font-bold text-black mr-1">★ 4.6 (5,000+)</span>
-              <span className="mr-1">•</span> Greek <span className="mr-1">•</span> $$
-          </div>
-          <div className="text-xs text-gray-500 mb-3">
-              $0.99 Delivery Fee • $2.50–$6.50 Service Fee • <span className="text-yellow-600 font-bold">🔶 Uber One</span>
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[100px] -mt-4 bg-white rounded-t-[20px] relative z-10 pt-6 px-5">
+          <h1 className="text-[26px] font-bold mb-1 tracking-tight text-black">Souvlaki Bar</h1>
+          <div className="flex items-center text-[15px] text-gray-500 mb-4 font-medium">
+              <span className="font-bold text-black mr-1 flex items-center bg-gray-100 rounded-full px-1.5 py-0.5 text-[12px]">4.8 ★</span>
+              <span className="mr-1 ml-1">Greek</span> • <span className="mx-1">$$</span> • <span className="mx-1 text-green-700 font-bold">Open until 10 PM</span>
           </div>
           
-          <div className="bg-gray-100 rounded-full p-1 flex mb-3">
-              <div className="bg-white rounded-full px-6 py-1.5 text-sm font-bold shadow-sm flex-1 text-center">Delivery</div>
-              <div className="px-6 py-1.5 text-sm font-medium text-gray-500 flex-1 text-center">Pickup</div>
+          <div className="flex justify-between items-center bg-gray-50 p-3 rounded-[12px] mb-6">
+              <div>
+                  <div className="text-[13px] font-bold text-black mb-0.5">Delivery: 15-25 min • $0.99</div>
+                  <div className="text-[11px] text-gray-500">Latest arrival by 10:40 PM</div>
+              </div>
+              <div className="text-green-600 font-bold text-[13px]">Change</div>
           </div>
           
-          <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                 <div>
-                     <div className="font-bold text-sm">37 min</div>
-                     <div className="text-xs text-gray-400">Earliest arrival</div>
-                 </div>
-              </div>
-              <div className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-black">Group order</div>
+          <div className="bg-gray-100 p-1 rounded-full flex w-full mb-8 relative">
+              <div className="bg-white rounded-full w-1/2 py-1.5 text-[14px] font-bold shadow-sm text-center transition-all">Delivery</div>
+              <div className="w-1/2 py-1.5 text-[14px] font-medium text-gray-500 text-center">Pickup</div>
           </div>
-      </div>
 
-      {/* Promo */}
-      <div className="px-4 py-4 border-b border-gray-100">
-          <div className="bg-green-50 border border-green-100 rounded-lg p-3 flex justify-between items-center mb-2">
-              <div className="text-green-800 font-bold text-sm">$0 Delivery Fee + 5% off with Uber One</div>
-              <div className="text-xl">🏷️</div>
-          </div>
-          <div className="text-xs text-gray-400 text-center">Try free for 5 months</div>
-      </div>
-
-      {/* Menu */}
-      <div className="px-4 py-6">
-          <h2 className="font-bold text-lg mb-4">Order again</h2>
-          <div className="flex overflow-x-auto space-x-4 pb-4 no-scrollbar">
-              <div className="min-w-[140px] bg-white border border-gray-100 rounded-xl p-2 shadow-sm">
-                  <div className="h-24 bg-gray-100 rounded-lg mb-2 relative">
-                      <div className="absolute inset-0 flex items-center justify-center text-3xl">🥗</div>
+          <h2 className="font-bold text-[20px] mb-4 text-black">Featured Items</h2>
+          <div className="flex overflow-x-auto space-x-4 pb-6 no-scrollbar clip-none">
+              <div className="min-w-[150px] bg-white border border-gray-100 rounded-[16px] p-3 shadow-sm active:scale-95 transition-transform">
+                  <div className="h-[100px] bg-gray-100 rounded-[12px] mb-3 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-100"></div>
+                      <div className="absolute inset-0 flex items-center justify-center text-[50px]">🥗</div>
                   </div>
-                  <div className="font-bold text-sm truncate">Greek Salad</div>
-                  <div className="text-xs text-gray-500">$14.50</div>
+                  <div className="font-bold text-[15px] leading-tight mb-1 text-black">Greek Salad</div>
+                  <div className="text-[13px] text-gray-500">$14.50</div>
               </div>
-               <div className="min-w-[140px] bg-white border border-gray-100 rounded-xl p-2 shadow-sm">
-                  <div className="h-24 bg-gray-100 rounded-lg mb-2 relative">
-                      <div className="absolute inset-0 flex items-center justify-center text-3xl">🥙</div>
+               <div className="min-w-[150px] bg-white border border-gray-100 rounded-[16px] p-3 shadow-sm active:scale-95 transition-transform">
+                  <div className="h-[100px] bg-gray-100 rounded-[12px] mb-3 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-100"></div>
+                      <div className="absolute inset-0 flex items-center justify-center text-[50px]">🥙</div>
                   </div>
-                  <div className="font-bold text-sm truncate">Chicken Pita</div>
-                  <div className="text-xs text-gray-500">$12.00</div>
+                  <div className="font-bold text-[15px] leading-tight mb-1 text-black">Chicken Pita</div>
+                  <div className="text-[13px] text-gray-500">$12.00</div>
               </div>
           </div>
 
-          <h2 className="font-bold text-lg mb-4 mt-2">Featured items</h2>
-          <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <h2 className="font-bold text-[20px] mb-4 mt-2 text-black">Popular</h2>
+          <div className="space-y-6">
+              <div className="flex items-start justify-between active:opacity-60 transition-opacity">
                   <div className="flex-1 pr-4">
-                      <div className="font-bold text-base mb-1">Chicken Souvlaki Plate</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">Served with rice, roasted potatoes, greek salad, tzatziki and pita bread.</div>
-                      <div className="font-medium text-sm mt-2">$22.00</div>
+                      <div className="font-bold text-[17px] mb-1 text-black">Chicken Souvlaki Plate</div>
+                      <div className="text-[13px] text-gray-500 line-clamp-2 leading-relaxed mb-2">Served with rice, roasted potatoes, greek salad, tzatziki and pita bread.</div>
+                      <div className="font-medium text-[15px] text-black">$22.00</div>
                   </div>
-                  <div className="w-24 h-24 bg-gray-100 rounded-xl flex items-center justify-center text-4xl">🍗</div>
+                  <div className="w-[100px] h-[100px] bg-gray-100 rounded-[16px] flex items-center justify-center text-[40px] shadow-sm border border-gray-100">🍗</div>
               </div>
-               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+               <div className="flex items-start justify-between active:opacity-60 transition-opacity">
                   <div className="flex-1 pr-4">
-                      <div className="font-bold text-base mb-1">Gyro Pita</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">Pork or chicken gyro wrapped in pita with tomatoes, onions and tzatziki.</div>
-                      <div className="font-medium text-sm mt-2">$11.50</div>
+                      <div className="font-bold text-[17px] mb-1 text-black">Gyro Pita</div>
+                      <div className="text-[13px] text-gray-500 line-clamp-2 leading-relaxed mb-2">Pork or chicken gyro wrapped in pita with tomatoes, onions and tzatziki.</div>
+                      <div className="font-medium text-[15px] text-black">$11.50</div>
                   </div>
-                  <div className="w-24 h-24 bg-gray-100 rounded-xl flex items-center justify-center text-4xl">🌯</div>
+                  <div className="w-[100px] h-[100px] bg-gray-100 rounded-[16px] flex items-center justify-center text-[40px] shadow-sm border border-gray-100">🌯</div>
               </div>
           </div>
       </div>
 
-      {/* Footer Button */}
-      <div className="fixed bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100 max-w-[390px] z-50">
+      {/* Footer Button - Floating */}
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-50 pb-[34px]">
            <button
             onClick={handleOrder}
             data-testid="btn-order-food"
-            className="w-full h-14 bg-black text-white rounded-full font-bold text-lg hover:bg-gray-900 transition-colors shadow-lg"
+            className="w-full h-[54px] bg-black text-white rounded-[16px] font-bold text-[17px] hover:bg-gray-900 transition-colors shadow-lg active:scale-[0.98] flex items-center justify-between px-6"
           >
-            Order Food
+            <span className="bg-white/20 px-2 py-0.5 rounded text-[13px]">1</span>
+            <span>View order</span>
+            <span>$22.00</span>
           </button>
       </div>
 

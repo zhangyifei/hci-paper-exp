@@ -6,6 +6,14 @@ export const metadata: Metadata = {
   description: 'Super-app flow study',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -13,8 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-[390px] min-h-screen bg-white relative overflow-hidden shadow-xl">
+      <body>
+        <div className="w-full max-w-[390px] mx-auto min-h-screen bg-white relative overflow-y-auto shadow-xl">
           {children}
         </div>
       </body>

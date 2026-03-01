@@ -68,7 +68,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   }
 
   return (
-    <div className="w-full h-full max-w-[390px] mx-auto bg-white shadow-2xl overflow-hidden text-black relative">
+    <div className="w-full min-h-screen bg-white text-black relative">
       {screen === 'home' && <HomeScreen onNext={goToMap} />}
       
       {screen === 'map' && <MapScreen onNext={goToRideAlmostThere} onBack={handleBackToHome} />}

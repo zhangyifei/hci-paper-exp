@@ -14,75 +14,89 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
   }, [onNext])
 
   return (
-    <div className="relative w-full h-full bg-white flex flex-col pt-12 pb-6 px-4">
+    <div className="relative w-full min-h-screen bg-gray-50 flex flex-col pt-14 pb-6 px-5 animate-fade-in">
       <StatusBar />
       
       {/* Top Row */}
-      <div className="flex justify-between items-center mb-6">
-        <button className="p-2 -ml-2 text-2xl">✕</button>
-        <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1 text-sm font-semibold">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
+      <div className="flex justify-between items-center mb-6 z-10">
+        <button className="w-9 h-9 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500 active:scale-90 transition-transform">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-          <span>Help</span>
+        </button>
+        <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-1.5 shadow-sm active:scale-95 transition-transform cursor-pointer">
+          <span className="text-xs font-bold text-black">Help</span>
         </div>
       </div>
 
       {/* Heading */}
-      <h1 className="text-3xl font-bold mb-2">Your Ride Almost there…</h1>
+      <h1 className="text-[28px] font-bold leading-tight mb-2 tracking-tight text-black">Your ride is<br/>almost here</h1>
       
       {/* Arrival Time */}
-      <div className="flex items-center text-lg font-semibold mb-4">
-        Arriving at 10:15 <span className="text-green-600 mx-2 text-2xl">•</span>
+      <div className="flex items-center text-[17px] font-semibold mb-6 text-gray-800">
+        Arriving at 10:15 <span className="text-green-600 mx-2 text-xs">●</span> On time
       </div>
 
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2 overflow-hidden">
-        <div className="bg-green-600 h-1.5 rounded-full w-[95%]"></div>
+        <div className="bg-black h-1.5 rounded-full w-[85%] animate-[pulse_2s_infinite]"></div>
       </div>
-      <div className="text-xs text-gray-500 mb-8">Latest arrival by 10:40</div>
+      <div className="text-[13px] text-gray-500 mb-8 font-medium">Latest arrival by 10:20</div>
 
-      {/* Map Placeholder */}
-      <div className="w-full h-40 bg-gray-200 rounded-xl mb-6 flex items-center justify-center relative overflow-hidden">
+      {/* Map Card */}
+      <div className="w-full h-[180px] bg-white rounded-[20px] mb-6 flex items-center justify-center relative overflow-hidden shadow-ios-card">
           <div className="absolute inset-0 bg-gray-100 opacity-50"></div>
           {/* Street Grid */}
-          <div className="absolute top-0 left-1/3 w-2 h-full bg-white transform -skew-x-12"></div>
-          <div className="absolute top-1/2 left-0 w-full h-2 bg-white transform -skew-y-6"></div>
-          <div className="text-4xl z-10">🚗</div>
+          <div className="absolute top-0 left-1/3 w-16 h-full bg-gray-200 transform -skew-x-12"></div>
+          <div className="absolute top-1/2 left-0 w-full h-16 bg-gray-200 transform -skew-y-6"></div>
+          
+          {/* Car moving animation */}
+          <div className="text-[40px] z-10 absolute animate-[bounce-subtle_2s_infinite]">🚗</div>
+          <div className="text-[30px] z-10 absolute right-8 top-8 opacity-50">📍</div>
       </div>
 
-      <div className="h-px bg-gray-100 w-full mb-6"></div>
+      <div className="h-px bg-gray-200 w-full mb-6"></div>
 
-      {/* Driver Info */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <div className="w-12 h-12 bg-gray-300 rounded-full mr-3 overflow-hidden">
-            <svg className="w-full h-full text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
+      {/* Driver Info Card */}
+      <div className="bg-white rounded-[20px] p-4 shadow-sm active:scale-[0.98] transition-transform">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <div className="w-14 h-14 bg-gray-100 rounded-full mr-3 overflow-hidden border border-gray-100 shadow-sm relative">
+              <div className="absolute inset-0 flex items-center justify-center text-2xl">👨🏻‍✈️</div>
+            </div>
+            <div>
+              <div className="font-bold text-[17px] text-black">Jonathan <span className="text-gray-400 font-normal text-sm ml-1">• 4.9★</span></div>
+              <div className="text-[13px] text-gray-500 font-medium">White Honda Civic • 7EL 005</div>
+            </div>
           </div>
-          <div>
-            <div className="font-bold text-lg">Jonathan • 7EL005</div>
-            <div className="text-sm text-gray-500">White Honda Civic</div>
+          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gray-50 border border-gray-100">
+             <div className="text-xl">💬</div>
           </div>
         </div>
-        <div className="flex flex-col items-center">
-           <div className="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full mb-1">95%</div>
-           <div className="text-[10px] text-gray-400">Match</div>
+        
+        {/* Actions */}
+        <div className="grid grid-cols-2 gap-3 mt-2">
+            <button className="h-[44px] bg-black text-white rounded-[12px] font-bold text-[15px] active:scale-95 transition-transform">Message</button>
+            <button className="h-[44px] bg-gray-100 text-black rounded-[12px] font-bold text-[15px] active:scale-95 transition-transform">Call</button>
         </div>
       </div>
 
       {/* Details */}
-      <div className="space-y-4">
-        <div>
-          <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Pick up spot details</div>
-          <div className="text-sm font-medium">Spot-01, Rue McGill, Montreal, Canada</div>
+      <div className="mt-6 px-2 space-y-4 opacity-0 animate-[fade-in_0.5s_ease-out_0.3s_forwards]">
+        <div className="flex items-start">
+          <div className="w-2 h-2 bg-black rounded-full mt-2 mr-4"></div>
+          <div>
+            <div className="text-[11px] text-gray-500 font-bold uppercase tracking-wide mb-0.5">Pick up</div>
+            <div className="text-[15px] font-medium text-black">100 Rue McGill</div>
+          </div>
         </div>
-        <div>
-          <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Address</div>
-          <div className="text-sm font-medium">100 Rue McGill</div>
+        <div className="flex items-start">
+           <div className="w-2 h-2 bg-black rounded-full mt-2 mr-4 opacity-30"></div>
+           <div>
+            <div className="text-[11px] text-gray-500 font-bold uppercase tracking-wide mb-0.5">Drop off</div>
+            <div className="text-[15px] font-medium text-gray-500">Pierre-Elliott-Trudeau Airport</div>
+          </div>
         </div>
       </div>
 

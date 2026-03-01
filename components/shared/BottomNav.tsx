@@ -1,32 +1,65 @@
 import React from 'react'
 
 export default function BottomNav() {
+  const [activeTab, setActiveTab] = React.useState('home')
+
+  const TabItem = ({ id, label, icon }: { id: string, label: string, icon: React.ReactNode }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 active:scale-90 ${activeTab === id ? 'text-black' : 'text-gray-400'}`}
+    >
+      <div className="mb-1">{icon}</div>
+      <span className="text-[10px] font-medium tracking-tight">{label}</span>
+    </button>
+  )
+
   return (
-    <div className="fixed bottom-0 left-0 w-full h-[88px] bg-white border-t border-gray-100 flex justify-around items-start pt-3 pb-8 z-50 max-w-[390px]">
-      <div className="flex flex-col items-center text-black">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span className="text-[10px] font-medium mt-1">Home</span>
+    <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 pb-[34px] pt-2 z-50 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+      <div className="flex justify-around items-center h-[49px] px-2">
+        <TabItem 
+          id="home" 
+          label="Home" 
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={activeTab === 'home' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={activeTab === 'home' ? "0" : "2"}>
+              <path d="M3 9.5L12 2.5L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H15V14.5H9V21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          } 
+        />
+        <TabItem 
+          id="services" 
+          label="Services" 
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={activeTab === 'services' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={activeTab === 'services' ? "0" : "2"}>
+              <rect x="3" y="3" width="7" height="7" rx="2" />
+              <rect x="14" y="3" width="7" height="7" rx="2" />
+              <rect x="14" y="14" width="7" height="7" rx="2" />
+              <rect x="3" y="14" width="7" height="7" rx="2" />
+            </svg>
+          } 
+        />
+        <TabItem 
+          id="activity" 
+          label="Activity" 
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={activeTab === 'activity' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={activeTab === 'activity' ? "0" : "2"}>
+              <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          } 
+        />
+        <TabItem 
+          id="account" 
+          label="Account" 
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={activeTab === 'account' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={activeTab === 'account' ? "0" : "2"}>
+              <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          } 
+        />
       </div>
-      <div className="flex flex-col items-center text-gray-400">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 10a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zm10-10a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2h-2zm0 10a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z" clipRule="evenodd" />
-        </svg>
-        <span className="text-[10px] font-medium mt-1">Services</span>
-      </div>
-      <div className="flex flex-col items-center text-gray-400">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-        </svg>
-        <span className="text-[10px] font-medium mt-1">Activity</span>
-      </div>
-      <div className="flex flex-col items-center text-gray-400">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-        </svg>
-        <span className="text-[10px] font-medium mt-1">Account</span>
-      </div>
+      {/* Home Indicator */}
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-[134px] h-[5px] bg-black rounded-full opacity-30"></div>
     </div>
   )
 }
+

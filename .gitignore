@@ -3,3 +3,6 @@ BLOB_READ_WRITE_TOKEN
 .env
 .next/
 node_modules/
+.vercel
+.env*.local
+test-results/

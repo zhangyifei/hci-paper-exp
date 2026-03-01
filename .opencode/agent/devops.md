@@ -1,13 +1,13 @@
 ---
-mode: agent
+mode: subagent
 description: DevOps agent — Vercel deployment, env vars, DB migrations, production ops
 tools:
-  - read
-  - write
-  - edit
-  - glob
-  - grep
-  - bash
+  read: true
+  write: true
+  edit: true
+  glob: true
+  grep: true
+  bash: true
 temperature: 0.2
 ---
 

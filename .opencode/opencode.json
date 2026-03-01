@@ -1,17 +1,20 @@
 {
-  // opencode agent configuration
-  // See: https://opencode.ai/docs/agents/
-  "agents": {
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
     "contract": {
       "description": "Contract agent — owns docs/contracts/*, validates all config changes",
+      "mode": "subagent",
       "model": "anthropic/claude-sonnet-4-5",
-      "instructions": ".opencode/agent/contract.md",
+      "prompt": "{file:./agent/contract.md}",
       "tools": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "glob": "allow",
-        "grep": "allow",
+        "read": true,
+        "write": true,
+        "edit": true,
+        "glob": true,
+        "grep": true,
+        "bash": true
+      },
+      "permission": {
         "bash": {
           "git push*": "deny",
           "git commit*": "deny",
@@ -22,17 +25,20 @@
     },
     "ui": {
       "description": "UI Prototype agent — renders all 4 condition screens",
+      "mode": "subagent",
       "model": "anthropic/claude-sonnet-4-5",
-      "instructions": ".opencode/agent/ui.md",
+      "prompt": "{file:./agent/ui.md}",
       "tools": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "glob": "allow",
-        "grep": "allow",
+        "read": true,
+        "write": true,
+        "edit": true,
+        "glob": true,
+        "grep": true,
+        "bash": true
+      },
+      "permission": {
         "bash": {
-          "git push*": "deny",
-          "git commit*": "deny",
+          "*": "deny",
           "npm run dev": "allow",
           "npm run build": "allow"
         }
@@ -40,17 +46,20 @@
     },
     "instrumentation": {
       "description": "Instrumentation/Data agent — logger, timing, API routes, DB schema",
+      "mode": "subagent",
       "model": "anthropic/claude-sonnet-4-5",
-      "instructions": ".opencode/agent/instrumentation.md",
+      "prompt": "{file:./agent/instrumentation.md}",
       "tools": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "glob": "allow",
-        "grep": "allow",
+        "read": true,
+        "write": true,
+        "edit": true,
+        "glob": true,
+        "grep": true,
+        "bash": true
+      },
+      "permission": {
         "bash": {
-          "git push*": "deny",
-          "git commit*": "deny",
+          "*": "deny",
           "npm run dev": "allow",
           "npm run build": "allow",
           "npx tsc*": "allow"
@@ -59,17 +68,20 @@
     },
     "qa": {
       "description": "QA agent — E2E Playwright tests for G1–G4 flows",
+      "mode": "subagent",
       "model": "anthropic/claude-sonnet-4-5",
-      "instructions": ".opencode/agent/qa.md",
+      "prompt": "{file:./agent/qa.md}",
       "tools": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "glob": "allow",
-        "grep": "allow",
+        "read": true,
+        "write": true,
+        "edit": true,
+        "glob": true,
+        "grep": true,
+        "bash": true
+      },
+      "permission": {
         "bash": {
-          "git push*": "deny",
-          "git commit*": "deny",
+          "*": "deny",
           "npx playwright test*": "allow",
           "npm run test*": "allow"
         }
@@ -77,16 +89,20 @@
     },
     "devops": {
       "description": "DevOps agent — Vercel deployment, env vars, DB migrations",
+      "mode": "subagent",
       "model": "anthropic/claude-sonnet-4-5",
-      "instructions": ".opencode/agent/devops.md",
+      "prompt": "{file:./agent/devops.md}",
       "tools": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "glob": "allow",
-        "grep": "allow",
+        "read": true,
+        "write": true,
+        "edit": true,
+        "glob": true,
+        "grep": true,
+        "bash": true
+      },
+      "permission": {
         "bash": {
-          "git push*": "deny",
+          "*": "deny",
           "vercel deploy*": "allow",
           "vercel env*": "allow",
           "npx vercel*": "allow"

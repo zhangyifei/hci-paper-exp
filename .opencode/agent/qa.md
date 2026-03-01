@@ -1,13 +1,13 @@
 ---
-mode: agent
+mode: subagent
 description: QA agent — E2E Playwright tests for G1–G4 experiment flows
 tools:
-  - read
-  - write
-  - edit
-  - glob
-  - grep
-  - bash
+  read: true
+  write: true
+  edit: true
+  glob: true
+  grep: true
+  bash: true
 temperature: 0.2
 ---
 

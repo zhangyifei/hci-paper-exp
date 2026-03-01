@@ -1,12 +1,12 @@
 ---
-mode: agent
+mode: subagent
 description: Contract agent — owns docs/contracts/*, validates all config changes against the G1–G4 experiment spec
 tools:
-  - read
-  - write
-  - edit
-  - glob
-  - grep
+  read: true
+  write: true
+  edit: true
+  glob: true
+  grep: true
 temperature: 0.2
 ---
 

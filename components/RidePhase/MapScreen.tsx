@@ -15,83 +15,94 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
   }
 
   return (
-    <div className="relative w-full h-full bg-white flex flex-col">
+    <div className="relative w-full min-h-screen bg-white flex flex-col animate-slide-in-right">
       <StatusBar />
 
-      {/* Header */}
-      <div className="flex items-center px-4 pt-14 pb-4 bg-white shadow-sm z-10 relative">
-        <button onClick={onBack} className="p-2 -ml-2">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      {/* Header - Floating with blur */}
+      <div className="absolute top-[47px] left-4 z-30">
+        <button 
+          onClick={onBack} 
+          className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-md flex items-center justify-center active:scale-90 transition-transform"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </button>
-        <div className="ml-4 bg-gray-100 rounded-full px-4 py-2 text-sm font-semibold flex items-center">
-          Home <span className="mx-2">▸</span>
-        </div>
       </div>
 
       {/* Map Placeholder */}
-      <div className="w-full h-64 bg-gray-200 relative overflow-hidden flex-shrink-0">
-        <svg className="w-full h-full" preserveAspectRatio="none">
-           {/* Route Line */}
-           <path d="M40,200 Q150,150 300,50" stroke="black" strokeWidth="3" fill="none" strokeDasharray="8 4" />
+      <div className="w-full h-[45vh] bg-[#F3F4F6] relative overflow-hidden flex-shrink-0">
+        <div className="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=40.714728,-73.998672&zoom=14&size=800x600&sensor=false')] bg-cover opacity-10"></div>
+        {/* Abstract Map UI */}
+        <svg className="w-full h-full absolute inset-0" preserveAspectRatio="none">
+           <path d="M-10,250 Q150,200 390,100" stroke="#4B5563" strokeWidth="6" fill="none" strokeLinecap="round" />
+           <path d="M-10,250 Q150,200 390,100" stroke="black" strokeWidth="3" fill="none" strokeDasharray="8 6" strokeLinecap="round" />
         </svg>
         {/* Car Icon */}
-        <div className="absolute left-8 bottom-12 text-2xl transform -rotate-12">🚗</div>
+        <div className="absolute left-[20%] bottom-[30%] text-3xl transform -rotate-12 drop-shadow-lg transition-transform duration-1000 ease-in-out">🚗</div>
         {/* Pin Icon */}
-        <div className="absolute right-16 top-8 text-3xl">📍</div>
+        <div className="absolute right-[20%] top-[25%] text-4xl drop-shadow-xl animate-bounce-subtle">📍</div>
       </div>
 
-      {/* Choose a ride */}
-      <div className="flex-1 bg-white rounded-t-3xl -mt-6 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 flex flex-col">
-        <h2 className="text-xl font-bold mb-4 text-center">Choose a ride</h2>
+      {/* Bottom Sheet */}
+      <div className="flex-1 bg-white rounded-t-[20px] -mt-6 pt-3 px-4 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] z-20 flex flex-col relative">
+        {/* Drag Handle */}
+        <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+
+        <h2 className="text-[20px] font-bold mb-4 text-center tracking-tight">Choose a ride</h2>
         
-        <div className="space-y-3 mb-auto">
+        <div className="space-y-2 mb-auto overflow-y-auto no-scrollbar pb-20">
           {/* Uber X - Selected */}
-          <div className="border-2 border-black rounded-xl p-3 flex items-center justify-between bg-white shadow-sm cursor-pointer relative">
-            <div className="absolute -top-3 right-4 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Faster</div>
+          <div className="border-[2px] border-black rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white shadow-sm cursor-pointer relative active:scale-[0.98] transition-all">
+            <div className="absolute -top-2.5 right-4 bg-[#1f1f1f] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">Faster</div>
             <div className="flex items-center">
-               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-3 text-xl">🚘</div>
-               <div>
-                 <div className="font-bold text-lg flex items-center">Uber X <span className="ml-2 text-xs font-normal text-gray-500">8:46pm · 4 min away</span></div>
-                 <div className="text-sm text-gray-500">Affordable, everyday rides</div>
+               <div className="w-[50px] relative">
+                  <div className="text-[40px] leading-none transform -scale-x-100">🚘</div>
+               </div>
+               <div className="ml-1">
+                 <div className="font-bold text-[17px] flex items-center leading-tight">Uber X <span className="ml-2 text-[12px] font-normal text-gray-500">8:46pm</span></div>
+                 <div className="text-[13px] text-gray-500 mt-0.5">Affordable, everyday rides</div>
                </div>
             </div>
-            <div className="font-bold text-lg">$12.59</div>
+            <div className="font-bold text-[17px]">$12.59</div>
           </div>
 
           {/* Uber Comfort */}
-           <div className="border border-gray-200 rounded-xl p-3 flex items-center justify-between bg-white opacity-70">
+           <div className="border border-gray-100 rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer">
             <div className="flex items-center">
-               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-3 text-xl">🚙</div>
-               <div>
-                 <div className="font-bold text-lg flex items-center">Uber Comfort <span className="ml-2 text-xs font-normal text-gray-500">8:46pm · 5 min away</span></div>
-                 <div className="text-sm text-gray-500">Newer cars with extra legroom</div>
+               <div className="w-[50px] relative">
+                  <div className="text-[40px] leading-none transform -scale-x-100 grayscale opacity-80">🚙</div>
+               </div>
+               <div className="ml-1">
+                 <div className="font-bold text-[17px] flex items-center leading-tight">Comfort <span className="ml-2 text-[12px] font-normal text-gray-500">8:47pm</span></div>
+                 <div className="text-[13px] text-gray-500 mt-0.5">Newer cars with extra legroom</div>
                </div>
             </div>
-            <div className="font-bold text-lg">$14.33</div>
+            <div className="font-bold text-[17px]">$14.33</div>
           </div>
 
           {/* Uber Premier */}
-           <div className="border border-gray-200 rounded-xl p-3 flex items-center justify-between bg-white opacity-70">
+           <div className="border border-gray-100 rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer">
             <div className="flex items-center">
-               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-3 text-xl">🏎️</div>
-               <div>
-                 <div className="font-bold text-lg flex items-center">Uber Premier <span className="ml-2 text-xs font-normal text-gray-500">8:46pm · 5 min away</span></div>
-                 <div className="text-sm text-gray-500">Premium rides in high-end cars</div>
+               <div className="w-[50px] relative">
+                  <div className="text-[40px] leading-none transform -scale-x-100 grayscale opacity-80">🏎️</div>
+               </div>
+               <div className="ml-1">
+                 <div className="font-bold text-[17px] flex items-center leading-tight">Premier <span className="ml-2 text-[12px] font-normal text-gray-500">8:47pm</span></div>
+                 <div className="text-[13px] text-gray-500 mt-0.5">Premium rides in high-end cars</div>
                </div>
             </div>
-            <div className="font-bold text-lg">$18.11</div>
+            <div className="font-bold text-[17px]">$18.11</div>
           </div>
         </div>
 
-        {/* Button */}
-        <div className="mt-4 pb-6">
+        {/* Button Fixed at Bottom of Sheet */}
+        <div className="absolute bottom-0 left-0 w-full px-4 pb-8 pt-4 bg-gradient-to-t from-white via-white to-transparent">
            <button
             onClick={handleChoose}
             data-testid="btn-choose-uber-x"
-            className="w-full h-14 bg-black text-white rounded-full font-bold text-lg hover:bg-gray-900 transition-colors"
+            className="w-full h-[54px] bg-black text-white rounded-[12px] font-bold text-[17px] shadow-lg active:scale-[0.97] transition-all flex items-center justify-center"
           >
             Choose Uber X
           </button>
