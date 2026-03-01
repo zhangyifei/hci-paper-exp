@@ -1,0 +1,53 @@
+{
+  "G1": {
+    "service2": "courier",
+    "banner": false,
+    "autoPopulate": false,
+    "listUI": "generic-options",
+    "bannerText": null,
+    "bannerCTA": null,
+    "pickupOptions": [
+      { "id": "small", "label": "Small", "price": 8 },
+      { "id": "medium", "label": "Medium", "price": 12 },
+      { "id": "large", "label": "Large", "price": 24 }
+    ],
+    "addressLabel": null,
+    "addressSublabel": null
+  },
+  "G2": {
+    "service2": "courier",
+    "banner": true,
+    "autoPopulate": true,
+    "listUI": "categorized-by-destination",
+    "bannerText": "Need to sent package? 5+ Courier divers available nearby",
+    "bannerCTA": "Send Now",
+    "pickupOptions": [
+      { "id": "express", "label": "Express (15min)", "price": 12 },
+      { "id": "standard", "label": "Standard (1hr)", "price": 8 }
+    ],
+    "addressLabel": "Rue Saint-Laurent - spot 01",
+    "addressSublabel": "Near 100 Rue saint-LAURENT"
+  },
+  "G3": {
+    "service2": "eats",
+    "banner": false,
+    "autoPopulate": false,
+    "listUI": "citywide-popular",
+    "bannerText": null,
+    "bannerCTA": null,
+    "pickupOptions": [],
+    "addressLabel": null,
+    "addressSublabel": null
+  },
+  "G4": {
+    "service2": "eats",
+    "banner": true,
+    "autoPopulate": true,
+    "listUI": "distance-filtered",
+    "bannerText": "Arrived at your destination 3+ restaurants nearby",
+    "bannerCTA": "Eat",
+    "pickupOptions": [],
+    "addressLabel": "Rue Saint-Laurent - spot 01",
+    "addressSublabel": "Near 100 Rue saint-LAURENT"
+  }
+}

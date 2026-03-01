@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExperimentEvent",
+  "description": "Schema for all instrumentation events in the HCI experiment",
+  "type": "object",
+  "required": [
+    "eventName",
+    "eventId",
+    "sessionId",
+    "participantId",
+    "sequenceId",
+    "flow",
+    "state",
+    "timestamp",
+    "clientMonoMs",
+    "condition"
+  ],
+  "properties": {
+    "eventName": {
+      "type": "string",
+      "description": "Dot-notation event name: flow.action or flow.action.state",
+      "enum": [
+        "ride.started",
+        "ride.option_selected",
+        "ride.confirmed",
+        "ride.arrived",
+        "trip_complete.viewed",
+        "trip_complete.banner_tapped",
+        "service2.entry",
+        "service2.address_edited",
+        "service2.option_selected",
+        "service2.task.started",
+        "service2.task.submitting",
+        "service2.task.complete",
+        "service2.task.error",
+        "experiment.completed",
+        "experiment.error"
+      ]
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event ID (crypto.randomUUID())"
+    },
+    "sessionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID per participant session, generated on landing page load"
+    },
+    "participantId": {
+      "type": "string",
+      "description": "PROLIFIC_PID from URL params"
+    },
+    "sequenceId": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic counter per session, starts at 0"
+    },
+    "flow": {
+      "type": "string",
+      "enum": ["ride", "trip_complete", "service2", "experiment"],
+      "description": "Which flow phase the event belongs to"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "ride_in_progress",
+        "ride_submitting",
+        "trip_complete_confirmed",
+        "service2_entry",
+        "service2_task_active",
+        "service2_task_submitting",
+        "service2_task_complete",
+        "finished",
+        "error_ride",
+        "error_service2",
+        "error_submit"
+      ],
+      "description": "Current state machine state"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Wall clock time: Date.now() in milliseconds"
+    },
+    "clientMonoMs": {
+      "type": "number",
+      "description": "Monotonic time: performance.now() in milliseconds"
+    },
+    "durationMs": {
+      "type": "number",
+      "description": "Task duration in ms (performance.measure). ONLY on service2.task.complete events.",
+      "minimum": 0
+    },
+    "parentEventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "eventId of the parent event (e.g. service2.entry for task.complete)"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event-specific data (e.g. selected option, price)",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if event is an error event"
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["G1", "G2", "G3", "G4"],
+      "description": "Experiment condition assigned to this participant"
+    },
+    "prolificStudyId": {
+      "type": "string",
+      "description": "STUDY_ID from Prolific URL params"
+    },
+    "prolificSessionId": {
+      "type": "string",
+      "description": "SESSION_ID from Prolific URL params"
+    }
+  },
+  "if": {
+    "properties": { "eventName": { "const": "service2.task.complete" } }
+  },
+  "then": {
+    "required": ["durationMs", "parentEventId"]
+  }
+}
