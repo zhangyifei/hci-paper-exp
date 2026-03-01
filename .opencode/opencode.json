@@ -1,0 +1,97 @@
+{
+  // opencode agent configuration
+  // See: https://opencode.ai/docs/agents/
+  "agents": {
+    "contract": {
+      "description": "Contract agent — owns docs/contracts/*, validates all config changes",
+      "model": "anthropic/claude-sonnet-4-5",
+      "instructions": ".opencode/agent/contract.md",
+      "tools": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": {
+          "git push*": "deny",
+          "git commit*": "deny",
+          "npm run*": "deny",
+          "npx*": "deny"
+        }
+      }
+    },
+    "ui": {
+      "description": "UI Prototype agent — renders all 4 condition screens",
+      "model": "anthropic/claude-sonnet-4-5",
+      "instructions": ".opencode/agent/ui.md",
+      "tools": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": {
+          "git push*": "deny",
+          "git commit*": "deny",
+          "npm run dev": "allow",
+          "npm run build": "allow"
+        }
+      }
+    },
+    "instrumentation": {
+      "description": "Instrumentation/Data agent — logger, timing, API routes, DB schema",
+      "model": "anthropic/claude-sonnet-4-5",
+      "instructions": ".opencode/agent/instrumentation.md",
+      "tools": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": {
+          "git push*": "deny",
+          "git commit*": "deny",
+          "npm run dev": "allow",
+          "npm run build": "allow",
+          "npx tsc*": "allow"
+        }
+      }
+    },
+    "qa": {
+      "description": "QA agent — E2E Playwright tests for G1–G4 flows",
+      "model": "anthropic/claude-sonnet-4-5",
+      "instructions": ".opencode/agent/qa.md",
+      "tools": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": {
+          "git push*": "deny",
+          "git commit*": "deny",
+          "npx playwright test*": "allow",
+          "npm run test*": "allow"
+        }
+      }
+    },
+    "devops": {
+      "description": "DevOps agent — Vercel deployment, env vars, DB migrations",
+      "model": "anthropic/claude-sonnet-4-5",
+      "instructions": ".opencode/agent/devops.md",
+      "tools": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": {
+          "git push*": "deny",
+          "vercel deploy*": "allow",
+          "vercel env*": "allow",
+          "npx vercel*": "allow"
+        }
+      }
+    }
+  }
+}
