@@ -29,28 +29,39 @@ interface LoggerSession {
   prolificSessionId?: string
 }
 
+const STORAGE_KEY = 'hci_experiment_events'
+
 class EventLogger {
-  private queue: ExperimentEvent[] = []
   private sequenceId = 0
   private session: LoggerSession | null = null
-  private flushInterval: ReturnType<typeof setInterval> | null = null
-  private isFlushing = false
+  private unloadHandler: (() => void) | null = null
 
   init(session: LoggerSession): void {
     this.session = session
     this.sequenceId = 0
-    this.queue = []
 
-    // Flush every 5 seconds
-    this.flushInterval = setInterval(() => {
-      this.flush().catch(console.error)
-    }, 5000)
+    // Start fresh in sessionStorage for this session
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+    }
 
-    // Flush on page unload via sendBeacon
+    // Remove any previous listener before adding a new one
+    if (this.unloadHandler && typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.unloadHandler)
+    }
+
+    // Safety net: if user closes the tab, send everything accumulated so far
+    this.unloadHandler = () => {
+      const events = this.readEvents()
+      if (events.length === 0) return
+      const body = JSON.stringify({ events })
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon('/api/events', body)
+      }
+    }
+
     if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => {
-        this.flushSync()
-      })
+      window.addEventListener('beforeunload', this.unloadHandler)
     }
   }
 
@@ -84,67 +95,60 @@ class EventLogger {
       ...extras,
     }
 
-    this.queue.push(event)
-
-    // Flush immediately if queue is large
-    if (this.queue.length >= 10) {
-      this.flush().catch(console.error)
-    }
+    this.appendEvent(event)
 
     return eventId
   }
 
-  async flush(): Promise<void> {
-    if (this.isFlushing || this.queue.length === 0) return
-    this.isFlushing = true
+  /** Send all accumulated events to the server in a single request. */
+  async flushAndWait(): Promise<void> {
+    const events = this.readEvents()
+    if (events.length === 0) return
 
-    const batch = [...this.queue]
-    this.queue = []
-
-    try {
-      await this.sendBatch(batch)
-    } catch (err) {
-      // Re-queue on failure
-      this.queue = [...batch, ...this.queue]
-      console.error('[logger] flush failed:', err)
-    } finally {
-      this.isFlushing = false
-    }
-  }
-
-  /** Synchronous flush via sendBeacon for page unload */
-  private flushSync(): void {
-    if (this.queue.length === 0) return
-    const body = JSON.stringify({ events: this.queue })
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon('/api/events', body)
-    }
-    this.queue = []
-  }
-
-  private async sendBatch(events: ExperimentEvent[]): Promise<void> {
     const response = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events }),
       keepalive: true,
     })
+
     if (!response.ok) {
       throw new Error(`[logger] POST /api/events failed: ${response.status}`)
     }
-  }
 
-  /** Flush and wait — used before Prolific redirect */
-  async flushAndWait(): Promise<void> {
-    await this.flush()
-    // Wait for any in-flight request
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    // Clear storage after successful send so beforeunload won't resend
+    this.clearEvents()
   }
 
   destroy(): void {
-    if (this.flushInterval) {
-      clearInterval(this.flushInterval)
-      this.flushInterval = null
+    if (this.unloadHandler && typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.unloadHandler)
+      this.unloadHandler = null
+    }
+  }
+
+  private appendEvent(event: ExperimentEvent): void {
+    const events = this.readEvents()
+    events.push(event)
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(events))
+    }
+  }
+
+  private readEvents(): ExperimentEvent[] {
+    if (typeof sessionStorage === 'undefined') return []
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY)
+      if (!raw) return []
+      return JSON.parse(raw) as ExperimentEvent[]
+    } catch {
+      return []
+    }
+  }
+
+  private clearEvents(): void {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(STORAGE_KEY)
     }
   }
 }
