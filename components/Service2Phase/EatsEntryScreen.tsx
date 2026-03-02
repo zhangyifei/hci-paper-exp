@@ -19,6 +19,10 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
     setService2EntryEventId(eventId)
   }, [])
 
+  const handleAddressEdit = () => {
+    logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active')
+  }
+
   const handleRestaurantSelect = (restaurantName: string) => {
     logger.trackEvent('service2.option_selected', 'service2', 'service2_task_active', { payload: { optionId: restaurantName, optionLabel: restaurantName } })
     onNext(service2EntryEventId)
@@ -40,8 +44,8 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
       {/* Delivery Toggle */}
       <div className="px-4 mb-6 flex justify-center">
           <div className="bg-gray-100 p-1 rounded-full flex w-fit relative">
-              <div className="bg-white shadow-sm rounded-full px-6 py-1.5 text-[14px] font-bold text-black z-10 transition-all">Delivery</div>
-              <div className="px-6 py-1.5 text-[14px] font-medium text-gray-500 z-10">Pickup</div>
+              <div className="bg-white shadow-sm rounded-full px-6 py-1.5 text-[14px] font-bold text-black z-10 transition-all" data-testid="toggle-delivery">Delivery</div>
+              <div className="px-6 py-1.5 text-[14px] font-medium text-gray-500 z-10" data-testid="toggle-pickup">Pickup</div>
           </div>
       </div>
 
@@ -56,10 +60,10 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
                  <div className="bg-white rounded-[16px] p-4 border border-green-500 shadow-[0_4px_12px_rgba(22,163,74,0.08)] relative active:scale-[0.99] transition-transform" data-testid="deliver-address-autofilled">
                     <div className="flex items-center mb-1">
                          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold mr-2 border border-green-200">SUGGESTED</span>
-                         <div className="font-bold text-[15px] text-black">Rue Saint-Laurent - spot 01</div>
+                         <div className="font-bold text-[15px] text-black">{config.addressLabel || 'Rue Saint-Laurent - spot 01'}</div>
                     </div>
-                    <div className="text-[13px] text-green-600 font-medium pl-20">Near 100 Rue saint-LAURENT</div>
-                    <div className="absolute top-4 right-4 text-[13px] text-gray-400 font-bold cursor-pointer">Edit</div>
+                    <div className="text-[13px] text-green-600 font-medium pl-20">{config.addressSublabel || 'Near 100 Rue saint-LAURENT'}</div>
+                    <div className="absolute top-4 right-4 text-[13px] text-gray-400 font-bold cursor-pointer" onClick={handleAddressEdit}>Edit</div>
                  </div>
               ) : (
                 <div className="bg-gray-100 rounded-[16px] h-[52px] flex items-center px-4 active:bg-gray-200 transition-colors" data-testid="deliver-address-empty">
@@ -83,7 +87,7 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
 
              <div className="space-y-6">
                  {/* Card 1 */}
-                 <div onClick={() => handleRestaurantSelect('Souvlaki Bar')} className="cursor-pointer group active:scale-[0.98] transition-transform duration-200">
+                 <div onClick={() => handleRestaurantSelect('Souvlaki Bar')} className="cursor-pointer group active:scale-[0.98] transition-transform duration-200" data-testid="restaurant-option-souvlaki-bar">
                      <div className="relative w-full h-[180px] bg-gray-100 rounded-[16px] mb-3 overflow-hidden shadow-sm">
                          {/* Placeholder Image Gradient */}
                          <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-red-50"></div>
@@ -114,7 +118,7 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
                  </div>
 
                  {/* Card 2 */}
-                 <div onClick={() => handleRestaurantSelect('Pop-Pop')} className="cursor-pointer group active:scale-[0.98] transition-transform duration-200">
+                 <div onClick={() => handleRestaurantSelect('Pop-Pop')} className="cursor-pointer group active:scale-[0.98] transition-transform duration-200" data-testid="restaurant-option-pop-pop">
                      <div className="relative w-full h-[180px] bg-gray-100 rounded-[16px] mb-3 overflow-hidden shadow-sm">
                          <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 to-amber-50"></div>
                          <div className="absolute inset-0 flex items-center justify-center text-[80px] drop-shadow-md transform group-hover:scale-110 transition-transform duration-500">🍿</div>

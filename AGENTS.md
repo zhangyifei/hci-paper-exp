@@ -4,7 +4,7 @@
 
 A **Next.js + TypeScript** web experiment for a 2×2 between-subjects HCI study.
 Participants complete a super-app flow (Ride → Trip Complete → Service 2) across 4 conditions (G1–G4).
-Hosted on **Vercel** with **Vercel Postgres** for event storage.
+Hosted on **Vercel** with **Vercel Blob** (JSONL) for event storage.
 
 ---
 
@@ -17,7 +17,7 @@ src/
     experiment/[condition]/
       page.tsx                 ← Condition router
     api/
-      events/route.ts          ← POST events to Vercel Postgres
+      events/route.ts          ← POST events to Vercel Blob (JSONL)
       assign/route.ts          ← GET condition assignment
   lib/
     experiment-config.ts       ← G1–G4 typed config
@@ -58,9 +58,9 @@ docs/
 | Orchestrator | Sisyphus (main) | Plans, delegates, verifies, ships |
 | Contract | subagent (contract skill) | Owns docs/contracts/*, validates all config changes |
 | UI Prototype | subagent (visual-engineering + frontend-ui-ux) | Renders all 4 condition screens |
-| Instrumentation | subagent (instrumentation skill) | Logger, timing, API routes, DB schema |
+| Instrumentation | subagent (instrumentation skill) | Logger, timing, API routes, Blob storage |
 | QA | subagent (qa skill + playwright) | E2E tests for G1–G4 flows |
-| DevOps | subagent (devops skill) | Vercel deployment, env vars, DB migrations |
+| DevOps | subagent (devops skill) | Vercel deployment, env vars, Blob store setup |
 
 ---
 
@@ -81,7 +81,7 @@ All instrumentation events MUST conform to:
 1. **Between-subjects**: Each participant sees exactly ONE condition (G1|G2|G3|G4)
 2. **Assignment**: `hashString(PROLIFIC_PID) % 4` → stable, reproducible
 3. **Timing**: `performance.mark/measure` from `service2.entry` → `service2.task.complete`
-4. **Storage**: Vercel Postgres (`@vercel/postgres`), SQL-exportable for R/SPSS
+4. **Storage**: Vercel Blob (`@vercel/blob`), JSONL files per session, exportable for R/SPSS
 5. **Prolific**: Capture `PROLIFIC_PID`, `STUDY_ID`, `SESSION_ID` from URL; redirect on completion
 6. **No GitHub Actions**: Deploy directly via Vercel CLI or Vercel dashboard
 

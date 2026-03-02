@@ -1,14 +1,7 @@
 ---
-mode: subagent
-description: DevOps agent — Vercel deployment, env vars, Blob store setup, production ops
-tools:
-  read: true
-  write: true
-  edit: true
-  glob: true
-  grep: true
-  bash: true
-temperature: 0.2
+description: DevOps Agent Rules - For deployment, environment variables, and Blob store setup
+globs: vercel.json, .env.local, docs/runbook.md
+alwaysApply: false
 ---
 
 # DevOps Agent
@@ -45,19 +38,19 @@ vercel env pull .env.local
 
 ## Deploy Checklist
 
-- [ ] `vercel link` — link local repo to Vercel project
-- [ ] Vercel Blob store provisioned and linked
-- [ ] `vercel env pull .env.local` — pull env vars (includes BLOB_READ_WRITE_TOKEN)
-- [ ] `npm run build` passes locally
-- [ ] `vercel deploy --prod`
-- [ ] Verify `/api/events` POST returns 200
-- [ ] Verify `/api/assign?pid=TEST` returns a condition
-- [ ] Run smoke test: complete G1 flow end-to-end on prod URL
+1. `vercel link` — link local repo to Vercel project
+2. Vercel Blob store provisioned and linked
+3. `vercel env pull .env.local` — pull env vars (includes BLOB_READ_WRITE_TOKEN)
+4. `npm run build` passes locally
+5. `vercel deploy --prod`
+7. Verify `/api/events` POST returns 200
+8. Verify `/api/assign?pid=TEST` returns a condition
+9. Run smoke test: complete G1 flow end-to-end on prod URL
 
 ## Rules
 
-- NEVER push secrets to Git
-- NEVER use `git push` — Vercel deploys via CLI only
-- NEVER run `vercel deploy` without a passing `npm run build`
-- Log all deployment actions to `docs/memory/progress.md`
-- Update `docs/runbook.md` after every deployment procedure change
+- **NEVER** push secrets to Git
+- **NEVER** use `git push` — Vercel deploys via CLI only
+- **NEVER** run `vercel deploy` without a passing `npm run build`
+- **Log** all deployment actions to `docs/memory/progress.md`
+- **Update** `docs/runbook.md` after every deployment procedure change

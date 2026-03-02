@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
 
@@ -8,6 +8,10 @@ interface MapScreenProps {
 }
 
 export default function MapScreen({ onNext, onBack }: MapScreenProps) {
+
+  useEffect(() => {
+    logger.trackEvent('ride.option_selected', 'ride', 'ride_in_progress', { payload: { optionId: 'uber-x', optionLabel: 'Uber X', price: 12.59 } })
+  }, [])
   
   const handleChoose = () => {
     logger.trackEvent('ride.confirmed', 'ride', 'ride_submitting')

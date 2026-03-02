@@ -29,7 +29,7 @@ function LandingInner() {
   }, [router, searchParams])
 
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center h-full min-h-[600px]">
       <div className="text-center">
         <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-sm text-gray-500">Loading experiment…</p>
@@ -41,7 +41,7 @@ function LandingInner() {
 export default function LandingPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-full min-h-[600px]">
         <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />
       </div>
     }>

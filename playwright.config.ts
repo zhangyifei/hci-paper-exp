@@ -2,10 +2,10 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: 1,
+  // workers: undefined, // Let Playwright determine based on CPU cores
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:3000',
@@ -25,9 +25,9 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
-    env: {
-      // Dummy blob token so API route doesn't crash during tests
-      BLOB_READ_WRITE_TOKEN: 'test_token_placeholder',
-    },
+    // env: {
+    //   // Dummy blob token so API route doesn't crash during tests
+    //   BLOB_READ_WRITE_TOKEN: 'test_token_placeholder',
+    // },
   },
 })

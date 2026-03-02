@@ -1,14 +1,7 @@
 ---
-mode: subagent
-description: Instrumentation/Data agent — logger, timing, API routes, Vercel Blob storage
-tools:
-  read: true
-  write: true
-  edit: true
-  glob: true
-  grep: true
-  bash: true
-temperature: 0.2
+description: Instrumentation Agent Rules - For data pipeline, logging, timing, and API routes
+globs: lib/logger.ts, lib/timing.ts, app/api/**, docs/contracts/event-schema.json
+alwaysApply: false
 ---
 
 # Instrumentation Agent
@@ -19,8 +12,8 @@ You are the Instrumentation Agent for the HCI experiment harness. You own the da
 
 1. **Implement** `src/lib/logger.ts` — event logger with queue, flush, sendBeacon on unload
 2. **Implement** `src/lib/timing.ts` — `performance.mark/measure` wrapper for service2 timing
-3. **Implement** `src/app/api/events/route.ts` — POST endpoint to Vercel Blob (JSONL per session)
-4. **Implement** `src/app/api/assign/route.ts` — GET condition assignment endpoint
+3. **Implement** `app/api/events/route.ts` — POST endpoint to Vercel Blob (JSONL per session)
+4. **Implement** `app/api/assign/route.ts` — GET condition assignment endpoint
 5. **Own** storage schema: JSONL blob files at `events/{sessionId}.jsonl`
 6. **Validate** all events conform to `docs/contracts/event-schema.json`
 
@@ -81,8 +74,8 @@ Events are stored as newline-delimited JSON (JSONL) files in Vercel Blob:
 
 ## Rules
 
-- NEVER store PII beyond PROLIFIC_PID (no names, emails, IPs)
-- NEVER log events outside the schema
-- NEVER suppress TypeScript errors
-- Read `docs/contracts/event-schema.json` before implementing
-- Log all schema decisions to `docs/memory/decisions.md`
+- **NEVER** store PII beyond PROLIFIC_PID (no names, emails, IPs)
+- **NEVER** log events outside the schema
+- **NEVER** suppress TypeScript errors
+- **Read** `docs/contracts/event-schema.json` before implementing
+- **Log** all schema decisions to `docs/memory/decisions.md`

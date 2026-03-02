@@ -20,7 +20,7 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await completeRidePhase(page)
 
     await assertBannerVisible(page, 'Send Now')
-    await expect(page.getByText(/Need to send package/i)).toBeVisible()
+    await expect(page.getByText(/Need to send a package/i)).toBeVisible()
     await expect(page.getByText(/5\+ Courier drivers available nearby/i)).toBeVisible()
 
     // No footnote (banner is present)
@@ -48,7 +48,7 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByText(/Near 100 Rue saint-LAURENT/i)).toBeVisible()
 
     // Edit link
-    await expect(page.getByText('[Edit]')).toBeVisible()
+    await expect(page.getByText('Edit')).toBeVisible()
   })
 
   test('G2 Courier Entry: categorized pickup options (Express/Standard)', async ({ page }) => {
@@ -64,8 +64,8 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByText('Standard (1hr)')).toBeVisible()
     await expect(page.getByText('$8')).toBeVisible()
 
-    // "Nearby" badge present for G2
-    await expect(page.getByText('Nearby')).toBeVisible()
+    // G2 heading: "Choose by Destination"
+    await expect(page.getByText('Choose by Destination')).toBeVisible()
   })
 
   test('G2 full flow: Confirm pickup → Delivery Complete with Popular nearby', async ({ page }) => {
@@ -77,11 +77,11 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await page.getByTestId('btn-confirm-pickup').click()
 
     // Delivery in progress
-    await expect(page.getByText('Your Delivery Almost there…')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })
 
     // Auto-advances
     await page.waitForTimeout(3000)
-    await expect(page.getByText('Delivery Complete 🎉')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 5000 })
 
     // G2-specific: Popular nearby section
     await expect(page.getByText('Popular nearby')).toBeVisible()

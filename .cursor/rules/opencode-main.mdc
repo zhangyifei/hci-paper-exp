@@ -1,0 +1,42 @@
+---
+description: Project Overview and Agent Roles for HCI Experiment Harness
+globs: **/*
+alwaysApply: true
+---
+
+# HCI Experiment Harness - Project Rules
+
+## Project Overview
+
+A **Next.js + TypeScript** web experiment for a 2×2 between-subjects HCI study.
+Participants complete a super-app flow (Ride → Trip Complete → Service 2) across 4 conditions (G1–G4).
+Hosted on **Vercel** with **Vercel Blob** (JSONL) for event storage.
+
+## Architecture
+
+- **`src/app/page.tsx`**: Landing (Prolific param capture)
+- **`src/app/experiment/[condition]/page.tsx`**: Condition router
+- **`src/app/api/events/route.ts`**: POST events to Vercel Blob (JSONL per session)
+- **`src/lib/experiment-config.ts`**: G1–G4 typed config (Source of Truth)
+- **`docs/contracts/experiment-config.json`**: G1–G4 control points (JSON source)
+
+## Agent Roles
+
+| Role | Agent Type | Responsibilities | Rule File |
+|------|-----------|-----------------|-----------|
+| **Orchestrator** | Sisyphus (main) | Plans, delegates, verifies, ships | (This file) |
+| **Contract** | Subagent | Owns `docs/contracts/*`, validates config changes | `opencode-contract.mdc` |
+| **UI Prototype** | Subagent | Renders all 4 condition screens | `opencode-ui.mdc` |
+| **Instrumentation** | Subagent | Logger, timing, API routes, Blob storage | `opencode-instrumentation.mdc` |
+| **QA** | Subagent | E2E tests for G1–G4 flows | `opencode-qa.mdc` |
+| **DevOps** | Subagent | Vercel deployment, env vars, Blob store setup | `opencode-devops.mdc` |
+
+## General Rules
+
+1. **Read AGENTS.md** on every session start (or this rule).
+2. **Read relevant contract files** before touching config or events.
+3. **Never suppress TypeScript errors** (`as any`, `@ts-ignore`, etc.).
+4. **Never commit** unless orchestrator explicitly requests.
+5. **Log all decisions** to `docs/memory/decisions.md`.
+6. **Update progress** in `docs/memory/progress.md` after each phase.
+7. **Contract gate**: All condition behavior changes MUST go through `experiment-config.json` first.

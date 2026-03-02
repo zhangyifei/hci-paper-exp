@@ -33,6 +33,7 @@
         "service2.task.submitting",
         "service2.task.complete",
         "service2.task.error",
+        "service2.complete.viewed",
         "experiment.completed",
         "experiment.error"
       ]

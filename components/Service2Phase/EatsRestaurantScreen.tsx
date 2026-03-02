@@ -11,9 +11,14 @@ interface EatsRestaurantScreenProps {
 
 export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: EatsRestaurantScreenProps) {
 
+  useEffect(() => {
+    logger.trackEvent('service2.task.started', 'service2', 'service2_task_active')
+  }, [])
+
   const handleOrder = () => {
+    logger.trackEvent('service2.task.submitting', 'service2', 'service2_task_submitting')
     const duration = markService2Complete()
-    logger.trackEvent('service2.task.complete', 'service2', 'service2_task_complete', { durationMs: duration, parentEventId })
+    logger.trackEvent('service2.task.complete', 'service2', 'service2_task_complete', { durationMs: duration ?? 0, parentEventId })
     onNext()
   }
 

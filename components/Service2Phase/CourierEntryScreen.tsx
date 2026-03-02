@@ -30,10 +30,15 @@ export default function CourierEntryScreen({ config, onNext }: CourierEntryScree
     logger.trackEvent('service2.option_selected', 'service2', 'service2_task_active', { payload: { optionId: id, optionLabel: label } })
   }
 
+  const handleAddressEdit = () => {
+    logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active')
+  }
+
   const handleConfirm = () => {
     if (!selectedOption) return
+    logger.trackEvent('service2.task.submitting', 'service2', 'service2_task_submitting')
     const duration = markService2Complete()
-    logger.trackEvent('service2.task.complete', 'service2', 'service2_task_complete', { durationMs: duration, parentEventId: service2EntryEventId })
+    logger.trackEvent('service2.task.complete', 'service2', 'service2_task_complete', { durationMs: duration ?? 0, parentEventId: service2EntryEventId })
     onNext()
   }
 
@@ -65,7 +70,7 @@ export default function CourierEntryScreen({ config, onNext }: CourierEntryScree
                      <div className="font-bold text-[15px] text-black">{config.addressLabel || 'Rue Saint-Laurent - spot 01'}</div>
                   </div>
                   <div className="text-[13px] text-gray-500 font-medium pl-8">{config.addressSublabel || 'Near 100 Rue saint-LAURENT'}</div>
-                  <div className="absolute top-4 right-4 text-[13px] text-green-600 font-bold cursor-pointer">Edit</div>
+                  <div className="absolute top-4 right-4 text-[13px] text-green-600 font-bold cursor-pointer" onClick={handleAddressEdit}>Edit</div>
                </div>
           ) : (
               <div className="bg-gray-100 rounded-[16px] h-[52px] flex items-center px-4 active:bg-gray-200 transition-colors" data-testid="sender-address-empty">
@@ -111,7 +116,9 @@ export default function CourierEntryScreen({ config, onNext }: CourierEntryScree
         {/* Pickup Options */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-               <h2 className="text-[13px] font-bold text-black tracking-wide">Select Service</h2>
+               <h2 className="text-[13px] font-bold text-black tracking-wide">
+                 {config.listUI === 'categorized-by-destination' ? 'Choose by Destination' : 'Select Service'}
+               </h2>
           </div>
           
           <div className="space-y-3">

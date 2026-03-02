@@ -56,3 +56,18 @@
 **Decision**: Replaced ADR-004 Vercel Postgres with Vercel Blob after confirming Postgres is not on the available plan.
 **Date**: 2026-03-01
 **Impact**: `/api/events` writes JSONL blobs instead of SQL rows. No DB migration needed. Export is file-based.
+
+### ADR-011: Experiment Completion — In-App "Test Done" Screen
+**Decision**: On experiment completion, show an in-app "Test Done" screen instead of redirecting to the Prolific survey URL.
+**Date**: 2026-03-01
+**Rationale**: Provides a controlled end state within the application. Prevents premature survey redirect if the participant needs to review anything. Completion event (`experiment.completed`) is still logged and flushed before screen transition.
+
+### ADR-012: Parallel Playwright Test Workers
+**Decision**: `playwright.config.ts` uses `fullyParallel: true` with worker count determined by CPU cores (default).
+**Date**: 2026-03-01
+**Rationale**: Each test uses a unique `sessionId` (`TEST_SESSION_{timestamp}_{random}`) to prevent blob data collisions between concurrent tests. 7 workers reduced suite runtime from ~45s to ~18s.
+
+### ADR-013: Animated Progress Bars for Wait Screens
+**Decision**: Replace static wait timers on `RideAlmostThereScreen` and `CourierDeliveryScreen` with `requestAnimationFrame`-driven progress bars showing a countdown.
+**Date**: 2026-03-01
+**Rationale**: Improves perceived responsiveness and communicates expected wait duration clearly to participants, reducing confusion during timed transitions.

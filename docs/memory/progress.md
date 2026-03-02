@@ -94,7 +94,7 @@ Design mockups analyzed. Key findings per condition:
 
 ## Phase 6 — QA (Playwright)
 **Date**: 2026-03-01  
-**Status**: ✅ Written (tests not yet run against live server)
+**Status**: ✅ Complete — 33/33 tests passing with 7 parallel workers
 
 ### Files Created
 - `playwright.config.ts` — Chromium, 390×844 viewport, webServer starts `npm run dev`
@@ -112,18 +112,56 @@ Design mockups analyzed. Key findings per condition:
 
 ## Phase 7 — Vercel Deployment
 **Date**: 2026-03-01  
-**Status**: ✅ Complete (config ready; manual deploy steps remain)
+**Status**: ✅ Complete
 
 ### Files Created/Updated
 - `vercel.json` — framework, build/install commands, function timeouts, no-cache headers for API routes
 - `.env.local.example` — updated with all required env vars and instructions
 - `docs/runbook.md` — updated to reflect Vercel Blob (removed Postgres references), added JSONL data export section and R analysis snippet
 
-### Remaining Manual Steps (by user)
-1. `vercel link` — link local repo to Vercel project
-2. Vercel Dashboard → Storage → Create Blob store → link to project
-3. `vercel env pull .env.local` — get `BLOB_READ_WRITE_TOKEN`
-4. `vercel env add NEXT_PUBLIC_PROLIFIC_COMPLETION_URL production` — set real Prolific code
-5. `vercel deploy --prod` — production deploy
-6. Smoke test: `/api/assign?pid=TEST` and `/api/events` POST
-7. Run Playwright tests: `npx playwright test` (requires dev server)
+### Deployment Details
+- **Production URL**: https://hci-paper-exp.vercel.app
+- **Build**: `npm run build` → ✅ clean (Next.js 14.2.35)
+- **Smoke tests**:
+  - `GET /api/assign?pid=TEST_PARTICIPANT_001` → `{"condition":"G4","pid":"TEST_PARTICIPANT_001"}` ✅
+  - `POST /api/events` with empty array → `{"ok":true,"inserted":0}` ✅
+
+---
+
+## Phase 8 — Full Feature Workflow (UI + Instrumentation + QA + Deploy)
+**Date**: 2026-03-01  
+**Status**: ✅ Complete
+
+### Summary of Changes
+**Contract**:
+- Fixed typo in `experiment-config.json` G2 `bannerText` ("sent" → "send", "divers" → "drivers")
+- Added `service2.complete.viewed` to `event-schema.json`
+
+**UI**:
+- Responsive layout: `min-h-screen` → `min-h-full` across all phase components; safe area padding on StatusBar/BottomNav
+- Animated progress bars with `requestAnimationFrame` on `RideAlmostThereScreen` and `CourierDeliveryScreen`
+- Touch-action fix (`pan-x pan-y`) + `flex-shrink-0` for horizontal card carousel scrolling
+- "Test Done" screen on experiment completion (no redirect to survey)
+- `TripCompleteScreen`: banner text sourced from `config.bannerText` (no hardcoding)
+- `EatsEntryScreen`: address from `config.addressLabel/addressSublabel`, `data-testid` on toggles
+- `CourierEntryScreen`: "Choose by Destination" heading for G2; Edit button wired
+
+**Instrumentation**:
+- Added `ride.option_selected` (MapScreen mount), `service2.task.started` (CourierDelivery/EatsRestaurant mount)
+- Added `service2.task.submitting`, `service2.address_edited`, `service2.complete.viewed`
+- Added `experiment.error` on flush failure; `experiment.completed` before showing "Test Done"
+- `durationMs` defaults to `0` if `markService2Complete()` returns `undefined`
+
+**Storage**:
+- `@vercel/blob` upgraded `0.27.3` → `2.3.0`
+- `/api/events`: `access: 'private'`, `allowOverwrite: true`, `get()` for stream-based read
+- All AGENTS.md / `.cursor/rules` / `.opencode/agent` references updated from Vercel Postgres → Vercel Blob
+
+**Dependencies**:
+- `next` updated `^14.2.29` → `^14.2.35`
+
+**QA**:
+- `playwright.config.ts`: `fullyParallel: true`, removed dummy `BLOB_READ_WRITE_TOKEN` override
+- `helpers.ts`: unique `sessionId` per test run; `force: true` clicks; increased timeouts
+- All 4 condition spec files: fixed text assertions (emoji removal, exact phrases, distance spacing)
+- **Result**: 33/33 tests passing in 18s with 7 workers

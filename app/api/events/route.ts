@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put, list } from '@vercel/blob'
+import { put, list, get } from '@vercel/blob'
 import type { ExperimentEvent } from '@/lib/logger'
 
 export const runtime = 'edge'
@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, inserted: 0 })
     }
 
-    // Group events by sessionId — one blob file per session
     const bySession = new Map<string, ExperimentEvent[]>()
     for (const event of events) {
       if (!event.sessionId) continue
@@ -26,25 +25,29 @@ export async function POST(req: NextRequest) {
       bySession.set(event.sessionId, existing)
     }
 
+    const token = process.env.BLOB_READ_WRITE_TOKEN
+    
+    // Debug log (masking token)
+    console.log('[api/events] Token present:', !!token, token ? `...${token.slice(-5)}` : 'missing')
+
     const writes = Array.from(bySession.entries()).map(
       async ([sessionId, sessionEvents]) => {
         const blobPath = `events/${sessionId}.jsonl`
 
-        // Fetch existing blob content if it exists
         let existing = ''
         try {
-          const { blobs } = await list({ prefix: blobPath })
+          const { blobs } = await list({ prefix: blobPath, token })
           if (blobs.length > 0) {
-            const res = await fetch(blobs[0].url)
-            if (res.ok) {
-              existing = await res.text()
+            const blob = await get(blobs[0].url, { access: 'private', token })
+            if (blob && blob.stream) {
+              existing = await new Response(blob.stream).text()
             }
           }
-        } catch {
-          // No existing blob — start fresh
+        } catch (err) {
+          // No existing blob — start fresh or error reading
+          console.warn('[api/events] Failed to read existing blob:', err)
         }
 
-        // Append new events as JSONL
         const newLines = sessionEvents
           .map((e) => JSON.stringify(e))
           .join('\n')
@@ -54,9 +57,11 @@ export async function POST(req: NextRequest) {
           : newLines + '\n'
 
         await put(blobPath, content, {
-          access: 'public',
+          access: 'private',
           addRandomSuffix: false,
+          allowOverwrite: true,
           contentType: 'application/x-ndjson',
+          token,
         })
       }
     )

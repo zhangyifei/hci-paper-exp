@@ -88,10 +88,7 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
              </div>
              <div>
                <div className="font-bold text-[17px] leading-tight mb-1 text-black">
-                 {config.service2 === 'courier' ? 'Send a package nearby?' : 'Hungry? Order food now'}
-               </div>
-               <div className="text-[13px] text-gray-500 font-medium">
-                 {config.service2 === 'courier' ? '5+ drivers available now' : 'Popular spots near you'}
+                 {config.bannerText}
                </div>
              </div>
            </div>

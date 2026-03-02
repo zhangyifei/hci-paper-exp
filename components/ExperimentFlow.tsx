@@ -23,22 +23,24 @@ type Screen =
   | 'ride_almost_there'
   | 'trip_complete'
   | 'service2_entry'
-  | 'service2_delivery' // Courier intermediate
-  | 'service2_restaurant' // Eats intermediate
+  | 'service2_delivery'
+  | 'service2_restaurant'
   | 'service2_complete'
+  | 'finished'
 
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('home')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
 
-  // Redirect logic
   const handleCompletion = async () => {
-    await logger.flushAndWait()
-    const redirectUrl = typeof sessionStorage !== 'undefined' 
-      ? sessionStorage.getItem('prolific_completion_url') 
-      : null
-    if (typeof window !== 'undefined') {
-      window.location.href = redirectUrl ?? 'https://app.prolific.co/submissions/complete?cc=PLACEHOLDER'
+    try {
+      logger.trackEvent('experiment.completed', 'experiment', 'finished')
+      await logger.flushAndWait()
+      setScreen('finished')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      logger.trackEvent('experiment.error', 'experiment', 'finished', { error: message })
+      setScreen('finished')
     }
   }
 
@@ -68,7 +70,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   }
 
   return (
-    <div className="w-full min-h-screen bg-white text-black relative">
+    <div className="w-full min-h-full bg-white text-black relative">
       {screen === 'home' && <HomeScreen onNext={goToMap} />}
       
       {screen === 'map' && <MapScreen onNext={goToRideAlmostThere} onBack={handleBackToHome} />}
@@ -109,6 +111,23 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
       {screen === 'service2_complete' && config.service2 === 'eats' && (
         <EatsCompleteScreen config={config} onNext={handleCompletion} />
+      )}
+
+      {screen === 'finished' && (
+        <div className="flex flex-col items-center justify-center h-full min-h-[600px] px-8 text-center animate-fade-in">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h1 className="text-[28px] font-bold tracking-tight text-black mb-2">Test Done</h1>
+          <p className="text-gray-500 text-[15px] leading-relaxed">
+            Thank you for completing the experiment.
+          </p>
+          <div className="mt-6 text-[13px] text-gray-400 font-medium">
+            Condition: {condition}
+          </div>
+        </div>
       )}
     </div>
   )

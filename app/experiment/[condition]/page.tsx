@@ -42,7 +42,7 @@ export default function ExperimentPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen p-8 text-center">
+      <div className="flex items-center justify-center h-full min-h-[600px] p-8 text-center">
         <p className="text-red-500 text-sm">{error}</p>
       </div>
     )
@@ -50,7 +50,7 @@ export default function ExperimentPage() {
 
   if (!ready) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-full min-h-[600px]">
         <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />
       </div>
     )

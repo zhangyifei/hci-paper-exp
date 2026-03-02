@@ -20,7 +20,7 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await completeRidePhase(page)
     await assertNoBanner(page)
     // Footnote visible
-    await expect(page.getByText(/To continue, tap/)).toBeVisible()
+    await expect(page.getByText(/Tap.*Done.*to go home/)).toBeVisible()
   })
 
   test('G3 Eats Entry: delivery address is empty (no auto-fill)', async ({ page }) => {
@@ -32,15 +32,15 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await expect(page.getByTestId('deliver-address-autofilled')).not.toBeVisible()
 
     // Placeholder text
-    await expect(page.getByText('Enter Address')).toBeVisible()
+    await expect(page.getByText('Enter delivery address')).toBeVisible()
   })
 
   test('G3 Eats Entry: shows citywide popular restaurant list', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    // G3 header: "Top Rate in Uber"
-    await expect(page.getByText('Top Rate in Uber')).toBeVisible()
+    // G3 header: "Top Rated"
+    await expect(page.getByText('Top Rated')).toBeVisible()
 
     // Restaurants listed
     await expect(page.getByText('Souvlaki Bar')).toBeVisible()
@@ -51,8 +51,8 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await expect(page.getByText('0.5km')).not.toBeVisible()
 
     // Cuisine filters
-    await expect(page.getByText('French')).toBeVisible()
-    await expect(page.getByText('Chinese')).toBeVisible()
+    await expect(page.getByText('Asian')).toBeVisible()
+    await expect(page.getByText('Healthy')).toBeVisible()
   })
 
   test('G3 full flow: select restaurant → restaurant page → order → complete', async ({ page }) => {
@@ -70,9 +70,9 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await page.getByTestId('btn-order-food').click()
 
     // Complete screen
-    await expect(page.getByText('Enjoy your order 🎉')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Order Confirmed')).toBeVisible({ timeout: 5000 })
 
-    // No "Explore More Serves" for G3
-    await expect(page.getByText('Explore More Serves')).not.toBeVisible()
+    // No "Explore More" for G3
+    await expect(page.getByText('Explore More')).not.toBeVisible()
   })
 })

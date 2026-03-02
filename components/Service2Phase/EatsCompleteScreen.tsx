@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { ConditionConfig } from '@/lib/experiment-config'
+import { logger } from '@/lib/logger'
 
 interface EatsCompleteScreenProps {
   config: ConditionConfig
@@ -8,6 +9,10 @@ interface EatsCompleteScreenProps {
 }
 
 export default function EatsCompleteScreen({ config, onNext }: EatsCompleteScreenProps) {
+  useEffect(() => {
+    logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
+  }, [])
+
   return (
     <div className="relative w-full min-h-full bg-gray-50 flex flex-col overflow-hidden">
       <StatusBar />

@@ -20,14 +20,14 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(page.getByText('Where to?')).toBeVisible()
     await expect(page.getByText('Start a Ride')).toBeVisible()
     // Uber/Eats/Courier tab bar visible
-    await expect(page.getByText('Uber', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Rides', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Eats', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Courier')).toBeVisible()
   })
 
   test('ride phase completes and shows Trip Complete', async ({ page }) => {
     await completeRidePhase(page)
-    await expect(page.getByText('Trip Complete 🎉')).toBeVisible()
+    await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible()
     await expect(page.getByText('Rue Saint-Laurent')).toBeVisible()
     await expect(page.getByText('$28.92')).toBeVisible()
   })
@@ -36,7 +36,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await completeRidePhase(page)
     await assertNoBanner(page)
     // Footnote text visible for G1
-    await expect(page.getByText(/To continue, tap/)).toBeVisible()
+    await expect(page.getByText(/Tap.*Done.*to go home/)).toBeVisible()
   })
 
   test('G1 Courier Entry: sender address is empty (no auto-fill)', async ({ page }) => {
@@ -77,11 +77,11 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await page.getByTestId('btn-confirm-pickup').click()
 
     // Delivery in progress screen
-    await expect(page.getByText('Your Delivery Almost there…')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })
 
     // Auto-advances to Delivery Complete
     await page.waitForTimeout(3000)
-    await expect(page.getByText('Delivery Complete 🎉')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 5000 })
 
     // No "Popular nearby" section for G1
     await expect(page.getByText('Popular nearby')).not.toBeVisible()

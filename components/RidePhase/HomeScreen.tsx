@@ -71,13 +71,13 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
       </div>
 
       {/* Cards Scroll */}
-      <div className="flex overflow-x-auto px-4 space-x-4 mb-auto no-scrollbar pb-6 clip-none">
-        <div className="min-w-[240px] h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
+      <div className="flex overflow-x-auto px-4 space-x-4 mb-auto no-scrollbar pb-6 clip-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
            <div className="absolute top-4 left-4 bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm border border-gray-100">🥙</div>
            <div className="font-bold text-[15px] mb-0.5">Souvlaki Bar</div>
            <div className="text-xs text-gray-500 font-medium">$0.99 Delivery Fee • 15-25 min</div>
         </div>
-        <div className="min-w-[240px] h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
+        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
            <div className="absolute top-4 left-4 bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm border border-gray-100">🍿</div>
            <div className="font-bold text-[15px] mb-0.5">Pop-Pop</div>
            <div className="text-xs text-green-600 font-bold">Buy 1, Get 1 Free</div>

@@ -15,7 +15,7 @@ export default function StatusBar() {
   }, [])
 
   return (
-    <div className="flex justify-between items-center px-5 h-[59px] pt-[28px] w-full bg-transparent absolute top-0 z-50 text-black font-semibold select-none pointer-events-none">
+    <div className="flex justify-between items-center px-5 h-[59px] pt-[28px] mobile-safe-top w-full bg-transparent absolute top-0 z-50 text-black font-semibold select-none pointer-events-none">
       <div className="text-[15px] tracking-[-0.01em] font-semibold min-w-[54px]">{time}</div>
       <div className="flex items-center gap-[5px]">
         {/* Signal */}

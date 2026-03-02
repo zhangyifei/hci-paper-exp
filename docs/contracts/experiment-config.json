@@ -19,7 +19,7 @@
     "banner": true,
     "autoPopulate": true,
     "listUI": "categorized-by-destination",
-    "bannerText": "Need to sent package? 5+ Courier divers available nearby",
+    "bannerText": "Need to send a package? 5+ Courier drivers available nearby",
     "bannerCTA": "Send Now",
     "pickupOptions": [
       { "id": "express", "label": "Express (15min)", "price": 12 },

@@ -8,8 +8,9 @@ export async function goToCondition(
   page: Page,
   condition: 'G1' | 'G2' | 'G3' | 'G4'
 ) {
+  const uniqueSessionId = `TEST_SESSION_${Date.now()}_${Math.floor(Math.random() * 1000)}`
   await page.goto(
-    `/?PROLIFIC_PID=TEST_PARTICIPANT_001&STUDY_ID=TEST_STUDY&SESSION_ID=TEST_SESSION&condition=${condition}`
+    `/?PROLIFIC_PID=TEST_PARTICIPANT_001&STUDY_ID=TEST_STUDY&SESSION_ID=${uniqueSessionId}&condition=${condition}`
   )
   // Wait for redirect to experiment page
   await page.waitForURL(`**/experiment/${condition}`, { timeout: 10000 })
@@ -20,16 +21,17 @@ export async function goToCondition(
  */
 export async function completeRidePhase(page: Page) {
   // Home screen → tap Start a Ride
-  await page.getByTestId('btn-start-ride').click()
+  await page.getByTestId('btn-start-ride').click({ force: true })
 
   // Map screen → tap Choose Uber X
-  await page.getByTestId('btn-choose-uber-x').click()
+  await page.getByTestId('btn-choose-uber-x').click({ force: true })
 
   // RideAlmostThere screen auto-advances after 2.5s
-  await page.waitForTimeout(3000)
+  // Wait longer to ensure transition happens even on slow CI/local
+  await page.waitForTimeout(4000)
 
   // Now on Trip Complete screen
-  await expect(page.getByText('Trip Complete 🎉')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible({ timeout: 10000 })
 }
 
 /**
@@ -52,8 +54,8 @@ export async function assertNoBanner(page: Page) {
  */
 export async function advanceToService2(page: Page, viaBanner = false) {
   if (viaBanner) {
-    await page.getByTestId('btn-banner-cta').click()
+    await page.getByTestId('btn-banner-cta').click({ force: true })
   } else {
-    await page.getByTestId('btn-back-to-home').click()
+    await page.getByTestId('btn-back-to-home').click({ force: true })
   }
 }

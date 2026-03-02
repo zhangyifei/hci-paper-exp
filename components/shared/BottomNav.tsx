@@ -14,7 +14,7 @@ export default function BottomNav() {
   )
 
   return (
-    <div className="sticky bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-100/80 pb-[20px] pt-1.5 z-50">
+    <div className="sticky bottom-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-100/80 pb-[20px] mobile-safe-bottom pt-1.5 z-50">
       <div className="flex justify-around items-center h-[44px] px-2">
         <TabItem 
           id="home" 

@@ -1,15 +1,30 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
+import { logger } from '@/lib/logger'
+
+const WAIT_MS = 2500
 
 interface RideAlmostThereScreenProps {
   onNext: () => void
 }
 
 export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenProps) {
+  const [progress, setProgress] = useState(0)
+
   useEffect(() => {
+    const start = performance.now()
+    const frame = () => {
+      const elapsed = performance.now() - start
+      const pct = Math.min(elapsed / WAIT_MS, 1)
+      setProgress(pct)
+      if (pct < 1) requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+
     const timer = setTimeout(() => {
+      logger.trackEvent('ride.arrived', 'ride', 'ride_submitting')
       onNext()
-    }, 2500)
+    }, WAIT_MS)
     return () => clearTimeout(timer)
   }, [onNext])
 
@@ -40,9 +55,15 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
 
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2 overflow-hidden">
-        <div className="bg-black h-1.5 rounded-full w-[85%] animate-[pulse_2s_infinite]"></div>
+        <div
+          className="bg-black h-1.5 rounded-full transition-none"
+          style={{ width: `${Math.round(progress * 100)}%` }}
+        />
       </div>
-      <div className="text-[13px] text-gray-500 mb-8 font-medium">Latest arrival by 10:20</div>
+      <div className="flex justify-between items-center mb-8">
+        <div className="text-[13px] text-gray-500 font-medium">Latest arrival by 10:20</div>
+        <div className="text-[13px] text-gray-400 font-medium tabular-nums">{Math.max(0, Math.ceil((1 - progress) * (WAIT_MS / 1000)))}s</div>
+      </div>
 
       {/* Map Card */}
       <div className="w-full h-[180px] bg-white rounded-[20px] mb-6 flex items-center justify-center relative overflow-hidden shadow-ios-card">

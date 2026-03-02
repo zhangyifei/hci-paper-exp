@@ -8,7 +8,7 @@ html, body {
   min-height: 100vh;
   min-height: 100dvh;
   overscroll-behavior-y: none;
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -87,7 +87,7 @@ html, body {
     -395px 20px 0 #2a2a2a;
 }
 
-/* Mobile: no frame, full screen */
+/* Mobile: no frame, full screen with safe areas */
 @media (max-width: 767px) {
   .device-frame {
     width: 100%;
@@ -104,6 +104,14 @@ html, body {
   .device-screen {
     border-radius: 0;
     height: 100dvh;
+  }
+
+  /* On real mobile, use env() safe-area for status bar and bottom nav */
+  .mobile-safe-top {
+    padding-top: max(28px, env(safe-area-inset-top, 28px));
+  }
+  .mobile-safe-bottom {
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
   }
 }
 
