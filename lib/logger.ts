@@ -50,13 +50,17 @@ class EventLogger {
       window.removeEventListener('beforeunload', this.unloadHandler)
     }
 
-    // Safety net: if user closes the tab, send everything accumulated so far
+    // Safety net: if user closes the tab, send everything accumulated so far.
+    // After a successful send, sessionStorage is cleared, so this is a no-op
+    // if flushAndWait() already completed.
     this.unloadHandler = () => {
+      if (!this.session) return
       const events = this.readEvents()
       if (events.length === 0) return
       const body = JSON.stringify({ events })
       if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
         navigator.sendBeacon('/api/events', body)
+        this.clearEvents()
       }
     }
 

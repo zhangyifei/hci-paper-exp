@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { supabase } from '@/lib/supabase'
 import type { ExperimentEvent } from '@/lib/logger'
-
-export const runtime = 'edge'
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,78 +15,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, inserted: 0 })
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN
+    const rows = events
+      .filter((e) => e.sessionId)
+      .map((e) => ({
+        event_name: e.eventName,
+        event_id: e.eventId,
+        session_id: e.sessionId,
+        participant_id: e.participantId,
+        sequence_id: e.sequenceId,
+        flow: e.flow,
+        state: e.state,
+        timestamp: e.timestamp,
+        client_mono_ms: e.clientMonoMs,
+        duration_ms: e.durationMs ?? null,
+        parent_event_id: e.parentEventId ?? null,
+        payload: e.payload ?? null,
+        error: e.error ?? null,
+        condition: e.condition,
+        prolific_study_id: e.prolificStudyId ?? null,
+        prolific_session_id: e.prolificSessionId ?? null,
+      }))
 
-    // Group events by session
-    const bySession = new Map<string, ExperimentEvent[]>()
-    for (const event of events) {
-      if (!event.sessionId) continue
-      const existing = bySession.get(event.sessionId) ?? []
-      existing.push(event)
-      bySession.set(event.sessionId, existing)
+    const { error } = await supabase.from('experiment_events').insert(rows)
+
+    if (error) {
+      console.error('[api/events] Supabase insert error:', error)
+      return NextResponse.json({ error: 'Failed to insert events' }, { status: 500 })
     }
 
-    const writes = Array.from(bySession.entries()).map(
-      async ([sessionId, sessionEvents]) => {
-        sessionEvents.sort((a, b) => a.sequenceId - b.sequenceId)
-
-        // ─── Raw event storage ───────────────────────────────────────────────
-        // Each flush is stored as a NEW private file.
-        // put() is a Simple Request: does NOT count against the Advanced Request
-        // quota. No list() or get() is needed before writing, so this operation
-        // costs zero Advanced Requests.
-        const batchId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-        const batchPath = `events/${sessionId}/${batchId}.jsonl`
-        const batchContent =
-          sessionEvents.map((e) => JSON.stringify(e)).join('\n') + '\n'
-
-        await put(batchPath, batchContent, {
-          access: 'private',
-          addRandomSuffix: false,
-          allowOverwrite: false,
-          contentType: 'application/x-ndjson',
-          token,
-        })
-
-        // ─── Per-session status (for /api/stats) ─────────────────────────────
-        // Written to a PUBLIC blob only on the first batch and on the
-        // experiment.completed batch. Skipping intermediate batches prevents a
-        // delayed network write from overwriting a previously set completed:true.
-        //
-        // Reading a public blob URL is a regular HTTP fetch — not a Vercel Blob
-        // operation — so the stats endpoint incurs zero Advanced Requests per
-        // read. put() of a public blob is also a Simple Request (free).
-        const isFirstBatch = sessionEvents.some((e) => e.sequenceId === 0)
-        const completionEvent = sessionEvents.find(
-          (e) => e.eventName === 'experiment.completed'
-        )
-
-        if (isFirstBatch || completionEvent) {
-          const firstEvent = sessionEvents[0]
-          await put(
-            `stats/${sessionId}.json`,
-            JSON.stringify({
-              sessionId,
-              condition: firstEvent.condition,
-              startedAt: firstEvent.timestamp,
-              completed: Boolean(completionEvent),
-              completedAt: completionEvent?.timestamp ?? null,
-            }),
-            {
-              access: 'public',
-              addRandomSuffix: false,
-              allowOverwrite: true,
-              contentType: 'application/json',
-              token,
-            }
-          )
-        }
-      }
-    )
-
-    await Promise.all(writes)
-
-    return NextResponse.json({ ok: true, inserted: events.length })
+    return NextResponse.json({ ok: true, inserted: rows.length })
   } catch (err) {
     console.error('[api/events]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

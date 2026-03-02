@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { list } from '@vercel/blob'
-
-export const runtime = 'edge'
+import { supabase } from '@/lib/supabase'
 
 type Condition = 'G1' | 'G2' | 'G3' | 'G4'
-
-interface SessionStatus {
-  sessionId: string
-  condition: Condition
-  startedAt: number
-  completed: boolean
-  completedAt: number | null
-}
 
 interface ConditionStat {
   total: number
@@ -32,85 +22,77 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN
+    // Get all distinct sessions with their condition
+    const { data: allSessions, error: sessErr } = await supabase
+      .from('experiment_events')
+      .select('session_id, condition')
+      .order('session_id')
 
-    // Collect all public status blob URLs.
-    // list() is one Advanced Request (covers up to 1,000 blobs per page).
-    const statusUrls: string[] = []
-    let cursor: string | undefined
-
-    do {
-      const page = await list({
-        prefix: 'stats/',
-        limit: 1000,
-        cursor,
-        token,
-      })
-      for (const blob of page.blobs) {
-        statusUrls.push(blob.url)
-      }
-      cursor = page.cursor
-    } while (cursor)
-
-    if (statusUrls.length === 0) {
-      return NextResponse.json({
-        generatedAt: new Date().toISOString(),
-        overall: { total: 0, completed: 0, completionRate: 0 },
-        byCondition: {
-          G1: { total: 0, completed: 0, completionRate: 0 },
-          G2: { total: 0, completed: 0, completionRate: 0 },
-          G3: { total: 0, completed: 0, completionRate: 0 },
-          G4: { total: 0, completed: 0, completionRate: 0 },
-        },
-      })
+    if (sessErr) {
+      console.error('[api/stats] sessions query:', sessErr)
+      return NextResponse.json({ error: 'Query failed' }, { status: 500 })
     }
 
-    // Fetch all public status files in parallel.
-    // Public blob URLs are CDN URLs — these are plain HTTP fetches and do NOT
-    // count as Vercel Blob Advanced Requests.
-    const statuses = await Promise.all(
-      statusUrls.map(async (url) => {
-        try {
-          const res = await fetch(url)
-          if (!res.ok) return null
-          return (await res.json()) as SessionStatus
-        } catch {
-          return null
-        }
-      })
-    )
+    // Get sessions that have experiment.completed
+    const { data: completedSessions, error: compErr } = await supabase
+      .from('experiment_events')
+      .select('session_id')
+      .eq('event_name', 'experiment.completed')
 
-    const valid = statuses.filter((s): s is SessionStatus => s !== null)
+    if (compErr) {
+      console.error('[api/stats] completed query:', compErr)
+      return NextResponse.json({ error: 'Query failed' }, { status: 500 })
+    }
+
+    // Deduplicate sessions
+    const sessionMap = new Map<string, string>()
+    for (const row of allSessions ?? []) {
+      if (!sessionMap.has(row.session_id)) {
+        sessionMap.set(row.session_id, row.condition)
+      }
+    }
+
+    const completedIds = new Set(
+      (completedSessions ?? []).map((r) => r.session_id)
+    )
 
     const conditions: Condition[] = ['G1', 'G2', 'G3', 'G4']
     const byCondition = Object.fromEntries(
       conditions.map((c) => {
-        const group = valid.filter((s) => s.condition === c)
-        const completedCount = group.filter((s) => s.completed).length
+        const sessionsInCondition = [...sessionMap.entries()].filter(
+          ([, cond]) => cond === c
+        )
+        const total = sessionsInCondition.length
+        const completed = sessionsInCondition.filter(([sid]) =>
+          completedIds.has(sid)
+        ).length
         return [
           c,
           {
-            total: group.length,
-            completed: completedCount,
+            total,
+            completed,
             completionRate:
-              group.length > 0
-                ? Math.round((completedCount / group.length) * 10000) / 100
+              total > 0
+                ? Math.round((completed / total) * 10000) / 100
                 : 0,
           } satisfies ConditionStat,
         ]
       })
     ) as Record<Condition, ConditionStat>
 
-    const totalCompleted = valid.filter((s) => s.completed).length
+    const totalSessions = sessionMap.size
+    const totalCompleted = [...sessionMap.keys()].filter((sid) =>
+      completedIds.has(sid)
+    ).length
 
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
       overall: {
-        total: valid.length,
+        total: totalSessions,
         completed: totalCompleted,
         completionRate:
-          valid.length > 0
-            ? Math.round((totalCompleted / valid.length) * 10000) / 100
+          totalSessions > 0
+            ? Math.round((totalCompleted / totalSessions) * 10000) / 100
             : 0,
       },
       byCondition,

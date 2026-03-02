@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { list, get } from '@vercel/blob'
-
-export const runtime = 'edge'
+import { supabase } from '@/lib/supabase'
 
 function requireAuth(req: NextRequest): boolean {
   const secret = process.env.STATS_SECRET
@@ -10,36 +8,24 @@ function requireAuth(req: NextRequest): boolean {
   return auth === `Bearer ${secret}`
 }
 
-// Returns all event batch files concatenated as JSONL (one event per line).
-// This endpoint is intentionally expensive in terms of Advanced Requests
-// (1 list + N private blob reads) and should only be called once at the
-// end of data collection, not during the study.
 export async function GET(req: NextRequest) {
   if (!requireAuth(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN
+    const { data, error } = await supabase
+      .from('experiment_events')
+      .select('*')
+      .order('session_id')
+      .order('sequence_id')
 
-    // 1. List all private event batch blobs — 1 Advanced Request per 1,000 files.
-    const blobUrls: string[] = []
-    let cursor: string | undefined
+    if (error) {
+      console.error('[api/export] query error:', error)
+      return NextResponse.json({ error: 'Query failed' }, { status: 500 })
+    }
 
-    do {
-      const page = await list({
-        prefix: 'events/',
-        limit: 1000,
-        cursor,
-        token,
-      })
-      for (const blob of page.blobs) {
-        blobUrls.push(blob.url)
-      }
-      cursor = page.cursor
-    } while (cursor)
-
-    if (blobUrls.length === 0) {
+    if (!data || data.length === 0) {
       return new Response('', {
         headers: {
           'Content-Type': 'application/x-ndjson',
@@ -48,22 +34,29 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // 2. Fetch all private blob contents in parallel — 1 Advanced Request each.
-    const chunks = await Promise.all(
-      blobUrls.map(async (url) => {
-        try {
-          const blob = await get(url, { access: 'private', token })
-          if (!blob?.stream) return ''
-          return await new Response(blob.stream).text()
-        } catch {
-          return ''
-        }
+    // Convert snake_case DB rows back to camelCase event format
+    const lines = data.map((row) =>
+      JSON.stringify({
+        eventName: row.event_name,
+        eventId: row.event_id,
+        sessionId: row.session_id,
+        participantId: row.participant_id,
+        sequenceId: row.sequence_id,
+        flow: row.flow,
+        state: row.state,
+        timestamp: row.timestamp,
+        clientMonoMs: row.client_mono_ms,
+        durationMs: row.duration_ms,
+        parentEventId: row.parent_event_id,
+        payload: row.payload,
+        error: row.error,
+        condition: row.condition,
+        prolificStudyId: row.prolific_study_id,
+        prolificSessionId: row.prolific_session_id,
       })
     )
 
-    const body = chunks.filter(Boolean).join('')
-
-    return new Response(body, {
+    return new Response(lines.join('\n') + '\n', {
       headers: {
         'Content-Type': 'application/x-ndjson',
         'Content-Disposition': 'attachment; filename="all_events.jsonl"',
