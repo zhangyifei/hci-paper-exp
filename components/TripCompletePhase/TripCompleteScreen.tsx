@@ -68,9 +68,15 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
       </div>
 
       {/* Map Placeholder */}
-      <div className="w-full h-40 bg-gray-100 rounded-[20px] mb-8 relative overflow-hidden flex items-center justify-center opacity-80 grayscale">
-         <div className="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=40.714728,-73.998672&zoom=15&size=600x300&sensor=false')] bg-cover opacity-20"></div>
-         <div className="text-4xl z-10 drop-shadow-md">📍</div>
+      <div className="w-full h-40 bg-gray-100 rounded-[20px] mb-8 relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-75"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476973422084-e0fa66ff9456?auto=format&fit=crop&w=800&q=75')" }}
+        />
+        <div className="absolute inset-0 bg-black/20 rounded-[20px]" />
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl">📍</div>
+        </div>
       </div>
 
       {/* Conditional Banner - The "Super App" Cross-sell */}

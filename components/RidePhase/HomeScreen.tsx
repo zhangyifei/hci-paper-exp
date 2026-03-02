@@ -20,7 +20,7 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
       <div className="flex items-center space-x-3 px-4 mt-[59px] mb-6 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform duration-200">Rides</div>
         <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200">Eats</div>
-        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200">Courier</div>
+        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200">Send</div>
       </div>
 
       {/* Search Bar */}
@@ -49,7 +49,7 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
       <div className="flex justify-between px-5 mb-10">
         {[
           { label: 'Ride', icon: <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-5h14v5z"/> },
-          { label: 'Package', icon: <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/> },
+          { label: 'Send', icon: <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/> },
           { label: 'Grocery', icon: <path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm0 10c-2.76 0-5-2.24-5-5h2c0 1.66 1.34 3 3 3s3-1.34 3-3h2c0 2.76-2.24 5-5 5z"/> },
           { label: 'Food', icon: <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/> }
         ].map((item, idx) => (
@@ -64,23 +64,84 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
         ))}
       </div>
 
-      {/* Order Uber Eats Again */}
+      {/* Order Voya Eats Again */}
       <div className="px-4 mb-4 flex justify-between items-center">
-        <h2 className="font-bold text-[19px] tracking-tight text-black">Order Uber Eats again</h2>
+        <h2 className="font-bold text-[19px] tracking-tight text-black">Order Voya Eats again</h2>
         <span className="text-gray-400 font-bold text-xl">→</span>
       </div>
 
       {/* Cards Scroll */}
-      <div className="flex overflow-x-auto px-4 space-x-4 mb-auto no-scrollbar pb-6 clip-none" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
-           <div className="absolute top-4 left-4 bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm border border-gray-100">🥙</div>
-           <div className="font-bold text-[15px] mb-0.5">Souvlaki Bar</div>
-           <div className="text-xs text-gray-500 font-medium">$0.99 Delivery Fee • 15-25 min</div>
+      <div
+        className="flex overflow-x-auto px-4 space-x-4 mb-auto no-scrollbar pb-6"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+      >
+        {/* Souvlaki Bar */}
+        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=480&q=75')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="font-bold text-[15px] mb-0.5 text-white">Souvlaki Bar</div>
+            <div className="text-xs text-white/80 font-medium">$0.99 Delivery Fee • 15-25 min</div>
+          </div>
         </div>
-        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 p-4 flex flex-col justify-end shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative">
-           <div className="absolute top-4 left-4 bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm border border-gray-100">🍿</div>
-           <div className="font-bold text-[15px] mb-0.5">Pop-Pop</div>
-           <div className="text-xs text-green-600 font-bold">Buy 1, Get 1 Free</div>
+
+        {/* Pop-Pop */}
+        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1585647347483-22b66260dfff?auto=format&fit=crop&w=480&q=75')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="font-bold text-[15px] mb-0.5 text-white">Pop-Pop</div>
+            <div className="text-xs text-green-400 font-bold">Buy 1, Get 1 Free</div>
+          </div>
+        </div>
+
+        {/* Burger House */}
+        <div className="min-w-[240px] flex-shrink-0 h-[160px] bg-white rounded-xl border border-gray-100 shadow-ios-card active:scale-[0.98] transition-transform duration-200 relative overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=480&q=75')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="font-bold text-[15px] mb-0.5 text-white">Burger House</div>
+            <div className="text-xs text-white/80 font-medium">Free Delivery • 20-30 min</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nearby Promotions */}
+      <div className="px-4 mb-4 flex justify-between items-center">
+        <h2 className="font-bold text-[19px] tracking-tight text-black">Nearby deals</h2>
+        <span className="text-gray-900 text-[15px] font-medium">See all</span>
+      </div>
+      <div className="px-4 mb-6 space-y-3">
+        <div className="flex items-center bg-white rounded-[16px] border border-gray-100 shadow-sm p-3 active:scale-[0.98] transition-transform overflow-hidden relative">
+          <div className="w-[72px] h-[72px] rounded-[12px] overflow-hidden flex-shrink-0 mr-3 relative">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=200&q=70')" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-[15px] text-black truncate">Pizzeria Napoli</div>
+            <div className="text-[12px] text-gray-500 mt-0.5">Italian • $$ • 0.8 km</div>
+            <div className="text-[11px] text-green-600 font-bold mt-1">20% off first order</div>
+          </div>
+          <div className="bg-gray-100 rounded-full px-2 py-0.5 text-[11px] font-bold text-black ml-2">4.7 ★</div>
+        </div>
+        <div className="flex items-center bg-white rounded-[16px] border border-gray-100 shadow-sm p-3 active:scale-[0.98] transition-transform overflow-hidden relative">
+          <div className="w-[72px] h-[72px] rounded-[12px] overflow-hidden flex-shrink-0 mr-3 relative">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=70')" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-[15px] text-black truncate">The Bistro</div>
+            <div className="text-[12px] text-gray-500 mt-0.5">French • $$$ • 1.2 km</div>
+            <div className="text-[11px] text-green-600 font-bold mt-1">Free delivery today</div>
+          </div>
+          <div className="bg-gray-100 rounded-full px-2 py-0.5 text-[11px] font-bold text-black ml-2">4.9 ★</div>
         </div>
       </div>
 

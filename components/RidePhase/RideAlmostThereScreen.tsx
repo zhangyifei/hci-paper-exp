@@ -66,15 +66,21 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
       </div>
 
       {/* Map Card */}
-      <div className="w-full h-[180px] bg-white rounded-[20px] mb-6 flex items-center justify-center relative overflow-hidden shadow-ios-card">
-          <div className="absolute inset-0 bg-gray-100 opacity-50"></div>
-          {/* Street Grid */}
-          <div className="absolute top-0 left-1/3 w-16 h-full bg-gray-200 transform -skew-x-12"></div>
-          <div className="absolute top-1/2 left-0 w-full h-16 bg-gray-200 transform -skew-y-6"></div>
-          
-          {/* Car moving animation */}
-          <div className="text-[40px] z-10 absolute animate-[bounce-subtle_2s_infinite]">🚗</div>
-          <div className="text-[30px] z-10 absolute right-8 top-8 opacity-50">📍</div>
+      <div className="w-full h-[180px] bg-white rounded-[20px] mb-6 relative overflow-hidden shadow-ios-card">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-80"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476973422084-e0fa66ff9456?auto=format&fit=crop&w=800&q=75')" }}
+          />
+          <div className="absolute inset-0 bg-black/15" />
+          {/* Route overlay */}
+          <svg className="w-full h-full absolute inset-0" preserveAspectRatio="none">
+            <path d="M30,160 Q200,80 360,30" stroke="white" strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.8" />
+            <path d="M30,160 Q200,80 360,30" stroke="#000" strokeWidth="2.5" fill="none" strokeDasharray="8 5" strokeLinecap="round" />
+          </svg>
+          {/* Car */}
+          <div className="absolute left-6 bottom-6 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-xl animate-[bounce-subtle_2s_infinite]">🚗</div>
+          {/* Pin */}
+          <div className="absolute right-6 top-5 z-10 w-9 h-9 bg-black rounded-full shadow-lg flex items-center justify-center text-lg">📍</div>
       </div>
 
       <div className="h-px bg-gray-200 w-full mb-6"></div>
@@ -84,7 +90,10 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <div className="w-14 h-14 bg-gray-100 rounded-full mr-3 overflow-hidden border border-gray-100 shadow-sm relative">
-              <div className="absolute inset-0 flex items-center justify-center text-2xl">👨🏻‍✈️</div>
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80')" }}
+              />
             </div>
             <div>
               <div className="font-bold text-[17px] text-black">Jonathan <span className="text-gray-400 font-normal text-sm ml-1">• 4.9★</span></div>
