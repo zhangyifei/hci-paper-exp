@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put, list, get } from '@vercel/blob'
+import { put } from '@vercel/blob'
 import type { ExperimentEvent } from '@/lib/logger'
 
 export const runtime = 'edge'
@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, inserted: 0 })
     }
 
+    const token = process.env.BLOB_READ_WRITE_TOKEN
+
+    // Group events by session
     const bySession = new Map<string, ExperimentEvent[]>()
     for (const event of events) {
       if (!event.sessionId) continue
@@ -25,44 +28,61 @@ export async function POST(req: NextRequest) {
       bySession.set(event.sessionId, existing)
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN
-    
-    // Debug log (masking token)
-    console.log('[api/events] Token present:', !!token, token ? `...${token.slice(-5)}` : 'missing')
-
     const writes = Array.from(bySession.entries()).map(
       async ([sessionId, sessionEvents]) => {
-        const blobPath = `events/${sessionId}.jsonl`
+        sessionEvents.sort((a, b) => a.sequenceId - b.sequenceId)
 
-        let existing = ''
-        try {
-          const { blobs } = await list({ prefix: blobPath, token })
-          if (blobs.length > 0) {
-            const blob = await get(blobs[0].url, { access: 'private', token })
-            if (blob && blob.stream) {
-              existing = await new Response(blob.stream).text()
-            }
-          }
-        } catch (err) {
-          // No existing blob — start fresh or error reading
-          console.warn('[api/events] Failed to read existing blob:', err)
-        }
+        // ─── Raw event storage ───────────────────────────────────────────────
+        // Each flush is stored as a NEW private file.
+        // put() is a Simple Request: does NOT count against the Advanced Request
+        // quota. No list() or get() is needed before writing, so this operation
+        // costs zero Advanced Requests.
+        const batchId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        const batchPath = `events/${sessionId}/${batchId}.jsonl`
+        const batchContent =
+          sessionEvents.map((e) => JSON.stringify(e)).join('\n') + '\n'
 
-        const newLines = sessionEvents
-          .map((e) => JSON.stringify(e))
-          .join('\n')
-
-        const content = existing
-          ? existing.trimEnd() + '\n' + newLines + '\n'
-          : newLines + '\n'
-
-        await put(blobPath, content, {
+        await put(batchPath, batchContent, {
           access: 'private',
           addRandomSuffix: false,
-          allowOverwrite: true,
+          allowOverwrite: false,
           contentType: 'application/x-ndjson',
           token,
         })
+
+        // ─── Per-session status (for /api/stats) ─────────────────────────────
+        // Written to a PUBLIC blob only on the first batch and on the
+        // experiment.completed batch. Skipping intermediate batches prevents a
+        // delayed network write from overwriting a previously set completed:true.
+        //
+        // Reading a public blob URL is a regular HTTP fetch — not a Vercel Blob
+        // operation — so the stats endpoint incurs zero Advanced Requests per
+        // read. put() of a public blob is also a Simple Request (free).
+        const isFirstBatch = sessionEvents.some((e) => e.sequenceId === 0)
+        const completionEvent = sessionEvents.find(
+          (e) => e.eventName === 'experiment.completed'
+        )
+
+        if (isFirstBatch || completionEvent) {
+          const firstEvent = sessionEvents[0]
+          await put(
+            `stats/${sessionId}.json`,
+            JSON.stringify({
+              sessionId,
+              condition: firstEvent.condition,
+              startedAt: firstEvent.timestamp,
+              completed: Boolean(completionEvent),
+              completedAt: completionEvent?.timestamp ?? null,
+            }),
+            {
+              access: 'public',
+              addRandomSuffix: false,
+              allowOverwrite: true,
+              contentType: 'application/json',
+              token,
+            }
+          )
+        }
       }
     )
 

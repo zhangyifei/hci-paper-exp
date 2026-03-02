@@ -67,6 +67,15 @@
 **Date**: 2026-03-01
 **Rationale**: Each test uses a unique `sessionId` (`TEST_SESSION_{timestamp}_{random}`) to prevent blob data collisions between concurrent tests. 7 workers reduced suite runtime from ~45s to ~18s.
 
+### ADR-014: Storage Optimization — Per-Batch Blob Files + Completion Rate Stats
+**Decision**: Restructure Vercel Blob writes so each event flush creates a NEW file (`events/{sessionId}/{batchId}.jsonl`) instead of appending to a single session file. Additionally, write a lightweight per-session PUBLIC status file (`stats/{sessionId}.json`) containing only `{condition, startedAt, completed, completedAt}` (no PII).  
+**Date**: 2026-03-01  
+**Rationale**: The previous pattern (`list() + get() + put()`) cost 2 Advanced Requests per flush, exhausting the free-tier 2,000 Advanced Request quota. `put()` is a *Simple Request* and does NOT count against the Advanced quota. The new pattern costs **0 Advanced Requests per flush**. Public status files are readable via free HTTP CDN fetches (not Vercel Blob ops), enabling the `/api/stats` completion-rate endpoint to cost only 1 Advanced Request (one `list()` call) regardless of participant count.  
+**New endpoints**:
+- `GET /api/stats` — live per-condition completion rate; protected by `STATS_SECRET` Bearer token
+- `GET /api/export` — full JSONL dump for R/SPSS; expensive (~1+N Advanced Requests); run once at end of study  
+**Tradeoff**: Export is now costlier in Advanced Requests (1 per batch file downloaded), but this is a one-time operation. The study write budget is effectively unlimited under the free tier.
+
 ### ADR-013: Animated Progress Bars for Wait Screens
 **Decision**: Replace static wait timers on `RideAlmostThereScreen` and `CourierDeliveryScreen` with `requestAnimationFrame`-driven progress bars showing a countdown.
 **Date**: 2026-03-01
