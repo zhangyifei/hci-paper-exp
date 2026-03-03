@@ -74,7 +74,7 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform flex items-center">
             <span className="mr-2 text-[18px]">🛵</span> Eats
         </div>
-        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform">Send</div>
+        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform">Courier</div>
       </div>
       
       {/* Delivery Toggle */}

@@ -5,9 +5,11 @@ import { logger } from '@/lib/logger'
 
 interface HomeScreenProps {
   onNext: () => void
+  service2Tab?: 'courier' | 'eats'
+  onService2TabClick?: () => void
 }
 
-export default function HomeScreen({ onNext }: HomeScreenProps) {
+export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: HomeScreenProps) {
   useEffect(() => {
     logger.trackEvent('ride.started', 'ride', 'ride_in_progress')
   }, [])
@@ -19,8 +21,16 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
       {/* Tab Bar */}
       <div className="flex items-center space-x-3 px-4 mt-[59px] mb-6 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform duration-200">Rides</div>
-        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200">Eats</div>
-        <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200">Send</div>
+        <div
+          onClick={service2Tab === 'eats' ? onService2TabClick : undefined}
+          className={`bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200 ${service2Tab === 'eats' ? 'cursor-pointer' : ''}`}
+          data-testid="tab-eats"
+        >Eats</div>
+        <div
+          onClick={service2Tab === 'courier' ? onService2TabClick : undefined}
+          className={`bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200 ${service2Tab === 'courier' ? 'cursor-pointer' : ''}`}
+          data-testid="tab-courier"
+        >Courier</div>
       </div>
 
       {/* Search Bar */}
@@ -49,7 +59,7 @@ export default function HomeScreen({ onNext }: HomeScreenProps) {
       <div className="flex justify-between px-5 mb-10">
         {[
           { label: 'Ride', icon: <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-5h14v5z"/> },
-          { label: 'Send', icon: <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/> },
+          { label: 'Courier', icon: <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/> },
           { label: 'Grocery', icon: <path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm0 10c-2.76 0-5-2.24-5-5h2c0 1.66 1.34 3 3 3s3-1.34 3-3h2c0 2.76-2.24 5-5 5z"/> },
           { label: 'Food', icon: <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/> }
         ].map((item, idx) => (

@@ -31,6 +31,7 @@ type Screen =
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('home')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
+  const [rideCompleted, setRideCompleted] = useState(false)
 
   const handleCompletion = async () => {
     try {
@@ -47,7 +48,10 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   // State transitions
   const goToMap = () => setScreen('map')
   const goToRideAlmostThere = () => setScreen('ride_almost_there')
-  const goToTripComplete = () => setScreen('trip_complete')
+  const goToTripComplete = () => {
+    setRideCompleted(true)
+    setScreen('trip_complete')
+  }
   const goToService2Entry = () => setScreen('service2_entry')
   
   const handleService2EntryNext = (eventId?: string) => {
@@ -71,7 +75,13 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   return (
     <div className="w-full min-h-full bg-white text-black relative">
-      {screen === 'home' && <HomeScreen onNext={goToMap} />}
+      {screen === 'home' && (
+        <HomeScreen 
+          onNext={goToMap} 
+          service2Tab={rideCompleted ? config.service2 : undefined}
+          onService2TabClick={rideCompleted ? goToService2Entry : undefined}
+        />
+      )}
       
       {screen === 'map' && <MapScreen onNext={goToRideAlmostThere} onBack={handleBackToHome} />}
       
@@ -81,7 +91,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         <TripCompleteScreen 
           condition={condition} 
           config={config} 
-          onNext={goToService2Entry} 
+          onNext={config.banner ? goToService2Entry : () => setScreen('home')} 
         />
       )}
 

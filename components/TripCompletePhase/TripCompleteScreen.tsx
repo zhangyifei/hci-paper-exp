@@ -115,13 +115,13 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
           data-testid="btn-back-to-home"
           className="w-full h-[54px] bg-gray-100 text-black rounded-[16px] font-bold text-[17px] active:bg-gray-200 active:scale-[0.98] transition-all mb-4"
         >
-          Done
+          {config.banner ? 'Done' : 'Back to Home'}
         </button>
         
         {/* Footnote for G1/G3 */}
         {!config.banner && (
           <p className="text-center text-[13px] text-gray-400 font-medium px-8 leading-relaxed">
-            Tap 'Done' to go home and start a new request.
+            Tap &apos;Back to Home&apos; to return home and explore other services.
           </p>
         )}
       </div>
