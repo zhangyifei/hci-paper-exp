@@ -155,16 +155,18 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
         </div>
       </div>
 
-      {/* Start Ride Button */}
-      <div className="sticky bottom-[70px] w-full px-4 pb-4 pt-4 bg-gradient-to-t from-white via-white to-transparent z-10">
-          <button
-            onClick={onNext}
-            data-testid="btn-start-ride"
-            className="w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg active:scale-[0.97] active:bg-gray-900 transition-all duration-200 flex items-center justify-center"
-          >
-            Start a Ride
-          </button>
-      </div>
+      {/* Start Ride Button — hidden after ride is complete (user must pick Service 2 tab) */}
+      {!service2Tab && (
+        <div className="sticky bottom-[70px] w-full px-4 pb-4 pt-4 bg-gradient-to-t from-white via-white to-transparent z-10">
+            <button
+              onClick={onNext}
+              data-testid="btn-start-ride"
+              className="w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg active:scale-[0.97] active:bg-gray-900 transition-all duration-200 flex items-center justify-center"
+            >
+              Start a Ride
+            </button>
+        </div>
+      )}
 
       <BottomNav />
     </div>
