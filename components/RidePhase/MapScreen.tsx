@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface MapScreenProps {
   onNext: () => void
@@ -11,6 +12,8 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
 
   useEffect(() => {
     logger.trackEvent('ride.option_selected', 'ride', 'ride_in_progress', { payload: { optionId: 'voya-x', optionLabel: 'Voya X', price: 12.59 } })
+    const cleanup = enterScreen('map', 'ride')
+    return cleanup
   }, [])
   
   const handleChoose = () => {

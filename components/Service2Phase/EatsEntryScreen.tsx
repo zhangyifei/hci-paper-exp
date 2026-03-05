@@ -4,6 +4,7 @@ import BottomNav from '../shared/BottomNav'
 import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface EatsEntryScreenProps {
   config: ConditionConfig
@@ -17,6 +18,8 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
     markService2Entry()
     const eventId = logger.trackEvent('service2.entry', 'service2', 'service2_entry')
     setService2EntryEventId(eventId)
+    const cleanup = enterScreen('service2_entry_eats', 'service2')
+    return cleanup
   }, [])
 
   const handleAddressEdit = () => {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 const WAIT_MS = 2500
 
@@ -12,6 +13,7 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
+    const cleanupScreen = enterScreen('ride_almost_there', 'ride')
     const start = performance.now()
     const frame = () => {
       const elapsed = performance.now() - start
@@ -25,7 +27,10 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
       logger.trackEvent('ride.arrived', 'ride', 'ride_submitting')
       onNext()
     }, WAIT_MS)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      cleanupScreen()
+    }
   }, [onNext])
 
   return (

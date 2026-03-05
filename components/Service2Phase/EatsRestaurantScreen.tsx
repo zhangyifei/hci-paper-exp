@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
 import { markService2Complete } from '@/lib/timing'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface EatsRestaurantScreenProps {
   onNext: () => void
@@ -52,6 +53,8 @@ export default function EatsRestaurantScreen({ onNext, onBack, parentEventId }: 
 
   useEffect(() => {
     logger.trackEvent('service2.task.started', 'service2', 'service2_task_active')
+    const cleanup = enterScreen('service2_restaurant', 'service2')
+    return cleanup
   }, [])
 
   const handleOrder = () => {

@@ -34,6 +34,15 @@
         "service2.task.complete",
         "service2.task.error",
         "service2.complete.viewed",
+        "screen.entered",
+        "screen.first_interaction",
+        "screen.exited",
+        "questionnaire.started",
+        "questionnaire.item_answered",
+        "questionnaire.completed",
+        "survey.started",
+        "survey.item_answered",
+        "survey.completed",
         "experiment.completed",
         "experiment.error"
       ]
@@ -59,13 +68,15 @@
     },
     "flow": {
       "type": "string",
-      "enum": ["ride", "trip_complete", "service2", "experiment"],
+      "enum": ["ride", "trip_complete", "service2", "experiment", "survey", "questionnaire", "screen"],
       "description": "Which flow phase the event belongs to"
     },
     "state": {
       "type": "string",
       "enum": [
         "idle",
+        "questionnaire_active",
+        "questionnaire_complete",
         "ride_in_progress",
         "ride_submitting",
         "trip_complete_confirmed",
@@ -73,12 +84,24 @@
         "service2_task_active",
         "service2_task_submitting",
         "service2_task_complete",
+        "survey_active",
+        "survey_complete",
+        "home",
+        "map",
+        "ride_almost_there",
+        "trip_complete",
+        "service2_entry_courier",
+        "service2_entry_eats",
+        "service2_delivery",
+        "service2_restaurant",
+        "service2_complete_courier",
+        "service2_complete_eats",
         "finished",
         "error_ride",
         "error_service2",
         "error_submit"
       ],
-      "description": "Current state machine state"
+      "description": "Current state machine state or screen name for screen.* events"
     },
     "timestamp": {
       "type": "integer",

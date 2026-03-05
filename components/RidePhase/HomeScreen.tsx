@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface HomeScreenProps {
   onNext: () => void
@@ -12,6 +13,8 @@ interface HomeScreenProps {
 export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: HomeScreenProps) {
   useEffect(() => {
     logger.trackEvent('ride.started', 'ride', 'ride_in_progress')
+    const cleanup = enterScreen('home', 'ride')
+    return cleanup
   }, [])
 
   return (

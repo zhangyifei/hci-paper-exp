@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
+import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
 import HomeScreen from './RidePhase/HomeScreen'
 import MapScreen from './RidePhase/MapScreen'
 import RideAlmostThereScreen from './RidePhase/RideAlmostThereScreen'
@@ -11,6 +12,8 @@ import CourierCompleteScreen from './Service2Phase/CourierCompleteScreen'
 import EatsEntryScreen from './Service2Phase/EatsEntryScreen'
 import EatsRestaurantScreen from './Service2Phase/EatsRestaurantScreen'
 import EatsCompleteScreen from './Service2Phase/EatsCompleteScreen'
+import BackgroundQuestionnaire from './Survey/BackgroundQuestionnaire'
+import PostTaskSurvey from './Survey/PostTaskSurvey'
 
 interface ExperimentFlowProps {
   condition: Condition
@@ -18,6 +21,7 @@ interface ExperimentFlowProps {
 }
 
 type Screen = 
+  | 'questionnaire'
   | 'home'
   | 'map'
   | 'ride_almost_there'
@@ -26,16 +30,26 @@ type Screen =
   | 'service2_delivery'
   | 'service2_restaurant'
   | 'service2_complete'
+  | 'survey'
   | 'finished'
 
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
-  const [screen, setScreen] = useState<Screen>('home')
+  const [screen, setScreen] = useState<Screen>('questionnaire')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
   const [rideCompleted, setRideCompleted] = useState(false)
 
-  const handleCompletion = async () => {
+  const handleQuestionnaireComplete = () => {
+    resetNavigationPath()
+    setScreen('home')
+  }
+
+  const handleSurveyComplete = async () => {
     try {
-      logger.trackEvent('experiment.completed', 'experiment', 'finished')
+      // Include the full navigation path in the completion event
+      const navPath = getNavigationPath()
+      logger.trackEvent('experiment.completed', 'experiment', 'finished', {
+        payload: { navigationPath: navPath, totalScreens: navPath.length },
+      })
       await logger.flushAndWait()
       setScreen('finished')
     } catch (err) {
@@ -43,6 +57,11 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       logger.trackEvent('experiment.error', 'experiment', 'finished', { error: message })
       setScreen('finished')
     }
+  }
+
+  const handleTaskCompletion = () => {
+    // After task is done, go to post-task survey instead of finishing
+    setScreen('survey')
   }
 
   // State transitions
@@ -75,6 +94,10 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   return (
     <div className="w-full min-h-full bg-white text-black relative">
+      {screen === 'questionnaire' && (
+        <BackgroundQuestionnaire onComplete={handleQuestionnaireComplete} />
+      )}
+
       {screen === 'home' && (
         <HomeScreen 
           onNext={goToMap} 
@@ -116,11 +139,15 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       )}
 
       {screen === 'service2_complete' && config.service2 === 'courier' && (
-        <CourierCompleteScreen config={config} onNext={handleCompletion} />
+        <CourierCompleteScreen config={config} onNext={handleTaskCompletion} />
       )}
 
       {screen === 'service2_complete' && config.service2 === 'eats' && (
-        <EatsCompleteScreen config={config} onNext={handleCompletion} />
+        <EatsCompleteScreen config={config} onNext={handleTaskCompletion} />
+      )}
+
+      {screen === 'survey' && (
+        <PostTaskSurvey onComplete={handleSurveyComplete} />
       )}
 
       {screen === 'finished' && (

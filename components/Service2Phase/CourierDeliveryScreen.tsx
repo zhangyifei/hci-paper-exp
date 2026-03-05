@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 const WAIT_MS = 2500
 
@@ -13,6 +14,7 @@ export default function CourierDeliveryScreen({ onNext }: CourierDeliveryScreenP
 
   useEffect(() => {
     logger.trackEvent('service2.task.started', 'service2', 'service2_task_active')
+    const cleanupScreen = enterScreen('service2_delivery', 'service2')
 
     const start = performance.now()
     const frame = () => {
@@ -27,7 +29,10 @@ export default function CourierDeliveryScreen({ onNext }: CourierDeliveryScreenP
       logger.trackEvent('service2.task.submitting', 'service2', 'service2_task_submitting')
       onNext()
     }, WAIT_MS)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      cleanupScreen()
+    }
   }, [onNext])
 
   return (

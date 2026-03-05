@@ -4,6 +4,7 @@ import BottomNav from '../shared/BottomNav'
 import { logger } from '@/lib/logger'
 import { markService2Entry, markService2Complete } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface CourierEntryScreenProps {
   config: ConditionConfig
@@ -18,11 +19,13 @@ export default function CourierEntryScreen({ config, onNext }: CourierEntryScree
     markService2Entry()
     const eventId = logger.trackEvent('service2.entry', 'service2', 'service2_entry')
     setService2EntryEventId(eventId)
+    const cleanup = enterScreen('service2_entry_courier', 'service2')
     
     // Set default option
     if (config.pickupOptions.length > 0) {
         setSelectedOption(config.pickupOptions[0].id)
     }
+    return cleanup
   }, [config.pickupOptions])
 
   const handleOptionSelect = (id: string, label: string) => {

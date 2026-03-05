@@ -1,6 +1,6 @@
 import type { Condition } from './experiment-config'
 
-export type FlowType = 'ride' | 'trip_complete' | 'service2' | 'experiment'
+export type FlowType = 'ride' | 'trip_complete' | 'service2' | 'experiment' | 'survey' | 'questionnaire' | 'screen'
 
 export interface ExperimentEvent {
   eventName: string
