@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface EatsCompleteScreenProps {
   config: ConditionConfig
@@ -18,6 +19,8 @@ const EXPLORE = [
 export default function EatsCompleteScreen({ config, onNext }: EatsCompleteScreenProps) {
   useEffect(() => {
     logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
+    const cleanup = enterScreen('service2_complete_eats', 'service2')
+    return cleanup
   }, [])
 
   return (

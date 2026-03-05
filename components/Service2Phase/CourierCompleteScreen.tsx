@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface CourierCompleteScreenProps {
   config: ConditionConfig
@@ -32,6 +33,8 @@ const NEARBY = [
 export default function CourierCompleteScreen({ config, onNext }: CourierCompleteScreenProps) {
   useEffect(() => {
     logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
+    const cleanup = enterScreen('service2_complete_courier', 'service2')
+    return cleanup
   }, [])
 
   return (

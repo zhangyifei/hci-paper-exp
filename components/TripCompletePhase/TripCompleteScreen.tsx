@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
+import { enterScreen } from '@/lib/screen-tracker'
 
 interface TripCompleteScreenProps {
   condition: Condition
@@ -13,6 +14,8 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
   
   useEffect(() => {
     logger.trackEvent('trip_complete.viewed', 'trip_complete', 'trip_complete_confirmed')
+    const cleanup = enterScreen('trip_complete', 'trip_complete')
+    return cleanup
   }, [])
 
   const handleBannerClick = () => {
