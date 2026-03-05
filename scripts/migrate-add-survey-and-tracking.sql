@@ -7,8 +7,9 @@
 --
 -- All new data flows through the existing experiment_events table via the
 -- JSONB `payload` column — no schema changes needed for the events table.
--- This migration adds a *materialized view* for convenient survey analysis
+-- This migration adds regular views for convenient survey analysis
 -- and indexes to speed up the new event-type queries.
+-- Regular views (not materialized) are always up-to-date — no refresh needed.
 
 -- 1. Index for the new event types so dashboard queries stay fast
 CREATE INDEX IF NOT EXISTS idx_events_flow
@@ -18,8 +19,8 @@ CREATE INDEX IF NOT EXISTS idx_events_participant_id
   ON experiment_events (participant_id);
 
 -- 2. Convenience view: one row per participant with survey + questionnaire responses
---    pivoted out of the JSONB payload.  Refresh after each batch of sessions.
-CREATE MATERIALIZED VIEW IF NOT EXISTS participant_responses AS
+--    pivoted out of the JSONB payload. Always up-to-date (regular view).
+CREATE OR REPLACE VIEW participant_responses AS
 SELECT
   e.participant_id,
   e.session_id,
@@ -58,11 +59,8 @@ SELECT
 FROM experiment_events e
 GROUP BY e.participant_id, e.session_id, e.condition;
 
-CREATE INDEX IF NOT EXISTS idx_pr_session
-  ON participant_responses (session_id);
-
 -- 3. Convenience view: per-screen behavioral metrics (dwell, hesitation, taps, scroll)
-CREATE MATERIALIZED VIEW IF NOT EXISTS screen_metrics AS
+CREATE OR REPLACE VIEW screen_metrics AS
 SELECT
   e.participant_id,
   e.session_id,
@@ -77,9 +75,4 @@ SELECT
 FROM experiment_events e
 WHERE e.event_name = 'screen.exited';
 
-CREATE INDEX IF NOT EXISTS idx_sm_session
-  ON screen_metrics (session_id);
-
--- To refresh after new sessions:
---   REFRESH MATERIALIZED VIEW CONCURRENTLY participant_responses;
---   REFRESH MATERIALIZED VIEW CONCURRENTLY screen_metrics;
+-- Regular views — always live, no refresh needed.
