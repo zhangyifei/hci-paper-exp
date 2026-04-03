@@ -212,3 +212,21 @@ Design mockups analyzed. Key findings per condition:
 - Refactored `components/stats/BehavioralChart.tsx` and `components/stats/SurveyChart.tsx` so scatter dots use a hidden numeric x-axis with deterministic jitter instead of sharing the categorical bar axis.
 - Kept the visible x-axis categorical and non-duplicated, which removes the repeated labels and restores readable spacing between the four conditions.
 - Updated tooltip handling so both bar and dot hover states still resolve to the correct condition label after the axis split.
+
+### Boxplot Upgrade
+- Added `components/stats/BoxPlotChart.tsx` as a reusable SVG boxplot renderer based on quartiles, median, Tukey whiskers, and outlier dots.
+- Replaced the behavioral charts on the stats page with true boxplots built from raw `values`.
+- Replaced the survey distribution panels with true boxplots while leaving the separate grouped-means survey overview chart in place.
+
+### Survey Overview Chart Fix
+- Replaced the remaining grouped bar chart in `components/stats/SurveyChart.tsx` with a custom point-and-interval overview chart so Figure 3 no longer reads like a second distribution chart.
+- Kept the dashed 4.0 midpoint reference and construct legend, but changed the visual marks to dots for means and whiskers for `±1 SD`.
+
+### Chart Detail Interaction
+- Added hover/click detail cards to the custom survey mean chart so Figure 3 exposes exact mean, SD, low, and high values for the selected point.
+- Added hover/click detail cards to `components/stats/BoxPlotChart.tsx` so each selected box reveals `n`, quartiles, whiskers, min/max, and outliers inline.
+
+### Survey Overview Boxplot Conversion
+- Replaced Figure 3 in `components/stats/SurveyChart.tsx` with a grouped boxplot overview that shows all four constructs within each condition.
+- Reused the shared boxplot summary math so the overview and the per-construct panels report the same quartile/whisker definitions.
+- Kept inline detail cards on the grouped overview so selected boxes expose exact quartiles, whiskers, max, and outlier values.
