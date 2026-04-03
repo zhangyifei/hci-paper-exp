@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 function requireAuth(req: NextRequest): boolean {
   const secret = process.env.STATS_SECRET
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('experiment_events')
       .select('*')
       .order('session_id')

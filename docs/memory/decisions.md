@@ -80,3 +80,8 @@
 **Decision**: Replace static wait timers on `RideAlmostThereScreen` and `CourierDeliveryScreen` with `requestAnimationFrame`-driven progress bars showing a countdown.
 **Date**: 2026-03-01
 **Rationale**: Improves perceived responsiveness and communicates expected wait duration clearly to participants, reducing confusion during timed transitions.
+
+### ADR-015: Server-Only Supabase Admin Client With Secret-Key Fallback
+**Decision**: Remove the unused `utils/supabase/*` SSR helpers and standardize backend DB access on a server-only admin client under `lib/supabase/admin.ts`. Refactor paper-analysis scripts to read Supabase credentials from environment variables via a shared helper instead of embedding credentials in source. Prefer `SUPABASE_SECRET_KEY`, with `SUPABASE_SERVICE_ROLE_KEY` accepted only as a legacy fallback.
+**Date**: 2026-04-02
+**Rationale**: This application does not use Supabase Auth or cookie-based sessions, so `@supabase/ssr` would add framework-specific auth helpers without solving a real problem here. A server-only admin client matches the actual architecture: all DB reads and writes happen in Next route handlers and offline scripts. Secret-key preference improves alignment with current Supabase guidance while preserving compatibility with older projects.
