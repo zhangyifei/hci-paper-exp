@@ -165,3 +165,24 @@ Design mockups analyzed. Key findings per condition:
 - `helpers.ts`: unique `sessionId` per test run; `force: true` clicks; increased timeouts
 - All 4 condition spec files: fixed text assertions (emoji removal, exact phrases, distance spacing)
 - **Result**: 33/33 tests passing in 18s with 7 workers
+
+---
+
+## Phase 9 — Repo Review + Unused Code Cleanup
+**Date**: 2026-04-02
+**Status**: ✅ Complete
+
+### Review Findings Addressed
+- Removed newly added `utils/supabase/*` helpers because they were not referenced anywhere in the application and duplicated the existing `lib/supabase.ts` server access path.
+- Removed the unused `@supabase/ssr` dependency after deleting those helpers.
+- Refactored `scripts/paper-stats.ts`, `scripts/paper-stats-v2.ts`, and `scripts/paper-stats-survey.ts` to use a shared env-based Supabase helper instead of embedding credentials in source files.
+- Corrected `scripts/paper-stats.ts` banner usage detection to the actual tracked event name: `trip_complete.banner_tapped`.
+
+### Verification
+- `npm run type-check` → passing after cleanup
+
+### Follow-up Refactor
+- Replaced `lib/supabase.ts` with a server-only admin client at `lib/supabase/admin.ts`.
+- Added `lib/supabase/admin-client.ts` as a shared factory so route handlers and scripts use the same secret-key-first configuration.
+- Updated API routes to import `supabaseAdmin` from the new path.
+- Updated `.env.local.example` to document `SUPABASE_SECRET_KEY` as the preferred backend credential and `SUPABASE_SERVICE_ROLE_KEY` as legacy fallback.

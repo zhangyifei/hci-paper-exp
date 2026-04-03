@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 type Condition = 'G1' | 'G2' | 'G3' | 'G4'
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Get all distinct sessions with their condition
-    const { data: allSessions, error: sessErr } = await supabase
+    const { data: allSessions, error: sessErr } = await supabaseAdmin
       .from('experiment_events')
       .select('session_id, condition')
       .order('session_id')
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get sessions that have experiment.completed
-    const { data: completedSessions, error: compErr } = await supabase
+    const { data: completedSessions, error: compErr } = await supabaseAdmin
       .from('experiment_events')
       .select('session_id')
       .eq('event_name', 'experiment.completed')

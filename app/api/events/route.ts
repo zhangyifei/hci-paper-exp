@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { ExperimentEvent } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         prolific_session_id: e.prolificSessionId ?? null,
       }))
 
-    const { error } = await supabase.from('experiment_events').insert(rows)
+    const { error } = await supabaseAdmin.from('experiment_events').insert(rows)
 
     if (error) {
       console.error('[api/events] Supabase insert error:', error)
