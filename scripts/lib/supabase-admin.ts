@@ -6,8 +6,7 @@ import {
   createAdminClient,
   getSupabaseAdminEnv,
 } from '../../lib/supabase/admin-client'
-
-type Condition = 'G1' | 'G2' | 'G3' | 'G4'
+import type { PaperStatsEventRow } from '../../lib/paper-stats/analysis'
 
 function loadLocalEnv() {
   for (const fileName of ['.env.local', '.env']) {
@@ -25,23 +24,7 @@ if (!supabaseUrl) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL')
 }
 
-export interface ExperimentEventRow {
-  id: number
-  event_name: string
-  session_id: string
-  participant_id: string
-  sequence_id: number
-  flow: string
-  state: string
-  timestamp: number
-  client_mono_ms: number
-  duration_ms: number | null
-  payload: Record<string, unknown> | null
-  condition: Condition
-  prolific_study_id: string | null
-  prolific_session_id: string | null
-  created_at: string
-}
+export type ExperimentEventRow = PaperStatsEventRow
 
 export const supabase = createAdminClient(getSupabaseAdminEnv(process.env))
 

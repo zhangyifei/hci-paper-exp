@@ -174,6 +174,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
                   key={opt.value}
                   type="button"
                   onClick={() => handleAnswer(item.code, opt.value)}
+                  data-testid={`questionnaire-option-${item.code}-${opt.value}`}
                   className={`
                     w-full text-left px-4 py-3 rounded-[12px] text-[14px] font-medium
                     transition-all duration-150 active:scale-[0.98]
