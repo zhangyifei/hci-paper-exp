@@ -1,19 +1,8 @@
 'use client'
 
-import {
-  ComposedChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-  ErrorBar,
-  Scatter,
-  Cell,
-} from 'recharts'
+import { useMemo, useState } from 'react'
+
+import { BoxPlotChart, summarizeValues, type BoxPlotSummary } from './BoxPlotChart'
 
 interface SurveyStat {
   n: number
@@ -27,12 +16,6 @@ interface Props {
   surveyByCondition: Record<string, SurveyStat | null>
 }
 
-interface ScatterPoint {
-  x: number
-  y: number
-  condition: string
-}
-
 const CONDITIONS = ['G1', 'G2', 'G3', 'G4'] as const
 
 const CONSTRUCTS = [
@@ -42,105 +25,308 @@ const CONSTRUCTS = [
   { key: 'manipCheck', label: 'MC', fullLabel: 'Manipulation Check', color: '#9333ea' },
 ] as const
 
-const COND_COLORS: Record<string, string> = {
+const CONDITION_COLORS: Record<string, string> = {
   G1: '#2563eb',
   G2: '#0891b2',
   G3: '#7c3aed',
   G4: '#d97706',
 }
 
-function jitterForIndex(index: number): number {
-  const offsets = [-0.24, -0.08, 0.08, 0.24]
-  return offsets[index % offsets.length]
+interface GroupedBoxItem {
+  id: string
+  condition: string
+  construct: string
+  color: string
+  values: number[]
+  summary: BoxPlotSummary
 }
 
-function buildScatterPoints(values: number[] | undefined, conditionIndex: number, condition: string) {
-  return (values ?? []).map((value, valueIndex) => ({
-    x: conditionIndex + 1 + jitterForIndex(valueIndex),
-    y: +value.toFixed(3),
-    condition,
-  }))
-}
+type SurveyConstructKey = 'cognitiveLoad' | 'usability' | 'continuance' | 'manipCheck'
 
-// ── Survey grouped bar: one row per construct, columns = conditions ───────────
-
-function CustomTooltip({
-  active,
-  payload,
-  label,
+function GroupedSurveyBoxPlotChart({
+  surveyByCondition,
 }: {
-  active?: boolean
-  payload?: Array<{
-    name?: string
-    value?: number
-    color?: string
-    payload?: { condition?: string }
-  }>
-  label?: string | number
+  surveyByCondition: Record<string, SurveyStat | null>
 }) {
-  if (!active || !payload?.length) return null
-  const conditionFromPayload = payload.find((entry) => entry.payload?.condition)?.payload?.condition
-  const heading =
-    conditionFromPayload ?? (typeof label === 'string' ? label : 'Observation')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const width = 940
+  const height = 360
+  const margin = { top: 16, right: 24, bottom: 64, left: 46 }
+  const plotWidth = width - margin.left - margin.right
+  const plotHeight = height - margin.top - margin.bottom
+  const yMin = 1
+  const yMax = 7
+  const ticks = [1, 2, 3, 4, 5, 6, 7]
+  const bandWidth = plotWidth / CONDITIONS.length
+  const offsets = [-30, -10, 10, 30]
+  const boxWidth = 14
+
+  const yForValue = (value: number) => {
+    const ratio = (value - yMin) / (yMax - yMin)
+    return margin.top + plotHeight - ratio * plotHeight
+  }
+
+  const detailItems = useMemo(
+    () =>
+      CONDITIONS.flatMap((condition) =>
+        CONSTRUCTS.flatMap((construct) => {
+          const survey = surveyByCondition[condition]
+          const key = construct.key as SurveyConstructKey
+          const stat = survey?.[key]
+
+          if (!stat) {
+            return []
+          }
+
+          const summary = summarizeValues(stat.values)
+          if (!summary) {
+            return []
+          }
+
+          return [
+            {
+              id: `${condition}-${construct.key}`,
+              condition,
+              construct: construct.fullLabel,
+              color: construct.color,
+              values: stat.values,
+              summary,
+            },
+          ]
+        }),
+      ),
+    [surveyByCondition],
+  )
+
+  const fallbackId = detailItems[0]?.id ?? null
+  const detail = detailItems.find((item) => item.id === (hoveredId ?? selectedId ?? fallbackId)) ?? null
 
   return (
-    <div className="bg-white border border-gray-200 rounded shadow-md p-3 text-[12px]">
-      <p className="font-bold text-gray-700 mb-2">{heading}</p>
-      {payload.map((entry) => (
-        <div
-          key={`${entry.name ?? 'value'}-${entry.value ?? 'unknown'}`}
-          className="flex justify-between gap-4 items-center"
+    <div>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-auto w-full overflow-visible"
+        role="img"
+        aria-label="Survey construct boxplots by condition"
+      >
+        {ticks.map((tick) => {
+          const y = yForValue(tick)
+          return (
+            <g key={tick}>
+              <line
+                x1={margin.left}
+                x2={width - margin.right}
+                y1={y}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeDasharray="3 3"
+              />
+              <text
+                x={margin.left - 10}
+                y={y + 4}
+                textAnchor="end"
+                fontSize={11}
+                fill="#6b7280"
+              >
+                {tick}
+              </text>
+            </g>
+          )
+        })}
+
+        <line
+          x1={margin.left}
+          x2={width - margin.right}
+          y1={yForValue(4)}
+          y2={yForValue(4)}
+          stroke="#9ca3af"
+          strokeDasharray="4 3"
+          strokeWidth={1.5}
+        />
+
+        <line
+          x1={margin.left}
+          x2={width - margin.right}
+          y1={margin.top + plotHeight}
+          y2={margin.top + plotHeight}
+          stroke="#cbd5e1"
+        />
+
+        {CONDITIONS.map((condition, rowIndex) => {
+          const centerX = margin.left + bandWidth * (rowIndex + 0.5)
+
+          return (
+            <g key={condition}>
+              {CONSTRUCTS.map((construct, constructIndex) => {
+                const itemId = `${condition}-${construct.key}`
+                const item = detailItems.find((entry) => entry.id === itemId)
+
+                if (!item) {
+                  return null
+                }
+
+                const summary = item.summary
+                const isActive = itemId === (hoveredId ?? selectedId ?? fallbackId)
+                const x = centerX + offsets[constructIndex]
+                const boxTop = yForValue(summary.q3)
+                const boxBottom = yForValue(summary.q1)
+                const medianY = yForValue(summary.median)
+                const whiskerTop = yForValue(summary.whiskerHigh)
+                const whiskerBottom = yForValue(summary.whiskerLow)
+                const hitAreaTop = Math.min(whiskerTop, boxTop) - 10
+                const hitAreaBottom = Math.max(whiskerBottom, boxBottom) + 10
+
+                return (
+                  <g
+                    key={itemId}
+                    onMouseEnter={() => setHoveredId(itemId)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onClick={() => setSelectedId(itemId)}
+                    className="cursor-pointer"
+                  >
+                    <rect
+                      x={x - 14}
+                      y={hitAreaTop}
+                      width={28}
+                      height={hitAreaBottom - hitAreaTop}
+                      fill="transparent"
+                    />
+                    <line
+                      x1={x}
+                      x2={x}
+                      y1={whiskerTop}
+                      y2={whiskerBottom}
+                      stroke={construct.color}
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                    />
+                    <line
+                      x1={x - 5.5}
+                      x2={x + 5.5}
+                      y1={whiskerTop}
+                      y2={whiskerTop}
+                      stroke={construct.color}
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                    />
+                    <line
+                      x1={x - 5.5}
+                      x2={x + 5.5}
+                      y1={whiskerBottom}
+                      y2={whiskerBottom}
+                      stroke={construct.color}
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                    />
+                    <rect
+                      x={x - boxWidth / 2}
+                      y={boxTop}
+                      width={boxWidth}
+                      height={Math.max(1, boxBottom - boxTop)}
+                      fill={construct.color}
+                      fillOpacity={isActive ? 0.34 : 0.24}
+                      stroke={construct.color}
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                      rx={2}
+                    />
+                    <line
+                      x1={x - boxWidth / 2}
+                      x2={x + boxWidth / 2}
+                      y1={medianY}
+                      y2={medianY}
+                      stroke={construct.color}
+                      strokeWidth={isActive ? 2.5 : 2}
+                    />
+                    {summary.outliers.map((outlier, outlierIndex) => {
+                      const offset = (outlierIndex - (summary.outliers.length - 1) / 2) * 7
+                      return (
+                        <circle
+                          key={`${item.id}-${outlier}-${outlierIndex}`}
+                          cx={x + offset}
+                          cy={yForValue(outlier)}
+                          r={2.5}
+                          fill={construct.color}
+                          stroke="#fff"
+                          strokeWidth={1}
+                        />
+                      )
+                    })}
+                  </g>
+                )
+              })}
+
+              <text
+                x={centerX}
+                y={height - 18}
+                textAnchor="middle"
+                fontSize={12}
+                fontWeight="700"
+                fill="#374151"
+              >
+                {condition}
+              </text>
+            </g>
+          )
+        })}
+
+        <text
+          x={16}
+          y={margin.top + plotHeight / 2}
+          transform={`rotate(-90 16 ${margin.top + plotHeight / 2})`}
+          textAnchor="middle"
+          fontSize={11}
+          fill="#9ca3af"
         >
-          <span className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-2.5 h-2.5 rounded-sm"
-              style={{ background: entry.color ?? '#374151' }}
-            />
-            <span className="text-gray-500">{entry.name ?? 'Individual'}</span>
-          </span>
-          <span className="font-mono font-semibold text-gray-800">
-            {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
-          </span>
+          Scale Score
+        </text>
+      </svg>
+
+      {detail ? (
+        <div className="mt-3 rounded border border-gray-200 bg-gray-50 p-3 text-[12px] text-gray-600">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="font-semibold text-gray-800">{detail.condition}</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ background: detail.color }}
+              />
+              {detail.construct}
+            </span>
+            <span className="text-gray-500">n = {detail.values.length}</span>
+          </div>
+          <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1">
+            <span>Min {detail.summary.min.toFixed(2)}</span>
+            <span>Q1 {detail.summary.q1.toFixed(2)}</span>
+            <span>Median {detail.summary.median.toFixed(2)}</span>
+            <span>Q3 {detail.summary.q3.toFixed(2)}</span>
+            <span>Whisker low {detail.summary.whiskerLow.toFixed(2)}</span>
+            <span>Whisker high {detail.summary.whiskerHigh.toFixed(2)}</span>
+            <span>Max {detail.summary.max.toFixed(2)}</span>
+            <span>
+              Outliers{' '}
+              {detail.summary.outliers.length
+                ? detail.summary.outliers.map((value) => value.toFixed(2)).join(', ')
+                : 'None'}
+            </span>
+          </div>
         </div>
-      ))}
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px]">
+        {CONSTRUCTS.map((construct) => (
+          <div key={construct.key} className="flex items-center gap-1.5 text-gray-600">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full"
+              style={{ background: construct.color }}
+            />
+            <span>{construct.fullLabel}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-// Constructs-as-rows chart: each group on x-axis = one construct, bars = conditions
 export function SurveyChart({ surveyByCondition }: Props) {
-  // Build data: one entry per construct
-  const byConstruct = CONSTRUCTS.map((construct) => {
-    const entry: Record<string, number | string | null> = {
-      construct: construct.fullLabel,
-      constructLabel: construct.label,
-    }
-    for (const cond of CONDITIONS) {
-      const s = surveyByCondition[cond]
-      const stat = s?.[construct.key]
-      entry[cond] = stat ? +stat.mean.toFixed(3) : null
-      entry[`${cond}_sd`] = stat ? +stat.sd.toFixed(3) : 0
-    }
-    return entry
-  })
-
-  // Build data: one entry per condition (for the dot-plot per-construct panels)
-  const byCondition = CONDITIONS.map((cond) => {
-    const s = surveyByCondition[cond]
-    return {
-      condition: cond,
-      CL: s ? +s.cognitiveLoad.mean.toFixed(3) : null,
-      CL_sd: s ? +s.cognitiveLoad.sd.toFixed(3) : 0,
-      PU: s ? +s.usability.mean.toFixed(3) : null,
-      PU_sd: s ? +s.usability.sd.toFixed(3) : 0,
-      CI: s ? +s.continuance.mean.toFixed(3) : null,
-      CI_sd: s ? +s.continuance.sd.toFixed(3) : 0,
-      MC: s ? +s.manipCheck.mean.toFixed(3) : null,
-      MC_sd: s ? +s.manipCheck.sd.toFixed(3) : 0,
-    }
-  })
-
-  const hasData = CONDITIONS.some((c) => surveyByCondition[c] !== null)
+  const hasData = CONDITIONS.some((condition) => surveyByCondition[condition] !== null)
   if (!hasData) {
     return (
       <div className="bg-white border border-gray-200 rounded p-6 flex items-center justify-center text-gray-400 text-sm italic h-48">
@@ -151,84 +337,32 @@ export function SurveyChart({ surveyByCondition }: Props) {
 
   return (
     <div className="space-y-8 mt-6">
-      {/* Panel 1: grouped bar — all conditions per construct */}
       <div className="bg-white border border-gray-200 rounded p-5">
         <p className="text-[13px] font-semibold text-gray-800 mb-0.5 italic">
-          Figure 3. Survey Scale Means by Condition (All Constructs)
+          Figure 3. Survey Construct Distributions by Condition (All Constructs)
         </p>
         <p className="text-[11px] text-gray-400 mb-4">
-          <span className="font-semibold not-italic">Note.</span> Grouped bars show condition means per construct; dashed line marks scale midpoint (4.0). 7-point Likert scale.
+          <span className="font-semibold not-italic">Note.</span> Colored boxes show the interquartile range (Q1-Q3) for each construct within each condition; center line = median; whiskers extend to the most extreme non-outlier values within 1.5×IQR; dots indicate outliers. Dashed line marks the 7-point scale midpoint (4.0).
         </p>
-        <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={byCondition} margin={{ top: 16, right: 20, bottom: 8, left: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-            <XAxis
-              dataKey="condition"
-              tick={{ fontSize: 12, fontWeight: 700, fill: '#374151' }}
-              tickLine={false}
-              axisLine={{ stroke: '#d1d5db' }}
-            />
-            <YAxis
-              domain={[1, 7]}
-              ticks={[1, 2, 3, 4, 5, 6, 7]}
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
-              label={{
-                value: 'Scale Score',
-                angle: -90,
-                position: 'insideLeft',
-                offset: -25,
-                style: { fontSize: 11, fill: '#9ca3af' },
-              }}
-            />
-            <ReferenceLine y={4} stroke="#9ca3af" strokeDasharray="4 3" strokeWidth={1.5} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f9fafb' }} />
-            <Legend
-              iconType="square"
-              iconSize={10}
-              wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
-            />
-
-            {CONSTRUCTS.map((c) => (
-              <Bar
-                key={c.key}
-                dataKey={c.label}
-                name={c.fullLabel}
-                fill={c.color}
-                fillOpacity={0.75}
-                barSize={22}
-                radius={[2, 2, 0, 0]}
-              >
-                <ErrorBar
-                  dataKey={`${c.label}_sd`}
-                  width={4}
-                  strokeWidth={1.5}
-                  stroke={c.color}
-                  direction="y"
-                />
-              </Bar>
-            ))}
-          </ComposedChart>
-        </ResponsiveContainer>
+        <GroupedSurveyBoxPlotChart surveyByCondition={surveyByCondition} />
+        <p className="mt-2 text-[11px] text-gray-400">Hover or click a box to inspect exact values.</p>
       </div>
 
-      {/* Panel 2: 4-panel small multiples — one construct per panel, bars = conditions + dots */}
       <div>
         <p className="text-[13px] font-semibold text-gray-800 mb-0.5 italic">
-          Figure 4. Individual Construct Comparisons with Data Points
+          Figure 4. Individual Construct Distributions by Condition
         </p>
         <p className="text-[11px] text-gray-400 mb-4">
-          <span className="font-semibold not-italic">Note.</span> Bars = M ± 1 SD; colored dots = individual participant responses; dashed line = scale midpoint (4.0).
+          <span className="font-semibold not-italic">Note.</span> Boxes show the interquartile range (Q1-Q3); center line = median; whiskers extend to the most extreme non-outlier values within 1.5×IQR; dots indicate outliers. The 7-point scale midpoint is 4.0.
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {CONSTRUCTS.map((construct) => {
-            // Individual raw values for scatter
-            const scatterPoints = CONDITIONS.flatMap((cond, conditionIndex) => {
-              const s = surveyByCondition[cond]
-              const vals = s?.[construct.key]?.values ?? []
-              return buildScatterPoints(vals, conditionIndex, cond)
-            })
+            const items = CONDITIONS.map((condition) => ({
+              key: `${construct.key}-${condition}`,
+              label: condition,
+              color: CONDITION_COLORS[condition],
+              values: surveyByCondition[condition]?.[construct.key]?.values ?? [],
+            }))
 
             return (
               <div key={construct.key} className="bg-white border border-gray-200 rounded p-4">
@@ -241,118 +375,18 @@ export function SurveyChart({ surveyByCondition }: Props) {
                     {construct.label} — {construct.fullLabel}
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <ComposedChart
-                    data={byCondition}
-                    margin={{ top: 8, right: 8, bottom: 16, left: 8 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-                    <XAxis
-                      dataKey="condition"
-                      interval={0}
-                      allowDuplicatedCategory={false}
-                      tick={{ fontSize: 10, fontWeight: 700, fill: '#374151' }}
-                      tickLine={false}
-                      axisLine={{ stroke: '#e5e7eb' }}
-                    />
-                    <XAxis
-                      xAxisId="scatter"
-                      type="number"
-                      dataKey="x"
-                      domain={[0.5, 4.5]}
-                      hide
-                    />
-                    <YAxis
-                      domain={[1, 7]}
-                      ticks={[1, 4, 7]}
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 10, fill: '#9ca3af' }}
-                      width={20}
-                    />
-                    <ReferenceLine
-                      y={4}
-                      stroke="#d1d5db"
-                      strokeDasharray="3 2"
-                      strokeWidth={1}
-                    />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null
-                        const p = payload[0]
-                        if (!p) return null
-                        const heading =
-                          (typeof p.payload === 'object' &&
-                          p.payload !== null &&
-                          'condition' in p.payload &&
-                          typeof p.payload.condition === 'string'
-                            ? p.payload.condition
-                            : typeof label === 'string'
-                              ? label
-                              : 'Observation')
-                        return (
-                          <div className="bg-white border border-gray-200 rounded shadow-sm p-2 text-[11px]">
-                            <span className="font-bold" style={{ color: COND_COLORS[heading] ?? '#374151' }}>
-                              {heading}
-                            </span>
-                            <div className="text-gray-600 mt-0.5">
-                              M = {typeof p.value === 'number' ? p.value.toFixed(2) : p.value}
-                            </div>
-                          </div>
-                        )
-                      }}
-                      cursor={{ fill: '#f9fafb' }}
-                    />
-
-                    <Bar
-                      dataKey={construct.label}
-                      barSize={28}
-                      radius={[2, 2, 0, 0]}
-                    >
-                      {byCondition.map((entry) => (
-                        <Cell
-                          key={entry.condition}
-                          fill={COND_COLORS[entry.condition] ?? '#94a3b8'}
-                          fillOpacity={0.65}
-                        />
-                      ))}
-                      <ErrorBar
-                        dataKey={`${construct.label}_sd`}
-                        width={5}
-                        strokeWidth={1.5}
-                        stroke="#374151"
-                        direction="y"
-                      />
-                    </Bar>
-
-                    {scatterPoints.length > 0 && (
-                      <Scatter
-                        data={scatterPoints}
-                        xAxisId="scatter"
-                        dataKey="y"
-                        shape={(props: {
-                          cx?: number
-                          cy?: number
-                          payload?: { condition: string }
-                        }) => (
-                          <circle
-                            cx={props.cx}
-                            cy={props.cy}
-                            r={3.5}
-                            fill={COND_COLORS[props.payload?.condition ?? ''] ?? '#374151'}
-                            fillOpacity={0.85}
-                            stroke="#fff"
-                            strokeWidth={1}
-                          />
-                        )}
-                      />
-                    )}
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <BoxPlotChart
+                  items={items}
+                  yLabel="Score"
+                  domain={[1, 7]}
+                  ticks={[1, 4, 7]}
+                  compact
+                />
               </div>
             )
           })}
         </div>
+        <p className="mt-2 text-[11px] text-gray-400">Hover or click a box to inspect quartiles, whiskers, and outliers.</p>
       </div>
     </div>
   )

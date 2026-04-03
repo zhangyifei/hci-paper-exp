@@ -105,3 +105,23 @@
 **Decision**: Render raw observation dots on the stats dashboard against a separate hidden numeric x-axis with slight horizontal jitter, while keeping the visible x-axis categorical for bar labels.
 **Date**: 2026-04-03
 **Rationale**: Recharts was treating scatter observations as additional categories on the visible x-axis, which made labels repeat and compressed the charts until the data became unreadable. Separating bar categories from dot coordinates preserves readability while still showing individual observations.
+
+### ADR-020: Distribution Charts Use True Boxplots
+**Decision**: Replace the behavioral distribution charts and the survey construct distribution panels with true boxplots computed from raw participant values.
+**Date**: 2026-04-03
+**Rationale**: The previous charts used mean bars with standard-deviation whiskers plus raw points, which can be mistaken for boxplots and does not communicate quartiles or median. The stats page now uses actual box-and-whisker summaries for distribution views while keeping the separate grouped means chart for the explicitly mean-based survey overview.
+
+### ADR-021: Survey Means Overview Uses Point-Interval Marks, Not Bars
+**Decision**: Replace the remaining grouped bar chart in the survey overview with a point-and-interval chart that shows means as dots and standard deviations as whiskers.
+**Date**: 2026-04-03
+**Rationale**: Even when correctly labeled, the grouped bars in the survey means overview visually resembled the old misleading bar-and-whisker distribution charts. Switching to point estimates with intervals makes it clear that Figure 3 is a summary-of-means view, while Figure 4 remains the actual distribution view.
+
+### ADR-022: Custom Stats Charts Surface Exact Values Inline
+**Decision**: Add hover/click selection states and inline detail cards to the custom SVG charts on `/stats`, instead of leaving the figures as non-interactive images.
+**Date**: 2026-04-03
+**Rationale**: The boxplots and mean-interval charts are readable as shapes, but exact values are difficult to inspect without zooming or cross-referencing tables. Inline detail cards make quartiles, whiskers, means, and intervals directly inspectable from the chart itself.
+
+### ADR-023: Survey Overview Figure Uses Grouped Boxplots
+**Decision**: Replace the survey overview figure with a grouped boxplot chart that shows all four constructs within each condition, rather than a separate mean-and-interval summary.
+**Date**: 2026-04-03
+**Rationale**: The point-and-interval view still read as a different statistical summary from the boxplot-based charts below it and kept causing confusion about whether the survey overview was a boxplot. Grouped boxplots make Figure 3 and Figure 4 statistically consistent while preserving an all-constructs overview in a single figure.
