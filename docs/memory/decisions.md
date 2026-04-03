@@ -85,3 +85,23 @@
 **Decision**: Remove the unused `utils/supabase/*` SSR helpers and standardize backend DB access on a server-only admin client under `lib/supabase/admin.ts`. Refactor paper-analysis scripts to read Supabase credentials from environment variables via a shared helper instead of embedding credentials in source. Prefer `SUPABASE_SECRET_KEY`, with `SUPABASE_SERVICE_ROLE_KEY` accepted only as a legacy fallback.
 **Date**: 2026-04-02
 **Rationale**: This application does not use Supabase Auth or cookie-based sessions, so `@supabase/ssr` would add framework-specific auth helpers without solving a real problem here. A server-only admin client matches the actual architecture: all DB reads and writes happen in Next route handlers and offline scripts. Secret-key preference improves alignment with current Supabase guidance while preserving compatibility with older projects.
+
+### ADR-016: Paper Stats Access Uses Server-Side Env Secret, Not Client-Side Constant
+**Decision**: Protect `/api/paper-stats` with `PAPER_STATS_SECRET` falling back to `STATS_SECRET`, and remove all hardcoded password checks from the client-side `/stats` page.
+**Date**: 2026-04-02
+**Rationale**: A password embedded in both the API route and the client bundle provides no effective access control. The client should submit user-entered credentials to the server, and only the server should compare them against an environment-backed secret.
+
+### ADR-017: Shared Paper-Stats Analysis Module for API and Offline Scripts
+**Decision**: Centralize paper-stats aggregation in `lib/paper-stats/analysis.ts` and have `/api/paper-stats` plus the offline paper-analysis scripts import that shared module instead of maintaining separate copies of the same logic.
+**Date**: 2026-04-02
+**Rationale**: The API route and the `scripts/paper-stats*.ts` files had drift-prone duplicate implementations for session grouping, completion detection, banner uptake, survey aggregates, and demographic rollups. A shared analysis module keeps the stats definitions consistent across the dashboard and paper export tooling, reduces maintenance overhead, and removes the remaining loose `any` usage from the stats scripts.
+
+### ADR-018: Paper Survey Aggregates Exclude Bots and Preserve Missingness
+**Decision**: Treat bot sessions as excluded across all paper-facing aggregates, not only behavioral metrics, and represent empty comparison groups with `null` means/SDs instead of synthetic zeros.
+**Date**: 2026-04-02
+**Rationale**: The paper-stats dashboard and scripts are used for study analysis, so survey constructs, demographic summaries, and factor comparisons must follow the same bot-exclusion rule as completion and timing metrics. Empty cells should remain visibly missing in the output rather than being coerced into `0.00`, which would imply an observed measurement that does not exist.
+
+### ADR-019: Stats Charts Use Hidden Numeric X-Axes for Observation Dots
+**Decision**: Render raw observation dots on the stats dashboard against a separate hidden numeric x-axis with slight horizontal jitter, while keeping the visible x-axis categorical for bar labels.
+**Date**: 2026-04-03
+**Rationale**: Recharts was treating scatter observations as additional categories on the visible x-axis, which made labels repeat and compressed the charts until the data became unreadable. Separating bar categories from dot coordinates preserves readability while still showing individual observations.

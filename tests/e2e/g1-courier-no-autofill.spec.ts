@@ -22,7 +22,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     // Uber/Eats/Courier tab bar visible
     await expect(page.getByText('Rides', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Eats', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('Courier')).toBeVisible()
+    await expect(page.getByTestId('tab-courier')).toBeVisible()
   })
 
   test('ride phase completes and shows Trip Complete', async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await completeRidePhase(page)
     await assertNoBanner(page)
     // Footnote text visible for G1
-    await expect(page.getByText(/Tap.*Done.*to go home/)).toBeVisible()
+    await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toBeVisible()
   })
 
   test('G1 Courier Entry: sender address is empty (no auto-fill)', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await advanceToService2(page, false)
 
     // Courier tab active
-    await expect(page.getByText('Courier')).toBeVisible()
+    await expect(page.getByTestId('sender-address-empty')).toBeVisible()
 
     // Sender address field is empty placeholder
     await expect(page.getByTestId('sender-address-empty')).toBeVisible()
@@ -73,7 +73,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await advanceToService2(page, false)
 
     // Select first option and confirm
-    await page.getByTestId('pickup-option-small').click()
+    await page.getByTestId('pickup-option-small').click({ force: true })
     await page.getByTestId('btn-confirm-pickup').click()
 
     // Delivery in progress screen

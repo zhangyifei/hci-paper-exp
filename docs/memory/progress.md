@@ -186,3 +186,29 @@ Design mockups analyzed. Key findings per condition:
 - Added `lib/supabase/admin-client.ts` as a shared factory so route handlers and scripts use the same secret-key-first configuration.
 - Updated API routes to import `supabaseAdmin` from the new path.
 - Updated `.env.local.example` to document `SUPABASE_SECRET_KEY` as the preferred backend credential and `SUPABASE_SERVICE_ROLE_KEY` as legacy fallback.
+
+### Review Fixes
+- Removed the hardcoded paper-stats password from both `app/api/paper-stats/route.ts` and `app/stats/page.tsx`; server auth now uses `PAPER_STATS_SECRET` or `STATS_SECRET`.
+- Updated the shared Playwright helper to complete the background questionnaire before asserting the ride flow, matching the current questionnaire-first experiment flow.
+- Added basic e2e coverage for the new stats feature: password gate rendering on `/stats` and unauthorized access rejection on `/api/paper-stats`.
+
+### Stats Consolidation
+- Added `lib/paper-stats/analysis.ts` as the shared source of truth for paper-facing aggregation: session summaries, condition stats, survey constructs, comparison groups, demographics, and event-name counts.
+- Refactored `app/api/paper-stats/route.ts` to fetch rows and delegate aggregation entirely to `computePaperStats(...)`.
+- Refactored `scripts/paper-stats.ts`, `scripts/paper-stats-v2.ts`, and `scripts/paper-stats-survey.ts` to reuse the shared analysis/types instead of carrying parallel math and payload-parsing logic.
+- Updated `scripts/lib/supabase-admin.ts` to reuse the shared event-row type.
+
+### Verification
+- `npm run type-check` → passing
+- `npm run build` → passing
+- `npx playwright test tests/e2e/stats-dashboard.spec.ts` → 2 passed
+
+### Stats Review Fixes
+- Excluded bot sessions from survey aggregates, comparison groups, and demographic summaries in `lib/paper-stats/analysis.ts`, aligning all paper-facing outputs with the existing non-bot behavioral filtering.
+- Changed empty group-comparison cells to surface `null` stats so the dashboard renders missing data as `—` instead of fabricated `0.00 (0.00)` values.
+- Expanded `tests/e2e/stats-dashboard.spec.ts` with deterministic assertions for `computePaperStats(...)` and a mocked successful dashboard load, covering the new shared analysis path as well as the UI render path.
+
+### Chart Readability Fix
+- Refactored `components/stats/BehavioralChart.tsx` and `components/stats/SurveyChart.tsx` so scatter dots use a hidden numeric x-axis with deterministic jitter instead of sharing the categorical bar axis.
+- Kept the visible x-axis categorical and non-duplicated, which removes the repeated labels and restores readable spacing between the four conditions.
+- Updated tooltip handling so both bar and dot hover states still resolve to the correct condition label after the axis split.

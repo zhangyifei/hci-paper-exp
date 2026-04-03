@@ -20,7 +20,7 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await completeRidePhase(page)
     await assertNoBanner(page)
     // Footnote visible
-    await expect(page.getByText(/Tap.*Done.*to go home/)).toBeVisible()
+    await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toBeVisible()
   })
 
   test('G3 Eats Entry: delivery address is empty (no auto-fill)', async ({ page }) => {
@@ -47,8 +47,8 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await expect(page.getByText('Pop-Pop')).toBeVisible()
 
     // No distance pills for G3
-    await expect(page.getByText('0.9km')).not.toBeVisible()
-    await expect(page.getByText('0.5km')).not.toBeVisible()
+    await expect(page.getByText('0.9 km')).not.toBeVisible()
+    await expect(page.getByText('0.5 km')).not.toBeVisible()
 
     // Cuisine filters
     await expect(page.getByText('Asian')).toBeVisible()
