@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger'
  *
  *   Cognitive Load (CL1-CL3)  — Raw TLX adapted
  *   Usability      (PU1-PU2)  — SUS adapted
- *   Continuance    (CI1-CI2)  — willingness-to-return
+ *   Continuance    (CI1-CI3)  — future-use intent (3 items)
  *   Manip. Checks  (MC1-MC2)  — interrelatedness perception
  */
 
@@ -60,16 +60,25 @@ const SURVEY_ITEMS: SurveyItem[] = [
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Continuance Intention ─────────────────────────────────────────
+  // Revised 3-item future-use scale (Bhattacherjee 2001 style) — replaces
+  // the legacy CI1/CI2 pilot pair where CI2 measured recommendation, not
+  // continuance. See main.tex Table 3.
   {
     code: 'CI1',
     construct: 'continuance',
-    question: 'I would use this app again for multiple services in a single session.',
+    question: 'I intend to use this super app again for similar cross-service tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'CI2',
     construct: 'continuance',
-    question: 'I would recommend this app to others who need multiple services.',
+    question: 'I predict that I would continue using this super app when I need to complete services in sequence.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'CI3',
+    construct: 'continuance',
+    question: 'I would prefer to use this super app rather than separate apps for similar cross-service tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Manipulation Checks ──────────────────────────────────────────

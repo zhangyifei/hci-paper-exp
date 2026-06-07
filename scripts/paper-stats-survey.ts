@@ -86,7 +86,7 @@ async function main() {
   console.log('=== SURVEY STATISTICS BY CONDITION ===')
   console.log('Construct: Cognitive Load (CL1-CL3, 7-pt scale, higher = more load)')
   console.log('Construct: Usability (PU1-PU2, 7-pt scale, higher = better)')
-  console.log('Construct: Continuance Intention (CI1-CI2, 7-pt scale, higher = more intent)')
+  console.log('Construct: Continuance Intention (CI1-CI3, 7-pt scale, higher = more intent)')
   console.log('Construct: Manipulation Check (MC1-MC2, 7-pt scale, higher = more recognized)')
   console.log('')
 
