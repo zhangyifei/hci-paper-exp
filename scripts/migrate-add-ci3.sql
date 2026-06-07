@@ -12,9 +12,9 @@
 --
 -- Idempotent: safe to re-run.
 
-DROP MATERIALIZED VIEW IF EXISTS participant_responses CASCADE;
+DROP VIEW IF EXISTS participant_responses CASCADE;
 
-CREATE MATERIALIZED VIEW participant_responses AS
+CREATE VIEW participant_responses AS
 SELECT
   e.participant_id,
   e.session_id,
@@ -54,9 +54,4 @@ SELECT
 FROM experiment_events e
 GROUP BY e.participant_id, e.session_id, e.condition;
 
-CREATE INDEX IF NOT EXISTS idx_pr_session
-  ON participant_responses (session_id);
 
--- Refresh once so downstream queries see existing sessions (with CI3 = NULL
--- for any pre-migration data).
-REFRESH MATERIALIZED VIEW participant_responses;
