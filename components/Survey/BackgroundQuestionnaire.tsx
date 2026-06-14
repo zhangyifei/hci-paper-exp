@@ -11,14 +11,23 @@ import { logger } from '@/lib/logger'
  *   - Super-app familiarity  (H7, H8)
  *   - Switching intensity     (H9)
  *
+ * Also includes attention check AC2 (placed before the demographic items),
+ * which must be answered "Rarely". A wrong answer ends the test and
+ * invalidates the session.
+ *
  * The paper's Procedure section says:
  *   "After consenting and filling in a background questionnaire
  *    (demographics, multi-service app experience, switching frequency),
  *    they are hash-assigned to one condition…"
  */
 
+/** AC2 correct answer. */
+export const AC2_CODE = 'AC2'
+export const AC2_CORRECT_VALUE = 'rarely'
+
 interface BackgroundQuestionnaireProps {
   onComplete: () => void
+  onAttentionCheckFail: (code: string, expected: string, actual: string) => void
 }
 
 interface SelectItem {
@@ -28,6 +37,17 @@ interface SelectItem {
 }
 
 const ITEMS: SelectItem[] = [
+  {
+    code: AC2_CODE,
+    question: 'To help us confirm response quality, please select "Rarely" for this question.',
+    options: [
+      { label: 'Never', value: 'never' },
+      { label: 'Rarely', value: 'rarely' },
+      { label: 'Monthly', value: 'monthly' },
+      { label: 'Weekly', value: 'weekly' },
+      { label: 'Daily', value: 'daily' },
+    ],
+  },
   {
     code: 'DEM1',
     question: 'What is your age range?',
@@ -94,7 +114,7 @@ const ITEMS: SelectItem[] = [
   },
 ]
 
-export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuestionnaireProps) {
+export default function BackgroundQuestionnaire({ onComplete, onAttentionCheckFail }: BackgroundQuestionnaireProps) {
   const [responses, setResponses] = useState<Record<string, string>>({})
   const [startedAt] = useState(() => performance.now())
 
@@ -128,6 +148,13 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
       },
     })
 
+    // Attention check: a wrong AC2 answer ends the test and invalidates the session.
+    const ac2 = responses[AC2_CODE]
+    if (ac2 !== AC2_CORRECT_VALUE) {
+      onAttentionCheckFail(AC2_CODE, AC2_CORRECT_VALUE, ac2)
+      return
+    }
+
     onComplete()
   }
 
@@ -139,7 +166,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-[24px] font-bold tracking-tight text-black mb-2">
-            Before We Begin
+            A Few Last Questions
           </h1>
           <p className="text-[14px] text-gray-500 leading-relaxed">
             A few quick questions about yourself and your experience with multi-service apps.
@@ -204,7 +231,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
               : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
           }`}
         >
-          Continue to Task
+          Finish
         </button>
       </div>
     </div>

@@ -79,6 +79,7 @@ export interface SessionDetail {
   condition: Condition
   participantId: string
   isBot: boolean
+  isInvalid: boolean
   eventCount: number
   navLagS: number | null
   s2DurS: number | null
@@ -91,6 +92,7 @@ export interface PaperStatsSummary {
     totalRows: number
     totalSessions: number
     botSessions: number
+    invalidSessions: number
     realSessions: number
     completedRealSessions: number
     completionRate: number
@@ -218,6 +220,19 @@ export function isBotSession(events: PaperStatsEventRow[]): boolean {
   )
 }
 
+/**
+ * A session is invalid when the participant failed an attention check. Such
+ * sessions are terminated mid-flow and must be excluded from all paper-facing
+ * aggregates, just like bot sessions.
+ */
+export function isInvalidSession(events: PaperStatsEventRow[]): boolean {
+  return events.some(
+    (event) =>
+      event.event_name === 'experiment.invalidated' ||
+      event.event_name === 'attention_check.failed',
+  )
+}
+
 function buildNumericSummary(values: number[]): NumericSummary | null {
   if (values.length === 0) {
     return null
@@ -248,12 +263,20 @@ function buildMeanSd(values: number[]): { mean: number | null; sd: number | null
 export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary {
   const bySession = groupEventsBySession(rows)
   const botSessionIds = new Set<string>()
+  const invalidSessionIds = new Set<string>()
 
   for (const [sessionId, events] of bySession) {
     if (isBotSession(events)) {
       botSessionIds.add(sessionId)
     }
+    if (isInvalidSession(events)) {
+      invalidSessionIds.add(sessionId)
+    }
   }
+
+  // Sessions excluded from every paper-facing aggregate (bots OR invalid).
+  const isExcluded = (sessionId: string) =>
+    botSessionIds.has(sessionId) || invalidSessionIds.has(sessionId)
 
   const sessionDetail = [...bySession.entries()].map(([sessionId, events]) => {
     const sorted = [...events].sort((a, b) => a.sequence_id - b.sequence_id)
@@ -267,6 +290,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       condition: sorted[0].condition,
       participantId: sorted[0].participant_id,
       isBot: botSessionIds.has(sessionId),
+      isInvalid: invalidSessionIds.has(sessionId),
       eventCount: sorted.length,
       navLagS:
         tripComplete && service2Entry
@@ -281,7 +305,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
   const conditionStats = Object.fromEntries(
     CONDITIONS.map((condition) => {
       const sessions = sessionDetail.filter(
-        (session) => session.condition === condition && !session.isBot,
+        (session) => session.condition === condition && !session.isBot && !session.isInvalid,
       )
       const completed = sessions.filter((session) => session.completed)
       const navLags = completed
@@ -313,7 +337,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
 
   const surveyRows = rows.filter(
     (row) =>
-      !botSessionIds.has(row.session_id) &&
+      !isExcluded(row.session_id) &&
       (row.event_name === 'questionnaire.completed' || row.event_name === 'survey.completed') &&
       getSurveyAggregates(row.payload) !== null,
   )
@@ -410,7 +434,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
   const famFreqs: Record<string, number> = {}
 
   for (const row of rows) {
-    if (botSessionIds.has(row.session_id)) {
+    if (isExcluded(row.session_id)) {
       continue
     }
 
@@ -434,7 +458,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
     eventNameCounts[row.event_name] = (eventNameCounts[row.event_name] || 0) + 1
   }
 
-  const realSessions = sessionDetail.filter((session) => !session.isBot)
+  const realSessions = sessionDetail.filter((session) => !session.isBot && !session.isInvalid)
   const completedRealSessions = realSessions.filter((session) => session.completed)
 
   return {
@@ -442,6 +466,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       totalRows: rows.length,
       totalSessions: sessionDetail.length,
       botSessions: botSessionIds.size,
+      invalidSessions: invalidSessionIds.size,
       realSessions: realSessions.length,
       completedRealSessions: completedRealSessions.length,
       completionRate:

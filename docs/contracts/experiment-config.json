@@ -12,7 +12,9 @@
       { "id": "large", "label": "Large", "price": 24 }
     ],
     "addressLabel": null,
-    "addressSublabel": null
+    "addressSublabel": null,
+    "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, send a package to 1000 Saint-Catherine Street West using the Courier service."
   },
   "G2": {
     "service2": "courier",
@@ -26,7 +28,9 @@
       { "id": "standard", "label": "Standard (1hr)", "price": 8 }
     ],
     "addressLabel": "Rue Saint-Laurent - spot 01",
-    "addressSublabel": "Near 100 Rue saint-LAURENT"
+    "addressSublabel": "Near 100 Rue saint-LAURENT",
+    "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, use the suggested \"Send Now\" option to send a package to the same destination."
   },
   "G3": {
     "service2": "eats",
@@ -37,7 +41,9 @@
     "bannerCTA": null,
     "pickupOptions": [],
     "addressLabel": null,
-    "addressSublabel": null
+    "addressSublabel": null,
+    "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, order food using the Eats service."
   },
   "G4": {
     "service2": "eats",
@@ -48,6 +54,8 @@
     "bannerCTA": "Eat",
     "pickupOptions": [],
     "addressLabel": "Rue Saint-Laurent - spot 01",
-    "addressSublabel": "Near 100 Rue saint-LAURENT"
+    "addressSublabel": "Near 100 Rue saint-LAURENT",
+    "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, use the suggested \"Eat\" option to order food near the same destination."
   }
 }

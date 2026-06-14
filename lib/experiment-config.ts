@@ -24,6 +24,8 @@ export interface ConditionConfig {
   pickupOptions: PickupOption[]
   addressLabel: string | null
   addressSublabel: string | null
+  rideTaskInstruction: string
+  service2TaskInstruction: string
 }
 
 const config = experimentConfigJson as Record<Condition, ConditionConfig>

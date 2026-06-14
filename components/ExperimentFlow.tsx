@@ -13,7 +13,10 @@ import EatsEntryScreen from './Service2Phase/EatsEntryScreen'
 import EatsRestaurantScreen from './Service2Phase/EatsRestaurantScreen'
 import EatsCompleteScreen from './Service2Phase/EatsCompleteScreen'
 import BackgroundQuestionnaire from './Survey/BackgroundQuestionnaire'
+import ConsentScreen from './Survey/ConsentScreen'
+import ScenarioInstructionScreen from './Survey/ScenarioInstructionScreen'
 import PostTaskSurvey from './Survey/PostTaskSurvey'
+import CompletionScreen from './Survey/CompletionScreen'
 
 interface ExperimentFlowProps {
   condition: Condition
@@ -21,7 +24,9 @@ interface ExperimentFlowProps {
 }
 
 type Screen = 
+  | 'consent'
   | 'questionnaire'
+  | 'scenario_instruction'
   | 'home'
   | 'map'
   | 'ride_almost_there'
@@ -32,18 +37,28 @@ type Screen =
   | 'service2_complete'
   | 'survey'
   | 'finished'
+  | 'terminated'
 
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
-  const [screen, setScreen] = useState<Screen>('questionnaire')
+  const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
   const [rideCompleted, setRideCompleted] = useState(false)
 
-  const handleQuestionnaireComplete = () => {
+  const handleConsentComplete = () => {
+    setScreen('scenario_instruction')
+  }
+
+  const handleScenarioComplete = () => {
     resetNavigationPath()
     setScreen('home')
   }
 
-  const handleSurveyComplete = async () => {
+  const handleSurveyComplete = () => {
+    // After the post-task survey, collect background questions (docx order).
+    setScreen('questionnaire')
+  }
+
+  const handleQuestionnaireComplete = async () => {
     try {
       // Include the full navigation path in the completion event
       const navPath = getNavigationPath()
@@ -59,8 +74,30 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     }
   }
 
+  // Shared handler for both attention checks (AC1 in survey, AC2 in
+  // questionnaire). A failure ends the test and marks the session invalid.
+  const handleAttentionCheckFailure = async (
+    code: string,
+    expected: string | number,
+    actual: string | number | undefined,
+  ) => {
+    logger.trackEvent('attention_check.failed', 'experiment', 'terminated', {
+      payload: { code, expected, actual: actual ?? null },
+    })
+    logger.trackEvent('experiment.invalidated', 'experiment', 'terminated', {
+      payload: { reason: 'attention_check', failedCheck: code },
+    })
+    try {
+      await logger.flushAndWait()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      logger.trackEvent('experiment.error', 'experiment', 'terminated', { error: message })
+    }
+    setScreen('terminated')
+  }
+
   const handleTaskCompletion = () => {
-    // After task is done, go to post-task survey instead of finishing
+    // After task is done, go to post-task survey
     setScreen('survey')
   }
 
@@ -94,8 +131,12 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   return (
     <div className="w-full min-h-full bg-white text-black relative">
-      {screen === 'questionnaire' && (
-        <BackgroundQuestionnaire onComplete={handleQuestionnaireComplete} />
+      {screen === 'consent' && (
+        <ConsentScreen onConsent={handleConsentComplete} />
+      )}
+
+      {screen === 'scenario_instruction' && (
+        <ScenarioInstructionScreen config={config} onStart={handleScenarioComplete} />
       )}
 
       {screen === 'home' && (
@@ -147,25 +188,22 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       )}
 
       {screen === 'survey' && (
-        <PostTaskSurvey onComplete={handleSurveyComplete} />
+        <PostTaskSurvey
+          onComplete={handleSurveyComplete}
+          onAttentionCheckFail={handleAttentionCheckFailure}
+        />
       )}
 
-      {screen === 'finished' && (
-        <div className="flex flex-col items-center justify-center h-full min-h-[600px] px-8 text-center animate-fade-in">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <h1 className="text-[28px] font-bold tracking-tight text-black mb-2">Test Done</h1>
-          <p className="text-gray-500 text-[15px] leading-relaxed">
-            Thank you for completing the experiment.
-          </p>
-          <div className="mt-6 text-[13px] text-gray-400 font-medium">
-            Condition: {condition}
-          </div>
-        </div>
+      {screen === 'questionnaire' && (
+        <BackgroundQuestionnaire
+          onComplete={handleQuestionnaireComplete}
+          onAttentionCheckFail={handleAttentionCheckFailure}
+        />
       )}
+
+      {screen === 'terminated' && <CompletionScreen variant="terminated" />}
+
+      {screen === 'finished' && <CompletionScreen variant="completed" />}
     </div>
   )
 }

@@ -11,6 +11,12 @@ interface LikertScaleProps {
   points?: number
   /** Labels for scale anchors [low, high] */
   anchors?: [string, string]
+  /**
+   * Optional full label for every point (length should equal `points`).
+   * When provided, a numbered legend is rendered below the scale so the
+   * participant knows exactly what each number means (e.g. 5 = Somewhat agree).
+   */
+  pointLabels?: string[]
   /** Called with the selected value (1-based) */
   onAnswer: (value: number) => void
   /** Currently selected value (controlled) */
@@ -22,6 +28,7 @@ export default function LikertScale({
   question,
   points = 7,
   anchors = ['Very Low', 'Very High'],
+  pointLabels,
   onAnswer,
   value,
 }: LikertScaleProps) {
@@ -41,6 +48,7 @@ export default function LikertScale({
           <button
             key={n}
             type="button"
+            data-testid={`likert-${code}-${n}`}
             onClick={() => onAnswer(n)}
             onMouseEnter={() => setHovered(n)}
             onMouseLeave={() => setHovered(null)}
@@ -66,6 +74,19 @@ export default function LikertScale({
         <span className="text-[11px] text-gray-400 font-medium">{anchors[0]}</span>
         <span className="text-[11px] text-gray-400 font-medium">{anchors[1]}</span>
       </div>
+
+      {/* Optional full numeric legend (e.g. for attention checks) */}
+      {pointLabels && pointLabels.length === points && (
+        <div className="mt-3 rounded-[10px] bg-gray-50 border border-gray-100 px-3 py-2.5">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {pointLabels.map((label, i) => (
+              <span key={i} className="text-[11px] text-gray-500 leading-snug">
+                <span className="font-bold text-gray-800">{i + 1}</span> = {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

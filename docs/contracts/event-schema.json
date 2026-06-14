@@ -37,12 +37,19 @@
         "screen.entered",
         "screen.first_interaction",
         "screen.exited",
+        "consent.viewed",
+        "consent.accepted",
+        "scenario.viewed",
+        "scenario.started",
         "questionnaire.started",
         "questionnaire.item_answered",
         "questionnaire.completed",
         "survey.started",
         "survey.item_answered",
         "survey.completed",
+        "attention_check.passed",
+        "attention_check.failed",
+        "experiment.invalidated",
         "experiment.completed",
         "experiment.error"
       ]
@@ -68,15 +75,19 @@
     },
     "flow": {
       "type": "string",
-      "enum": ["ride", "trip_complete", "service2", "experiment", "survey", "questionnaire", "screen"],
+      "enum": ["ride", "trip_complete", "service2", "experiment", "survey", "questionnaire", "screen", "onboarding"],
       "description": "Which flow phase the event belongs to"
     },
     "state": {
       "type": "string",
       "enum": [
         "idle",
+        "consent_active",
+        "consent_complete",
         "questionnaire_active",
         "questionnaire_complete",
+        "scenario_active",
+        "scenario_complete",
         "ride_in_progress",
         "ride_submitting",
         "trip_complete_confirmed",
@@ -86,6 +97,7 @@
         "service2_task_complete",
         "survey_active",
         "survey_complete",
+        "terminated",
         "home",
         "map",
         "ride_almost_there",

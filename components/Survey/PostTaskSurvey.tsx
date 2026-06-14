@@ -6,17 +6,27 @@ import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
 
 /**
- * Post-task survey collecting subjective measures aligned with the paper's
- * Table 2 (Planned Measurement Items for Subjective Constructs):
+ * Post-task survey collecting subjective measures. Item wording matches the
+ * post-task questionnaire (section B) of:
+ *   docs/0613/Appendix_D_SuperApp_Questionnaire_HEC_06102026.docx
  *
- *   Cognitive Load (CL1-CL3)  — Raw TLX adapted
- *   Usability      (PU1-PU2)  — SUS adapted
- *   Continuance    (CI1-CI3)  — future-use intent (3 items)
- *   Manip. Checks  (MC1-MC2)  — interrelatedness perception
+ *   Cognitive Load (CL1-CL3)  — Raw TLX adapted, 1 (Very low) – 7 (Very high)
+ *   Usability      (PU1-PU4)  — SUS adapted, 1 (Strongly disagree) – 7 (Strongly agree)
+ *   Continuance    (CI1-CI3)  — future-use intent
+ *   Manip. Checks  (MC1-MC4)  — prompt / data carryover / service differentiation
+ *   Attention      (AC1)      — must select "Somewhat agree" (value 5). Scored
+ *                              separately; never mixed into the constructs above.
+ *
+ * All items use a 1–7 response scale (LikertScale default points = 7).
  */
+
+/** AC1 correct answer: "Somewhat agree" on the 1–7 scale. */
+export const AC1_CODE = 'AC1'
+export const AC1_CORRECT_VALUE = 5
 
 interface PostTaskSurveyProps {
   onComplete: () => void
+  onAttentionCheckFail: (code: string, expected: number, actual: number) => void
 }
 
 interface SurveyItem {
@@ -24,14 +34,16 @@ interface SurveyItem {
   construct: string
   question: string
   anchors: [string, string]
+  /** Optional full per-point labels (rendered as a legend under the scale). */
+  pointLabels?: string[]
 }
 
 const SURVEY_ITEMS: SurveyItem[] = [
-  // ── Cognitive Load (Raw TLX adapted) ──────────────────────────────
+  // ── Cognitive Load (Raw TLX adapted, 1=Very low … 7=Very high) ─────
   {
     code: 'CL1',
     construct: 'cognitive_load',
-    question: 'How much mental activity was required to complete this task?',
+    question: 'How much mental activity was required to complete these tasks?',
     anchors: ['Very Low', 'Very High'],
   },
   {
@@ -43,60 +55,97 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'CL3',
     construct: 'cognitive_load',
-    question: 'How stressed or annoyed did you feel during the task?',
+    question: 'How stressed or annoyed did you feel during the tasks?',
     anchors: ['Very Low', 'Very High'],
   },
-  // ── Usability (SUS adapted) ───────────────────────────────────────
+  // ── Perceived Usability (SUS adapted) ─────────────────────────────
   {
     code: 'PU1',
     construct: 'usability',
-    question: 'I found this system easy to use for these consecutive tasks.',
+    question: 'I found this super app easy to use for these consecutive tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU2',
     construct: 'usability',
-    question: 'I felt I could efficiently complete my goal using this system.',
+    question: 'I felt I could efficiently complete my goal using this super app.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'PU3',
+    construct: 'usability',
+    question: 'The transition between the two services in the super app felt smooth.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'PU4',
+    construct: 'usability',
+    question: 'The super app made it easy to continue from the first service to the second service.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Continuance Intention ─────────────────────────────────────────
-  // Revised 3-item future-use scale (Bhattacherjee 2001 style) — replaces
-  // the legacy CI1/CI2 pilot pair where CI2 measured recommendation, not
-  // continuance. See main.tex Table 3.
   {
     code: 'CI1',
     construct: 'continuance',
-    question: 'I intend to use this super app again for similar cross-service tasks.',
+    question: 'I would use this super app again for similar service tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'CI2',
     construct: 'continuance',
-    question: 'I predict that I would continue using this super app when I need to complete services in sequence.',
+    question: 'I intend to use this super app again if I need to complete similar tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'CI3',
     construct: 'continuance',
-    question: 'I would prefer to use this super app rather than separate apps for similar cross-service tasks.',
+    question: 'I would choose this super app again for similar tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Manipulation Checks ──────────────────────────────────────────
   {
     code: 'MC1',
     construct: 'manipulation_check',
-    question: 'The system prompted me with the next service at the right moment.',
+    question: 'The super app prompted me with the next service at the right moment.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC2',
     construct: 'manipulation_check',
-    question: 'The system automatically carried my data into the next service.',
+    question: 'The super app automatically carried my data into the next service.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC3',
+    construct: 'manipulation_check',
+    question: 'The second service felt different from the ride service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC4',
+    construct: 'manipulation_check',
+    question: 'The two service tasks required different kinds of actions.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  // ── Attention Check (scored separately, excluded from constructs) ──
+  {
+    code: AC1_CODE,
+    construct: 'attention_check',
+    question: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+    pointLabels: [
+      'Strongly disagree',
+      'Disagree',
+      'Somewhat disagree',
+      'Neither agree nor disagree',
+      'Somewhat agree',
+      'Agree',
+      'Strongly agree',
+    ],
   },
 ]
 
-export default function PostTaskSurvey({ onComplete }: PostTaskSurveyProps) {
+export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: PostTaskSurveyProps) {
   const [responses, setResponses] = useState<Record<string, number>>({})
   const [startedAt] = useState(() => performance.now())
 
@@ -123,9 +172,11 @@ export default function PostTaskSurvey({ onComplete }: PostTaskSurveyProps) {
 
     const durationMs = Math.round(performance.now() - startedAt)
 
-    // Compute construct-level aggregates
+    // Compute construct-level aggregates, excluding the attention check so it
+    // never contaminates cognitive load / usability / continuance / manip checks.
     const constructs: Record<string, number[]> = {}
     for (const item of SURVEY_ITEMS) {
+      if (item.construct === 'attention_check') continue
       if (!constructs[item.construct]) constructs[item.construct] = []
       constructs[item.construct].push(responses[item.code])
     }
@@ -142,6 +193,13 @@ export default function PostTaskSurvey({ onComplete }: PostTaskSurveyProps) {
         durationMs,
       },
     })
+
+    // Attention check: a wrong AC1 answer ends the test and invalidates the session.
+    const ac1 = responses[AC1_CODE]
+    if (ac1 !== AC1_CORRECT_VALUE) {
+      onAttentionCheckFail(AC1_CODE, AC1_CORRECT_VALUE, ac1)
+      return
+    }
 
     onComplete()
   }
@@ -182,6 +240,7 @@ export default function PostTaskSurvey({ onComplete }: PostTaskSurveyProps) {
             code={item.code}
             question={item.question}
             anchors={item.anchors}
+            pointLabels={item.pointLabels}
             value={responses[item.code]}
             onAnswer={(v) => handleAnswer(item.code, item.construct, v)}
           />

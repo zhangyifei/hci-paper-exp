@@ -60,6 +60,7 @@ interface SessionDetail {
   condition: string
   participantId: string
   isBot: boolean
+  isInvalid: boolean
   eventCount: number
   navLagS: number | null
   s2DurS: number | null
@@ -73,6 +74,7 @@ interface StatsData {
     totalRows: number
     totalSessions: number
     botSessions: number
+    invalidSessions: number
     realSessions: number
     completedRealSessions: number
     completionRate: number
@@ -418,6 +420,7 @@ export default function StatsPage() {
             <StatCard label="DB Rows" value={data.overview.totalRows} />
             <StatCard label="Total Sessions" value={data.overview.totalSessions} />
             <StatCard label="Bot Sessions" value={data.overview.botSessions} />
+            <StatCard label="Invalid Sessions" value={data.overview.invalidSessions} sub="failed attn check" />
             <StatCard label="Real Sessions" value={data.overview.realSessions} />
             <StatCard label="Completed" value={data.overview.completedRealSessions} sub="real sessions" />
             <StatCard
@@ -721,20 +724,21 @@ export default function StatsPage() {
               {showSessions ? '▲ Hide' : '▼ Expand'} {data.sessionDetail.length} sessions
             </button>
             <span className="text-[12px] text-gray-400">
-              {data.sessionDetail.filter((s) => !s.isBot && s.completed).length} real completed ·{' '}
-              {data.sessionDetail.filter((s) => s.isBot).length} bots excluded
+              {data.sessionDetail.filter((s) => !s.isBot && !s.isInvalid && s.completed).length} real completed ·{' '}
+              {data.sessionDetail.filter((s) => s.isBot).length} bots ·{' '}
+              {data.sessionDetail.filter((s) => s.isInvalid).length} invalid excluded
             </span>
           </div>
           {showSessions && (
             <PaperTable
-              caption={`Table 5. Per-Session Raw Data (N = ${data.sessionDetail.filter((s) => !s.isBot).length} real sessions)`}
-              note="Nav Lag and Task Time in seconds. Bot sessions shown in gray."
+              caption={`Table 5. Per-Session Raw Data (N = ${data.sessionDetail.filter((s) => !s.isBot && !s.isInvalid).length} real sessions)`}
+              note="Nav Lag and Task Time in seconds. Bot and invalid (failed attention check) sessions are excluded."
               headers={[
                 'Cond.', 'Participant ID', 'Bot', 'Completed',
                 'Nav Lag (s)', 'Task Time (s)', 'Banner', 'Events',
               ]}
               rows={[...data.sessionDetail]
-                .filter((s) => !s.isBot)
+                .filter((s) => !s.isBot && !s.isInvalid)
                 .sort((a, b) => a.condition.localeCompare(b.condition))
                 .map((s) => [
                   <CondTag key="c" cond={s.condition} />,

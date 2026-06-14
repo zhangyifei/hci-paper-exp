@@ -84,6 +84,59 @@ test.describe('Stats dashboard access', () => {
     expect(stats.demographics.famFreqs).toEqual({ weekly: 1 })
   })
 
+  test('computePaperStats excludes invalid (failed attention check) sessions from aggregates', async () => {
+    const rows: PaperStatsEventRow[] = [
+      makeRow({
+        id: 1,
+        session_id: 'session-valid',
+        participant_id: 'participant-valid',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 2,
+            usability_mean: 6,
+            continuance_mean: 5,
+            manipulation_check_mean: 4,
+          },
+          { DEM1: '25-34', DEM2: 'female', FAM1: 'weekly' },
+        ),
+      }),
+      // An invalid session: it has a completed survey row AND an invalidation event.
+      makeRow({
+        id: 2,
+        session_id: 'session-invalid',
+        participant_id: 'participant-invalid',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 7,
+            usability_mean: 1,
+            continuance_mean: 1,
+            manipulation_check_mean: 7,
+          },
+          { DEM1: '55-64', DEM2: 'male', FAM1: 'never' },
+        ),
+      }),
+      makeRow({
+        id: 3,
+        event_name: 'experiment.invalidated',
+        state: 'terminated',
+        session_id: 'session-invalid',
+        participant_id: 'participant-invalid',
+        condition: 'G1',
+        payload: { reason: 'attention_check', failedCheck: 'AC1' },
+      }),
+    ]
+
+    const stats = computePaperStats(rows)
+
+    expect(stats.overview.invalidSessions).toBe(1)
+    expect(stats.surveyByCondition.G1?.n).toBe(1)
+    expect(stats.surveyByCondition.G1?.cognitiveLoad.values).toEqual([2])
+    expect(stats.demographics.ages).toEqual({ '25-34': 1 })
+    expect(stats.demographics.genders).toEqual({ female: 1 })
+  })
+
   test('computePaperStats returns null comparison stats for empty groups', async () => {
     const stats = computePaperStats([])
 
@@ -130,6 +183,7 @@ test.describe('Stats dashboard access', () => {
             totalRows: 4,
             totalSessions: 2,
             botSessions: 0,
+            invalidSessions: 0,
             realSessions: 2,
             completedRealSessions: 1,
             completionRate: 50,
@@ -140,6 +194,7 @@ test.describe('Stats dashboard access', () => {
               condition: 'G1',
               participantId: 'participant-1',
               isBot: false,
+              isInvalid: false,
               eventCount: 10,
               navLagS: 5.5,
               s2DurS: 25.2,

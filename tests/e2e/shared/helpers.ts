@@ -1,12 +1,36 @@
 import { Page, expect } from '@playwright/test'
 
-async function completeBackgroundQuestionnaire(page: Page) {
+async function acceptConsent(page: Page) {
+  const continueButton = page.getByTestId('btn-consent-continue')
+  if (!(await continueButton.isVisible().catch(() => false))) {
+    return
+  }
+
+  await page.getByTestId('consent-acknowledge').click({ force: true })
+  await continueButton.click({ force: true })
+  await expect(page.getByTestId('btn-scenario-start')).toBeVisible({ timeout: 10000 })
+}
+
+async function continueScenarioInstruction(page: Page) {
+  const startButton = page.getByTestId('btn-scenario-start')
+  await expect(startButton).toBeVisible({ timeout: 10000 })
+  await startButton.click({ force: true })
+  await expect(page.getByTestId('btn-start-ride')).toBeVisible({ timeout: 10000 })
+}
+
+/**
+ * Complete the background questionnaire shown at the END of the study,
+ * after the post-task survey.
+ */
+export async function completeBackgroundQuestionnaire(page: Page) {
   const submitButton = page.getByTestId('btn-submit-questionnaire')
   if (!(await submitButton.isVisible().catch(() => false))) {
     return
   }
 
+  // AC2 attention check must be answered "Rarely" to avoid termination.
   const answers = [
+    'questionnaire-option-AC2-rarely',
     'questionnaire-option-DEM1-25-34',
     'questionnaire-option-DEM2-male',
     'questionnaire-option-FAM1-weekly',
@@ -21,16 +45,16 @@ async function completeBackgroundQuestionnaire(page: Page) {
     await option.evaluate((node) => {
       ;(node as HTMLButtonElement).click()
     })
-    await expect(page.getByText(`${index + 1} of 6 answered`, { exact: true })).toBeVisible()
+    await expect(page.getByText(`${index + 1} of ${answers.length} answered`, { exact: true })).toBeVisible()
   }
 
   await submitButton.click({ force: true })
-  await expect(page.getByTestId('btn-start-ride')).toBeVisible({ timeout: 10000 })
 }
 
 /**
  * Navigate to the experiment landing page for a specific condition.
  * Uses ?condition=Gx override so we don't rely on hash assignment.
+ * Passes through consent and scenario onboarding to reach the ride task.
  */
 export async function goToCondition(
   page: Page,
@@ -42,7 +66,8 @@ export async function goToCondition(
   )
   // Wait for redirect to experiment page
   await page.waitForURL(`**/experiment/${condition}`, { timeout: 10000 })
-  await completeBackgroundQuestionnaire(page)
+  await acceptConsent(page)
+  await continueScenarioInstruction(page)
 }
 
 /**
@@ -76,6 +101,34 @@ export async function assertBannerVisible(page: Page, ctaText: string) {
  */
 export async function assertNoBanner(page: Page) {
   await expect(page.getByTestId('btn-banner-cta')).not.toBeVisible()
+}
+
+/**
+ * Complete the 15-item post-task survey (14 constructs + AC1 attention check).
+ * AC1 must be answered "Somewhat agree" (value 5) to avoid termination; all
+ * other items default to value 4 unless overridden.
+ */
+export async function completePostTaskSurvey(
+  page: Page,
+  opts: { ac1Value?: number } = {},
+) {
+  const ac1Value = opts.ac1Value ?? 5
+  const codes = [
+    'CL1', 'CL2', 'CL3',
+    'PU1', 'PU2', 'PU3', 'PU4',
+    'CI1', 'CI2', 'CI3',
+    'MC1', 'MC2', 'MC3', 'MC4',
+    'AC1',
+  ]
+
+  for (const code of codes) {
+    const value = code === 'AC1' ? ac1Value : 4
+    const btn = page.getByTestId(`likert-${code}-${value}`)
+    await btn.scrollIntoViewIfNeeded()
+    await btn.evaluate((node) => (node as HTMLButtonElement).click())
+  }
+
+  await page.getByTestId('btn-submit-survey').click({ force: true })
 }
 
 /**
