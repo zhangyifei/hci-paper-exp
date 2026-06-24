@@ -38,6 +38,20 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await expect(deliveryInput).toHaveAttribute('placeholder', 'Enter delivery address')
   })
 
+  test('G3 delivery address can be filled by tapping a saved place', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, false)
+
+    // Selectable saved places are offered while the field is empty.
+    await expect(page.getByTestId('delivery-saved-places')).toBeVisible()
+    await page.getByTestId('delivery-saved-mcgill').click({ force: true })
+    await expect(page.getByTestId('input-delivery-address')).toHaveValue('3008 Rue McGill')
+
+    // A valid selection lets restaurant selection proceed.
+    await page.getByText('Souvlaki Bar').first().click()
+    await expect(page.getByTestId('btn-order-food')).toBeVisible()
+  })
+
   test('G3 Eats Entry: shows citywide popular restaurant list', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)

@@ -32,6 +32,14 @@ const SENDER_SUGGESTIONS = [
   '1000 Saint-Catherine Street West, Montreal',
 ]
 
+/** Selectable saved/recent sender places so participants can tap instead of
+ *  typing. Present in every condition (a normal app feature); the auto-populate
+ *  pre-fill remains the condition manipulation. */
+const SAVED_SENDER_PLACES: SavedAddress[] = [
+  { id: 'sender-saint-laurent', name: 'Rue Saint-Laurent - spot 01', detail: '100 Rue Saint-Laurent, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'sender-mcgill', name: 'Rue McGill', detail: '3008 Rue McGill, Montreal', icon: '📍' },
+]
+
 /** A valid address has a street number and a street name. */
 function isValidAddress(value: string): boolean {
   const v = value.trim()
@@ -95,6 +103,14 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
     setSenderFocused(false)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { field: 'sender', source: 'suggestion' },
+    })
+  }
+
+  const handlePickSenderSaved = (place: SavedAddress) => {
+    setSenderAddress(place.detail)
+    setSenderTouched(true)
+    logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
+      payload: { field: 'sender', source: 'saved', placeId: place.id },
     })
   }
 
@@ -201,6 +217,23 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
 
           {config.autoPopulate && config.addressSublabel && !senderFocused && (
             <p className="mt-1.5 text-[12px] text-gray-400 pl-1">{config.addressSublabel}</p>
+          )}
+
+          {/* Selectable saved places (shown when the sender field is empty so
+              participants can tap instead of typing the full address). */}
+          {senderAddress.trim().length === 0 && (
+            <div className="mt-3 space-y-1" data-testid="sender-saved-places">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
+              {SAVED_SENDER_PLACES.map((place) => (
+                <button key={place.id} type="button" onClick={() => handlePickSenderSaved(place)} data-testid={`sender-saved-${place.id}`} className="w-full flex items-center text-left active:opacity-60 transition-opacity py-2">
+                  <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{place.icon}</div>
+                  <div className="flex-1 border-b border-gray-100 pb-3">
+                    <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">{place.name}{place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}</div>
+                    <div className="text-[13px] text-gray-500">{place.detail}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
 
           {senderError && (

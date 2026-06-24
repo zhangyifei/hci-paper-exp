@@ -26,6 +26,21 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(page.getByTestId('tab-courier')).toBeVisible()
   })
 
+  test('destination can be filled by tapping a saved place', async ({ page }) => {
+    // Focusing the field surfaces selectable saved/recent destinations.
+    await page.getByTestId('input-destination').click({ force: true })
+    await expect(page.getByTestId('destination-suggestions')).toBeVisible()
+
+    await page.getByTestId('destination-suggestion-saint-catherine').click({ force: true })
+    await expect(page.getByTestId('input-destination')).toHaveValue('1000 Saint-Catherine Street West')
+
+    // A valid selection lets the ride start without typing.
+    await page.getByTestId('btn-start-ride').click({ force: true })
+    await page.getByTestId('btn-choose-uber-x').click({ force: true })
+    await page.waitForTimeout(4000)
+    await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible({ timeout: 10000 })
+  })
+
   test('ride phase completes and shows Trip Complete', async ({ page }) => {
     await completeRidePhase(page)
     await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible()
