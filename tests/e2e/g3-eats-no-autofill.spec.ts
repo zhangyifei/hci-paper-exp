@@ -31,8 +31,11 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
     await expect(page.getByTestId('deliver-address-empty')).toBeVisible()
     await expect(page.getByTestId('deliver-address-autofilled')).not.toBeVisible()
 
-    // Placeholder text
-    await expect(page.getByText('Enter delivery address')).toBeVisible()
+    // Editable delivery address input with placeholder
+    const deliveryInput = page.getByTestId('input-delivery-address')
+    await expect(deliveryInput).toBeVisible()
+    await expect(deliveryInput).toHaveValue('')
+    await expect(deliveryInput).toHaveAttribute('placeholder', 'Enter delivery address')
   })
 
   test('G3 Eats Entry: shows citywide popular restaurant list', async ({ page }) => {
@@ -58,6 +61,11 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
   test('G3 full flow: select restaurant → restaurant page → order → complete', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
+
+    // Enter the delivery address (now required before selecting a restaurant)
+    const deliveryInput = page.getByTestId('input-delivery-address')
+    await deliveryInput.click({ force: true })
+    await deliveryInput.fill('1000 Saint-Catherine Street West')
 
     // Tap Souvlaki Bar
     await page.getByText('Souvlaki Bar').first().click()

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import { logger } from '@/lib/logger'
@@ -10,12 +10,39 @@ interface HomeScreenProps {
   onService2TabClick?: () => void
 }
 
+/** A valid address has at least one number and some letters. */
+function isValidAddress(value: string): boolean {
+  const v = value.trim()
+  return v.length >= 5 && /\d/.test(v) && /[a-zA-Z]/.test(v)
+}
+
 export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: HomeScreenProps) {
+  const [destination, setDestination] = useState('')
+  const [showError, setShowError] = useState(false)
+
   useEffect(() => {
     logger.trackEvent('ride.started', 'ride', 'ride_in_progress')
     const cleanup = enterScreen('home', 'ride')
     return cleanup
   }, [])
+
+  const destinationValid = isValidAddress(destination)
+
+  const handleDestinationChange = (value: string) => {
+    setDestination(value)
+    if (showError && isValidAddress(value)) setShowError(false)
+  }
+
+  const handleStartRide = () => {
+    if (!destinationValid) {
+      setShowError(true)
+      return
+    }
+    logger.trackEvent('ride.destination_entered', 'ride', 'ride_in_progress', {
+      payload: { destination: destination.trim() },
+    })
+    onNext()
+  }
 
   return (
     <div className="relative w-full min-h-full bg-[#FDFDFD] flex flex-col animate-fade-in">
@@ -36,20 +63,38 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
         >Courier</div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar — destination input (required to start a ride) */}
       <div className="px-4 mb-8">
-        <div className="bg-white rounded-full h-[52px] flex items-center px-4 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-gray-50 active:scale-[0.98] transition-transform duration-200">
-          <div className="flex items-center space-x-4">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className={`bg-white rounded-full h-[52px] flex items-center px-4 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.08)] border ${showError ? 'border-red-500' : 'border-gray-50'} active:scale-[0.98] transition-transform duration-200`}>
+          <div className="flex items-center space-x-4 flex-1 min-w-0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <span className="text-[17px] font-semibold text-black">Where to?</span>
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              value={destination}
+              onChange={(e) => handleDestinationChange(e.target.value)}
+              onBlur={() => setShowError(!isValidAddress(destination) && destination.length > 0)}
+              placeholder="Where to?"
+              aria-label="Destination address"
+              aria-invalid={showError}
+              data-testid="input-destination"
+              className="flex-1 min-w-0 bg-transparent outline-none text-[17px] font-semibold text-black placeholder:text-black placeholder:font-semibold"
+            />
           </div>
-          <div className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-bold flex items-center text-black">
+          <div className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-bold flex items-center text-black flex-shrink-0 ml-2">
             <span className="mr-1">🕒</span> Now ▾
           </div>
         </div>
+        {showError && (
+          <p data-testid="destination-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Enter your destination address to continue.
+          </p>
+        )}
       </div>
 
       {/* Suggestions Section */}
@@ -162,9 +207,10 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
       {!service2Tab && (
         <div className="sticky bottom-[70px] w-full px-4 pb-4 pt-4 bg-gradient-to-t from-white via-white to-transparent z-10">
             <button
-              onClick={onNext}
+              onClick={handleStartRide}
+              aria-disabled={!destinationValid}
               data-testid="btn-start-ride"
-              className="w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg active:scale-[0.97] active:bg-gray-900 transition-all duration-200 flex items-center justify-center"
+              className={`w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg transition-all duration-200 flex items-center justify-center ${destinationValid ? 'active:scale-[0.97] active:bg-gray-900' : 'opacity-40'}`}
             >
               Start a Ride
             </button>

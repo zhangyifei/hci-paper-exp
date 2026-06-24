@@ -6,72 +6,65 @@ import { logger } from '@/lib/logger'
 interface GuidanceBannerProps {
   /** Neutral reminder text (identical position across conditions). */
   text: string
-  /** Idle delay before the banner first appears. */
+  /** Idle delay before the banner (re)appears. */
   thresholdMs: number
-  /**
-   * Incremented by a parent "Help" control to re-show the banner after the
-   * participant explicitly requests help (the banner otherwise appears only
-   * once per task).
-   */
-  helpNonce?: number
 }
 
 /**
  * Non-blocking idle guidance banner.
  *
- * Appears once per task after `thresholdMs` of no interaction, in the same
- * position across all conditions, with neutral language. It is dismissible,
- * never auto-navigates, and only re-appears if the participant requests help
- * (via `helpNonce`).
+ * Appears automatically after `thresholdMs` of no interaction, in the same
+ * position across all conditions, with neutral language. It is dismissible and
+ * never auto-navigates. After being dismissed it intelligently re-arms, so the
+ * hint resurfaces only if the participant stalls again — staying out of the way
+ * while they are actively interacting.
  */
-export default function GuidanceBanner({ text, thresholdMs, helpNonce = 0 }: GuidanceBannerProps) {
+export default function GuidanceBanner({ text, thresholdMs }: GuidanceBannerProps) {
   const [visible, setVisible] = useState(false)
-  const shownOnceRef = useRef(false)
+  const visibleRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const firstHelpRun = useRef(true)
+  // Shared re-arm function so the dismiss handler and activity listeners agree.
+  const armRef = useRef<() => void>(() => {})
 
-  // Auto-show once after the idle threshold; reset on any interaction until shown.
   useEffect(() => {
-    const arm = () => {
-      if (shownOnceRef.current) return
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => {
-        if (shownOnceRef.current) return
-        shownOnceRef.current = true
-        setVisible(true)
-        logger.trackEvent('guidance.banner_shown', 'screen', 'idle', {
-          payload: { reason: 'idle', text },
-        })
-      }, thresholdMs)
+    const show = () => {
+      if (visibleRef.current) return
+      visibleRef.current = true
+      setVisible(true)
+      logger.trackEvent('guidance.banner_shown', 'screen', 'idle', {
+        payload: { reason: 'idle', text },
+      })
     }
 
+    const arm = () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(show, thresholdMs)
+    }
+    armRef.current = arm
+
+    // Any interaction resets the idle countdown — but only while hidden, so an
+    // already-visible hint stays put until the participant dismisses it.
     const onActivity = () => {
-      if (!shownOnceRef.current) arm()
+      if (visibleRef.current) return
+      arm()
     }
 
     arm()
     document.addEventListener('pointerdown', onActivity, { passive: true })
+    document.addEventListener('keydown', onActivity)
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
       document.removeEventListener('pointerdown', onActivity)
+      document.removeEventListener('keydown', onActivity)
     }
   }, [thresholdMs, text])
 
-  // Re-show when the participant explicitly requests help.
-  useEffect(() => {
-    if (firstHelpRun.current) {
-      firstHelpRun.current = false
-      return
-    }
-    setVisible(true)
-    logger.trackEvent('guidance.banner_shown', 'screen', 'idle', {
-      payload: { reason: 'help', text },
-    })
-  }, [helpNonce, text])
-
   const handleDismiss = () => {
+    visibleRef.current = false
     setVisible(false)
     logger.trackEvent('guidance.banner_dismissed', 'screen', 'idle')
+    // Re-arm so the hint can resurface after another idle period.
+    armRef.current()
   }
 
   if (!visible) return null

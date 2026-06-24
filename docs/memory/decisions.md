@@ -145,3 +145,13 @@
 **Decision**: Make both questionnaires full-browser with always-active submit buttons that validate on click (top warning banner, accessible per-item highlighting that is not colour-only, scroll-to/focus first unanswered, answers preserved). Paginate the post-task survey into two pages with a progress bar, "Page X of 2", sequential participant-facing numbering (internal codes hidden), and the attention check placed mid-survey.
 **Date**: 2026-06-24
 **Rationale**: Implements the PDF questionnaire and submit-behaviour requirements while keeping AC-failure termination intact.
+
+### ADR-028: Remove Persistent Task Indicator; Self-Re-Arming Idle Guidance Banner
+**Decision**: Remove the always-on `TaskIndicator` pill (and its `?` Help affordance / `helpNonce` plumbing). The only in-task guidance is now the idle `GuidanceBanner`, which auto-appears after `guidanceThresholdMs` (10s) of inactivity and, once dismissed, re-arms so it resurfaces only if the participant stalls again.
+**Date**: 2026-06-24
+**Rationale**: The persistent indicator was visual clutter and a constant prompt. A self-re-arming idle hint is less intrusive and "smarter" — it stays out of the way while the participant is active and only re-offers help when they appear stuck. The `indicator` config field is retained but no longer rendered.
+
+### ADR-029: Participants Must Enter Required Addresses (Ride Destination + Eats Delivery)
+**Decision**: Make the ride Home "Where to?" a real, required destination input (gates "Start a Ride") for all conditions, and make the Eats no-autofill (G3) "Deliver to" a real, required input that must be valid before a restaurant can be selected. Auto-populate conditions (G2 sender, G4 delivery) remain pre-filled as the manipulation.
+**Date**: 2026-06-24
+**Rationale**: Task instructions told participants to "enter your destination/delivery address," but the ride destination was a static label and the G3 delivery address was a non-interactive div, so the info was never actually entered. Requiring entry in the non-autofill conditions makes the Eats flow symmetric with the already-interactive Courier flow and makes the auto-populate manipulation (and Service 2 timing) meaningful. Validation reuses the existing street-address heuristic (length ≥ 5, contains a digit and letters). Test ids `input-destination` and `input-delivery-address` added; `deliver-address-empty` wrapper id preserved.
