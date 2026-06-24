@@ -80,7 +80,11 @@ export async function goToCondition(
  * Complete the Ride phase: Home → Map → RideAlmostThere → TripComplete
  */
 export async function completeRidePhase(page: Page) {
-  // Home screen → tap Start a Ride
+  // Home screen → enter destination address (now required), then Start a Ride
+  const destination = page.getByTestId('input-destination')
+  await destination.click({ force: true })
+  await destination.fill('1000 Saint-Catherine Street West')
+
   await page.getByTestId('btn-start-ride').click({ force: true })
 
   // Map screen → tap Choose Uber X

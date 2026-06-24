@@ -13,8 +13,20 @@ interface EatsEntryScreenProps {
   onBack: () => void
 }
 
+/** A valid address has at least one number and some letters. */
+function isValidAddress(value: string): boolean {
+  const v = value.trim()
+  return v.length >= 5 && /\d/.test(v) && /[a-zA-Z]/.test(v)
+}
+
 export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScreenProps) {
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
+
+  // Delivery address (editable; pre-filled with the suggestion when permitted).
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(
+    config.autoPopulate && config.addressLabel ? config.addressLabel : '',
+  )
+  const [showAddressError, setShowAddressError] = useState(false)
 
   useEffect(() => {
     markService2Entry()
@@ -24,11 +36,30 @@ export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScr
     return cleanup
   }, [])
 
+  // Auto-filled conditions don't require manual entry; otherwise the address
+  // must be a valid street address before a restaurant can be selected.
+  const addressValid = config.autoPopulate || isValidAddress(deliveryAddress)
+
+  const handleDeliveryChange = (value: string) => {
+    setDeliveryAddress(value)
+    if (showAddressError && isValidAddress(value)) setShowAddressError(false)
+    logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active', {
+      payload: { field: 'delivery' },
+    })
+  }
+
   const handleAddressEdit = () => {
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active')
   }
 
   const handleRestaurantSelect = (restaurantName: string) => {
+    if (!addressValid) {
+      setShowAddressError(true)
+      return
+    }
+    logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
+      payload: { field: 'delivery', address: deliveryAddress.trim() },
+    })
     logger.trackEvent('service2.option_selected', 'service2', 'service2_task_active', { payload: { optionId: restaurantName, optionLabel: restaurantName } })
     onNext(service2EntryEventId)
   }
@@ -108,13 +139,33 @@ export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScr
                     <div className="absolute top-4 right-4 text-[13px] text-gray-400 font-bold cursor-pointer" onClick={handleAddressEdit}>Edit</div>
                  </div>
               ) : (
-                <div className="bg-gray-100 rounded-[16px] h-[52px] flex items-center px-4 active:bg-gray-200 transition-colors" data-testid="deliver-address-empty">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black mr-3">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <span className="text-gray-500 font-medium text-[15px]">Enter delivery address</span>
-                </div>
+                <>
+                  <div className={`bg-gray-100 rounded-[16px] h-[52px] flex items-center px-4 border-2 transition-colors ${showAddressError ? 'border-red-500' : 'border-transparent focus-within:border-black'}`} data-testid="deliver-address-empty">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black mr-3 flex-shrink-0" aria-hidden>
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <input
+                          type="text"
+                          inputMode="text"
+                          autoComplete="off"
+                          value={deliveryAddress}
+                          onChange={(e) => handleDeliveryChange(e.target.value)}
+                          onBlur={() => setShowAddressError(!isValidAddress(deliveryAddress) && deliveryAddress.length > 0)}
+                          placeholder="Enter delivery address"
+                          aria-label="Delivery address"
+                          aria-invalid={showAddressError}
+                          data-testid="input-delivery-address"
+                          className="flex-1 bg-transparent outline-none text-[15px] font-medium text-black placeholder:text-gray-500"
+                      />
+                  </div>
+                  {showAddressError && (
+                    <p data-testid="delivery-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Enter your delivery address before choosing a restaurant.
+                    </p>
+                  )}
+                </>
               )}
           </div>
 

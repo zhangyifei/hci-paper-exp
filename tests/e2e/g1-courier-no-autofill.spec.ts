@@ -18,7 +18,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
   })
 
   test('home screen shows correct content', async ({ page }) => {
-    await expect(page.getByText('Where to?')).toBeVisible()
+    await expect(page.getByTestId('input-destination')).toBeVisible()
     await expect(page.getByText('Start a Ride')).toBeVisible()
     // Uber/Eats/Courier tab bar visible
     await expect(page.getByText('Rides', { exact: true }).first()).toBeVisible()

@@ -3,7 +3,6 @@ import { Condition, ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
 import PhoneFrame from './shared/PhoneFrame'
-import TaskIndicator from './shared/TaskIndicator'
 import GuidanceBanner from './shared/GuidanceBanner'
 import HomeScreen from './RidePhase/HomeScreen'
 import MapScreen from './RidePhase/MapScreen'
@@ -58,7 +57,6 @@ const TASK2_SCREENS: Screen[] = [
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
-  const [helpNonce, setHelpNonce] = useState(0)
 
   const handleConsentComplete = () => {
     setScreen('scenario_instruction')
@@ -206,15 +204,11 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     return (
       <PhoneFrame
         overlay={
-          <>
-            <TaskIndicator label={activeTask.indicator} onHelp={() => setHelpNonce((n) => n + 1)} />
-            <GuidanceBanner
-              key={taskPhase}
-              text={activeTask.guidanceText}
-              thresholdMs={config.guidanceThresholdMs}
-              helpNonce={helpNonce}
-            />
-          </>
+          <GuidanceBanner
+            key={taskPhase}
+            text={activeTask.guidanceText}
+            thresholdMs={config.guidanceThresholdMs}
+          />
         }
       >
         {inner}
