@@ -15,6 +15,12 @@ async function continueScenarioInstruction(page: Page) {
   const startButton = page.getByTestId('btn-scenario-start')
   await expect(startButton).toBeVisible({ timeout: 10000 })
   await startButton.click({ force: true })
+
+  // Task 1 instruction page → Start Task 1
+  const startTask = page.getByTestId('btn-start-task')
+  await expect(startTask).toBeVisible({ timeout: 10000 })
+  await startTask.click({ force: true })
+
   await expect(page.getByTestId('btn-start-ride')).toBeVisible({ timeout: 10000 })
 }
 
@@ -113,57 +119,60 @@ export async function completePostTaskSurvey(
   opts: { ac1Value?: number } = {},
 ) {
   const ac1Value = opts.ac1Value ?? 5
-  const codes = [
-    'CL1', 'CL2', 'CL3',
-    'PU1', 'PU2', 'PU3', 'PU4',
-    'CI1', 'CI2', 'CI3',
-    'MC1', 'MC2', 'MC3', 'MC4',
-    'AC1',
-  ]
+  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'AC1', 'PU2', 'PU3', 'PU4']
+  const page2 = ['CI1', 'CI2', 'CI3', 'MC1', 'MC2', 'MC3', 'MC4']
 
-  for (const code of codes) {
+  const answer = async (code: string) => {
     const value = code === 'AC1' ? ac1Value : 4
     const btn = page.getByTestId(`likert-${code}-${value}`)
     await btn.scrollIntoViewIfNeeded()
     await btn.evaluate((node) => (node as HTMLButtonElement).click())
   }
 
+  for (const code of page1) await answer(code)
+  await page.getByTestId('btn-survey-continue').click({ force: true })
+  for (const code of page2) await answer(code)
+
   await page.getByTestId('btn-submit-survey').click({ force: true })
 }
 
 /**
- * Advance from Trip Complete to Service 2 (via banner CTA or Back to Home)
+ * Fill the interactive Courier entry form (sender + recipient + option) and
+ * confirm. Works for both auto-fill (G2) and empty (G1) conditions.
+ */
+export async function completeCourierEntry(page: Page) {
+  const sender = page.getByTestId('input-sender-address')
+  await sender.click({ force: true })
+  await sender.fill('100 Rue Saint-Laurent, Montreal')
+
+  // Pick a saved recipient address.
+  await page.getByTestId('saved-address-rue-mcgill').click({ force: true })
+  await expect(page.getByTestId('recipient-selected')).toBeVisible()
+
+  await page.getByTestId('btn-confirm-pickup').click({ force: true })
+}
+
+/**
+ * Advance from Trip Complete to Service 2. The transition cue differs by
+ * condition (banner CTA vs neutral continue), then a Task 2 instruction page
+ * gates entry into the second service for all conditions.
  */
 export async function advanceToService2(page: Page, viaBanner = false) {
   if (viaBanner) {
     await page.getByTestId('btn-banner-cta').click({ force: true })
-    return
+  } else {
+    await page.getByTestId('btn-back-to-home').click({ force: true })
   }
 
-  await page.getByTestId('btn-back-to-home').click({ force: true })
+  // Task 2 instruction page → Start Task 2
+  const startTask = page.getByTestId('btn-start-task')
+  await expect(startTask).toBeVisible({ timeout: 10000 })
+  await startTask.click({ force: true })
 
-  const service2Markers = [
-    page.getByTestId('sender-address-empty'),
-    page.getByTestId('sender-address-autofilled'),
-    page.getByTestId('deliver-address-empty'),
-    page.getByTestId('deliver-address-autofilled'),
-  ]
-
-  if (await service2Markers[0].isVisible().catch(() => false)) return
-  if (await service2Markers[2].isVisible().catch(() => false)) return
-
-  await page.getByTestId('tab-eats').click({ force: true })
-  if (
-    (await page.getByTestId('deliver-address-empty').isVisible().catch(() => false)) ||
-    (await page.getByTestId('deliver-address-autofilled').isVisible().catch(() => false))
-  ) {
-    return
-  }
-
-  await page.getByTestId('tab-courier').click({ force: true })
   await expect(
     page
-      .getByTestId('sender-address-empty')
-      .or(page.getByTestId('sender-address-autofilled')),
+      .getByTestId('input-sender-address')
+      .or(page.getByTestId('deliver-address-empty'))
+      .or(page.getByTestId('deliver-address-autofilled')),
   ).toBeVisible({ timeout: 10000 })
 }

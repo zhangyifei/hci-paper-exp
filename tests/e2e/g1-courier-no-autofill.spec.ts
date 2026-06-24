@@ -4,6 +4,7 @@ import {
   completeRidePhase,
   assertNoBanner,
   advanceToService2,
+  completeCourierEntry,
 } from './shared/helpers'
 
 test.describe('G1 — Ride + Courier, No Auto-fill', () => {
@@ -43,12 +44,10 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    // Courier tab active
-    await expect(page.getByTestId('sender-address-empty')).toBeVisible()
-
-    // Sender address field is empty placeholder
-    await expect(page.getByTestId('sender-address-empty')).toBeVisible()
-    await expect(page.getByTestId('sender-address-autofilled')).not.toBeVisible()
+    // Sender input present and empty (no auto-fill)
+    await expect(page.getByTestId('input-sender-address')).toBeVisible()
+    await expect(page.getByTestId('input-sender-address')).toHaveValue('')
+    await expect(page.getByText('SUGGESTED')).not.toBeVisible()
   })
 
   test('G1 Courier Entry: shows generic pricing options (Small/Medium/Large)', async ({ page }) => {
@@ -72,9 +71,9 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    // Select first option and confirm
+    // Select first option, fill addresses, then confirm
     await page.getByTestId('pickup-option-small').click({ force: true })
-    await page.getByTestId('btn-confirm-pickup').click()
+    await completeCourierEntry(page)
 
     // Delivery in progress screen
     await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })

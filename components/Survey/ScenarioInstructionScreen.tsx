@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import StatusBar from '../shared/StatusBar'
+import ResearchPage from '../shared/ResearchPage'
 import type { ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 
@@ -35,10 +35,19 @@ export default function ScenarioInstructionScreen({
   }
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in">
-      <StatusBar />
-
-      <div className="flex-1 overflow-y-auto px-5 pt-[72px] pb-8 no-scrollbar">
+    <ResearchPage
+      data-testid="screen-scenario"
+      footer={
+        <button
+          onClick={handleStart}
+          data-testid="btn-scenario-start"
+          className="w-full h-[54px] rounded-[14px] font-bold text-[16px] transition-all active:scale-[0.98] bg-black text-white hover:bg-gray-900"
+        >
+          Continue
+        </button>
+      }
+    >
+      <div className="animate-fade-in">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-[24px] font-bold tracking-tight text-black mb-2">
@@ -100,17 +109,6 @@ export default function ScenarioInstructionScreen({
           based on your experience.
         </p>
       </div>
-
-      {/* Start */}
-      <div className="sticky bottom-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-50 pb-[34px]">
-        <button
-          onClick={handleStart}
-          data-testid="btn-scenario-start"
-          className="w-full h-[54px] rounded-[16px] font-bold text-[17px] shadow-lg transition-all active:scale-[0.97] flex items-center justify-center bg-black text-white hover:bg-gray-900"
-        >
-          Start Tasks
-        </button>
-      </div>
-    </div>
+    </ResearchPage>
   )
 }

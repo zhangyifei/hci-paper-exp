@@ -21,13 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <div className="device-frame">
-          <div className="device-screen">
-            {children}
-          </div>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
