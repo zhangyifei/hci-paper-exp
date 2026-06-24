@@ -19,6 +19,21 @@ function isValidAddress(value: string): boolean {
   return v.length >= 5 && /\d/.test(v) && /[a-zA-Z]/.test(v)
 }
 
+interface SavedPlace {
+  id: string
+  name: string
+  detail: string
+  tag?: string
+  icon: string
+}
+
+/** Selectable saved/recent delivery places so participants can tap instead of
+ *  typing. Present whenever the address is not auto-populated. */
+const SAVED_DELIVERY_PLACES: SavedPlace[] = [
+  { id: 'mcgill', name: '3008 Rue McGill', detail: 'Old Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: 'Home', icon: '🏠' },
+]
+
 export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScreenProps) {
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
 
@@ -50,6 +65,14 @@ export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScr
 
   const handleAddressEdit = () => {
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active')
+  }
+
+  const handlePickDeliverySaved = (place: SavedPlace) => {
+    setDeliveryAddress(place.name)
+    setShowAddressError(false)
+    logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
+      payload: { field: 'delivery', source: 'saved', placeId: place.id },
+    })
   }
 
   const handleRestaurantSelect = (restaurantName: string) => {
@@ -164,6 +187,22 @@ export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScr
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       Enter your delivery address before choosing a restaurant.
                     </p>
+                  )}
+
+                  {/* Selectable saved places (tap instead of typing the address). */}
+                  {deliveryAddress.trim().length === 0 && (
+                    <div className="mt-3 space-y-1" data-testid="delivery-saved-places">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
+                      {SAVED_DELIVERY_PLACES.map((place) => (
+                        <button key={place.id} type="button" onClick={() => handlePickDeliverySaved(place)} data-testid={`delivery-saved-${place.id}`} className="w-full flex items-center text-left active:opacity-60 transition-opacity py-2">
+                          <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{place.icon}</div>
+                          <div className="flex-1 border-b border-gray-100 pb-3">
+                            <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">{place.name}{place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}</div>
+                            <div className="text-[13px] text-gray-500">{place.detail}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </>
               )}

@@ -16,8 +16,25 @@ function isValidAddress(value: string): boolean {
   return v.length >= 5 && /\d/.test(v) && /[a-zA-Z]/.test(v)
 }
 
+interface SavedPlace {
+  id: string
+  name: string
+  detail: string
+  tag?: string
+  icon: string
+}
+
+/** Selectable saved/recent destinations so participants can tap instead of
+ *  typing the full address. The task destination is offered as a recent place. */
+const SAVED_DESTINATIONS: SavedPlace[] = [
+  { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'mcgill', name: '3008 Rue McGill', detail: 'Old Montreal', icon: '📍' },
+  { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: 'Home', icon: '🏠' },
+]
+
 export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: HomeScreenProps) {
   const [destination, setDestination] = useState('')
+  const [focused, setFocused] = useState(false)
   const [showError, setShowError] = useState(false)
 
   useEffect(() => {
@@ -28,9 +45,28 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
 
   const destinationValid = isValidAddress(destination)
 
+  const query = destination.trim().toLowerCase()
+  const suggestions = focused
+    ? SAVED_DESTINATIONS.filter(
+        (p) =>
+          query.length === 0 ||
+          p.name.toLowerCase().includes(query) ||
+          p.detail.toLowerCase().includes(query),
+      )
+    : []
+
   const handleDestinationChange = (value: string) => {
     setDestination(value)
     if (showError && isValidAddress(value)) setShowError(false)
+  }
+
+  const handlePickDestination = (place: SavedPlace) => {
+    setDestination(place.name)
+    setFocused(false)
+    setShowError(false)
+    logger.trackEvent('ride.destination_selected', 'ride', 'ride_in_progress', {
+      payload: { destinationId: place.id, destination: place.name },
+    })
   }
 
   const handleStartRide = () => {
@@ -63,36 +99,64 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
         >Courier</div>
       </div>
 
-      {/* Search Bar — destination input (required to start a ride) */}
+      {/* Search Bar — destination input (tap a saved place or type) */}
       <div className="px-4 mb-8">
-        <div className={`bg-white rounded-full h-[52px] flex items-center px-4 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.08)] border ${showError ? 'border-red-500' : 'border-gray-50'} active:scale-[0.98] transition-transform duration-200`}>
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              value={destination}
-              onChange={(e) => handleDestinationChange(e.target.value)}
-              onBlur={() => setShowError(!isValidAddress(destination) && destination.length > 0)}
-              placeholder="Where to?"
-              aria-label="Destination address"
-              aria-invalid={showError}
-              data-testid="input-destination"
-              className="flex-1 min-w-0 bg-transparent outline-none text-[17px] font-semibold text-black placeholder:text-black placeholder:font-semibold"
-            />
+        <div className="relative">
+          <div className={`bg-white rounded-full h-[52px] flex items-center px-4 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.08)] border ${showError ? 'border-red-500' : focused ? 'border-black' : 'border-gray-50'} transition-colors duration-200`}>
+            <div className="flex items-center space-x-4 flex-1 min-w-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                value={destination}
+                onChange={(e) => handleDestinationChange(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => { setFocused(false); setShowError(!isValidAddress(destination) && destination.length > 0) }}
+                placeholder="Where to?"
+                aria-label="Destination address"
+                aria-invalid={showError}
+                data-testid="input-destination"
+                className="flex-1 min-w-0 bg-transparent outline-none text-[17px] font-semibold text-black placeholder:text-black placeholder:font-semibold"
+              />
+            </div>
+            <div className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-bold flex items-center text-black flex-shrink-0 ml-2">
+              <span className="mr-1">🕒</span> Now ▾
+            </div>
           </div>
-          <div className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-bold flex items-center text-black flex-shrink-0 ml-2">
-            <span className="mr-1">🕒</span> Now ▾
-          </div>
+
+          {suggestions.length > 0 && (
+            <ul role="listbox" aria-label="Saved and recent destinations" data-testid="destination-suggestions" className="absolute z-40 left-0 right-0 mt-2 bg-white rounded-[16px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden">
+              {suggestions.map((place) => (
+                <li key={place.id} role="option" aria-selected={destination === place.name}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handlePickDestination(place)}
+                    data-testid={`destination-suggestion-${place.id}`}
+                    className="w-full flex items-center text-left px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[15px] flex-shrink-0">{place.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-[15px] text-black flex items-center">
+                        {place.name}
+                        {place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}
+                      </div>
+                      <div className="text-[13px] text-gray-500 truncate">{place.detail}</div>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         {showError && (
           <p data-testid="destination-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Enter your destination address to continue.
+            Tap a saved place or enter your destination to continue.
           </p>
         )}
       </div>
