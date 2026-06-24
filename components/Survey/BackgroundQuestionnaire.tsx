@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
-import StatusBar from '../shared/StatusBar'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
+import ResearchPage from '../shared/ResearchPage'
 import { logger } from '@/lib/logger'
 
 /**
@@ -114,9 +114,19 @@ const ITEMS: SelectItem[] = [
   },
 ]
 
+/**
+ * Participant-facing order with the attention check (AC2) placed in the middle.
+ * Internal codes (AC2, DEM1, …) are never shown — only sequential numbers.
+ */
+const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', AC2_CODE, 'FAM2', 'SWI1', 'SWI2']
+const ITEM_BY_CODE: Record<string, SelectItem> = Object.fromEntries(ITEMS.map((i) => [i.code, i]))
+
 export default function BackgroundQuestionnaire({ onComplete, onAttentionCheckFail }: BackgroundQuestionnaireProps) {
   const [responses, setResponses] = useState<Record<string, string>>({})
+  const [showErrors, setShowErrors] = useState(false)
+  const [focusNonce, setFocusNonce] = useState(0)
   const [startedAt] = useState(() => performance.now())
+  const focusCodeRef = useRef<string | null>(null)
 
   useEffect(() => {
     logger.trackEvent('questionnaire.started', 'questionnaire', 'questionnaire_active', {
@@ -134,18 +144,38 @@ export default function BackgroundQuestionnaire({ onComplete, onAttentionCheckFa
     })
   }, [])
 
-  const allAnswered = Object.keys(responses).length === ITEMS.length
+  const answeredCount = Object.keys(responses).length
+  const total = ORDERED_CODES.length
+  const firstMissingCode = ORDERED_CODES.find((c) => responses[c] === undefined)
+  const firstMissingNumber = firstMissingCode ? ORDERED_CODES.indexOf(firstMissingCode) + 1 : 0
+
+  // After a failed submit, scroll to and focus the first unanswered question.
+  useEffect(() => {
+    const code = focusCodeRef.current
+    if (!code) return
+    const el = document.getElementById(`q-${code}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.querySelector<HTMLButtonElement>('button')?.focus()
+    }
+    focusCodeRef.current = null
+  }, [focusNonce])
 
   const handleSubmit = () => {
-    if (!allAnswered) return
+    if (firstMissingCode) {
+      setShowErrors(true)
+      focusCodeRef.current = firstMissingCode
+      logger.trackEvent('questionnaire.validation_failed', 'questionnaire', 'questionnaire_active', {
+        payload: { firstMissing: firstMissingCode, answered: answeredCount, total },
+      })
+      setFocusNonce((n) => n + 1)
+      return
+    }
 
     const durationMs = Math.round(performance.now() - startedAt)
     logger.trackEvent('questionnaire.completed', 'questionnaire', 'questionnaire_complete', {
       durationMs,
-      payload: {
-        responses,
-        durationMs,
-      },
+      payload: { responses, durationMs },
     })
 
     // Attention check: a wrong AC2 answer ends the test and invalidates the session.
@@ -159,81 +189,120 @@ export default function BackgroundQuestionnaire({ onComplete, onAttentionCheckFa
   }
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in">
-      <StatusBar />
-
-      <div className="flex-1 overflow-y-auto px-5 pt-[72px] pb-8 no-scrollbar">
+    <ResearchPage
+      data-testid="screen-questionnaire"
+      footer={
+        <button
+          onClick={handleSubmit}
+          data-testid="btn-submit-questionnaire"
+          className="w-full h-[54px] rounded-[14px] bg-black text-white font-bold text-[16px] hover:bg-gray-900 active:scale-[0.98] transition-all"
+        >
+          Finish
+        </button>
+      }
+    >
+      <div className="animate-fade-in">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[24px] font-bold tracking-tight text-black mb-2">
-            A Few Last Questions
-          </h1>
+        <div className="mb-6">
+          <h1 className="text-[26px] font-bold tracking-tight text-black mb-2">A Few Last Questions</h1>
           <p className="text-[14px] text-gray-500 leading-relaxed">
             A few quick questions about yourself and your experience with multi-service apps.
             This helps us understand different user perspectives.
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="flex justify-between text-[12px] font-bold text-gray-400 mb-2">
-            <span>{Object.keys(responses).length} of {ITEMS.length} answered</span>
+        {/* Warning banner (accessible: icon + text, not colour alone) */}
+        {showErrors && firstMissingCode && (
+          <div
+            role="alert"
+            data-testid="questionnaire-warning"
+            className="sticky top-2 z-20 mb-5 flex items-start gap-2.5 rounded-[12px] border-2 border-red-300 bg-red-50 px-4 py-3"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" className="mt-0.5 flex-shrink-0" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-[13.5px] font-semibold text-red-700 leading-snug">
+              Please answer all required questions before submitting. Question {firstMissingNumber} still needs an answer.
+            </p>
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        )}
+
+        {/* Progress */}
+        <div className="mb-7">
+          <div className="flex justify-between text-[12px] font-bold text-gray-500 mb-2">
+            <span data-testid="questionnaire-progress">{answeredCount} of {total} answered</span>
+          </div>
+          <div
+            className="h-2 bg-gray-100 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={answeredCount}
+            aria-valuemin={0}
+            aria-valuemax={total}
+          >
             <div
               className="h-full bg-black rounded-full transition-all duration-300"
-              style={{ width: `${(Object.keys(responses).length / ITEMS.length) * 100}%` }}
+              style={{ width: `${(answeredCount / total) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Questions */}
-        {ITEMS.map((item) => (
-          <div key={item.code} className="mb-8">
-            <div className="mb-3">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{item.code}</span>
-              <p className="text-[15px] font-semibold text-black mt-1 leading-snug">{item.question}</p>
-            </div>
+        {ORDERED_CODES.map((code) => {
+          const item = ITEM_BY_CODE[code]
+          const number = ORDERED_CODES.indexOf(code) + 1
+          const invalid = showErrors && responses[code] === undefined
+          return (
+            <div
+              key={code}
+              id={`q-${code}`}
+              className={`mb-8 scroll-mt-28 ${invalid ? 'rounded-[14px] border-2 border-red-400 bg-red-50/50 p-4' : ''}`}
+            >
+              <div className="mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center">
+                    {number}
+                  </span>
+                  {invalid && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      Answer required
+                    </span>
+                  )}
+                </div>
+                <p className="text-[15px] font-semibold text-black mt-1.5 leading-snug">{item.question}</p>
+              </div>
 
-            <div className="space-y-2">
-              {item.options.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleAnswer(item.code, opt.value)}
-                  data-testid={`questionnaire-option-${item.code}-${opt.value}`}
-                  className={`
-                    w-full text-left px-4 py-3 rounded-[12px] text-[14px] font-medium
-                    transition-all duration-150 active:scale-[0.98]
-                    ${responses[item.code] === opt.value
-                      ? 'bg-black text-white shadow-md'
-                      : 'bg-gray-50 text-gray-700 border border-gray-100 hover:bg-gray-100'
-                    }
-                  `}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <div className="space-y-2">
+                {item.options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleAnswer(code, opt.value)}
+                    data-testid={`questionnaire-option-${code}-${opt.value}`}
+                    aria-pressed={responses[code] === opt.value}
+                    className={`
+                      w-full text-left px-4 py-3 rounded-[12px] text-[14px] font-medium
+                      transition-all duration-150 active:scale-[0.98]
+                      ${responses[code] === opt.value
+                        ? 'bg-black text-white shadow-md'
+                        : 'bg-gray-50 text-gray-700 border border-gray-100 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
-
-      {/* Submit */}
-      <div className="sticky bottom-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-50 pb-[34px]">
-        <button
-          onClick={handleSubmit}
-          disabled={!allAnswered}
-          data-testid="btn-submit-questionnaire"
-          className={`w-full h-[54px] rounded-[16px] font-bold text-[17px] shadow-lg transition-all active:scale-[0.97] flex items-center justify-center ${
-            allAnswered
-              ? 'bg-black text-white hover:bg-gray-900'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-          }`}
-        >
-          Finish
-        </button>
-      </div>
-    </div>
+    </ResearchPage>
   )
 }

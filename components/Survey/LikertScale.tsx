@@ -21,6 +21,14 @@ interface LikertScaleProps {
   onAnswer: (value: number) => void
   /** Currently selected value (controlled) */
   value?: number
+  /** Sequential participant-facing number (1, 2, 3 …). */
+  displayNumber?: number
+  /** Hide the internal research code and show the display number instead. */
+  hideCode?: boolean
+  /** Highlight as unanswered after a failed submit (accessible, not colour-only). */
+  invalid?: boolean
+  /** DOM id used to scroll to / focus this item. */
+  fieldId?: string
 }
 
 export default function LikertScale({
@@ -31,23 +39,60 @@ export default function LikertScale({
   pointLabels,
   onAnswer,
   value,
+  displayNumber,
+  hideCode = false,
+  invalid = false,
+  fieldId,
 }: LikertScaleProps) {
   const [hovered, setHovered] = useState<number | null>(null)
 
   return (
-    <div className="mb-8">
-      {/* Code + Question */}
+    <div
+      id={fieldId}
+      data-testid={`survey-item-${code}`}
+      className={`mb-8 scroll-mt-28 transition-colors ${
+        invalid ? 'rounded-[14px] border-2 border-red-400 bg-red-50/50 p-4' : ''
+      }`}
+    >
+      {/* Number / code + Question */}
       <div className="mb-4">
-        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{code}</span>
-        <p className="text-[15px] font-semibold text-black mt-1 leading-snug">{question}</p>
+        <div className="flex items-center gap-2">
+          {hideCode ? (
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center">
+              {displayNumber}
+            </span>
+          ) : (
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{code}</span>
+          )}
+          {invalid && (
+            <span
+              data-testid="required-flag"
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              Answer required
+            </span>
+          )}
+        </div>
+        <p className="text-[15px] font-semibold text-black mt-1.5 leading-snug">{question}</p>
       </div>
 
       {/* Scale */}
-      <div className="flex items-center justify-between gap-2">
+      <div
+        className="flex items-center justify-between gap-2"
+        role="radiogroup"
+        aria-label={hideCode ? `Question ${displayNumber}` : code}
+      >
         {Array.from({ length: points }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             type="button"
+            role="radio"
+            aria-checked={value === n}
             data-testid={`likert-${code}-${n}`}
             onClick={() => onAnswer(n)}
             onMouseEnter={() => setHovered(n)}

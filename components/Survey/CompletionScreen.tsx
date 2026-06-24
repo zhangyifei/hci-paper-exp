@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import StatusBar from '../shared/StatusBar'
+import ResearchPage from '../shared/ResearchPage'
 
 /**
  * End-of-experiment screen with two variants:
@@ -20,11 +20,9 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
   const isCompleted = variant === 'completed'
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in">
-      <StatusBar />
-
+    <ResearchPage maxWidthClassName="max-w-[520px]">
       <div
-        className="flex-1 flex flex-col items-center justify-center px-8 text-center"
+        className="flex flex-col items-center justify-center text-center py-6 animate-fade-in"
         data-testid={isCompleted ? 'screen-finished' : 'screen-terminated'}
       >
         {/* Icon badge with soft gradient ring */}
@@ -101,6 +99,6 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
           You may now close this window.
         </p>
       </div>
-    </div>
+    </ResearchPage>
   )
 }

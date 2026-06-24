@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
+import PhoneFrame from './shared/PhoneFrame'
+import TaskIndicator from './shared/TaskIndicator'
+import GuidanceBanner from './shared/GuidanceBanner'
 import HomeScreen from './RidePhase/HomeScreen'
 import MapScreen from './RidePhase/MapScreen'
 import RideAlmostThereScreen from './RidePhase/RideAlmostThereScreen'
@@ -15,6 +18,7 @@ import EatsCompleteScreen from './Service2Phase/EatsCompleteScreen'
 import BackgroundQuestionnaire from './Survey/BackgroundQuestionnaire'
 import ConsentScreen from './Survey/ConsentScreen'
 import ScenarioInstructionScreen from './Survey/ScenarioInstructionScreen'
+import TaskInstructionScreen from './Survey/TaskInstructionScreen'
 import PostTaskSurvey from './Survey/PostTaskSurvey'
 import CompletionScreen from './Survey/CompletionScreen'
 
@@ -27,10 +31,12 @@ type Screen =
   | 'consent'
   | 'questionnaire'
   | 'scenario_instruction'
+  | 'task1_instruction'
   | 'home'
   | 'map'
   | 'ride_almost_there'
   | 'trip_complete'
+  | 'task2_instruction'
   | 'service2_entry'
   | 'service2_delivery'
   | 'service2_restaurant'
@@ -39,10 +45,20 @@ type Screen =
   | 'finished'
   | 'terminated'
 
+/** Super App screens belonging to Task 1 (the ride). */
+const TASK1_SCREENS: Screen[] = ['home', 'map', 'ride_almost_there', 'trip_complete']
+/** Super App screens belonging to Task 2 (the second service). */
+const TASK2_SCREENS: Screen[] = [
+  'service2_entry',
+  'service2_delivery',
+  'service2_restaurant',
+  'service2_complete',
+]
+
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
-  const [rideCompleted, setRideCompleted] = useState(false)
+  const [helpNonce, setHelpNonce] = useState(0)
 
   const handleConsentComplete = () => {
     setScreen('scenario_instruction')
@@ -50,7 +66,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   const handleScenarioComplete = () => {
     resetNavigationPath()
-    setScreen('home')
+    setScreen('task1_instruction')
   }
 
   const handleSurveyComplete = () => {
@@ -104,15 +120,12 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   // State transitions
   const goToMap = () => setScreen('map')
   const goToRideAlmostThere = () => setScreen('ride_almost_there')
-  const goToTripComplete = () => {
-    setRideCompleted(true)
-    setScreen('trip_complete')
-  }
-  const goToService2Entry = () => setScreen('service2_entry')
-  
+  const goToTripComplete = () => setScreen('trip_complete')
+  const goToTask2Instruction = () => setScreen('task2_instruction')
+
   const handleService2EntryNext = (eventId?: string) => {
     if (eventId) setService2EntryEventId(eventId)
-    
+
     if (config.service2 === 'courier') {
       setScreen('service2_delivery')
     } else {
@@ -121,89 +134,137 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   }
 
   const handleService2TaskNext = () => {
-      setScreen('service2_complete')
+    setScreen('service2_complete')
   }
 
-  const handleBackToHome = () => {
-    // In the experiment, "Back to Home" advances to Service 2 — there is no real home
-    setScreen('service2_entry')
+  const goBack = (from: Screen, to: Screen) => {
+    logger.trackEvent('screen.back', 'screen', from, { payload: { from, to } })
+    setScreen(to)
   }
 
-  return (
-    <div className="w-full min-h-full bg-white text-black relative">
-      {screen === 'consent' && (
-        <ConsentScreen onConsent={handleConsentComplete} />
-      )}
+  // ── Render ────────────────────────────────────────────────────────────
+  const isTask2 = TASK2_SCREENS.includes(screen)
+  const isSuperApp = TASK1_SCREENS.includes(screen) || isTask2
+  const activeTask = isTask2 ? config.task2 : config.task1
 
-      {screen === 'scenario_instruction' && (
-        <ScenarioInstructionScreen config={config} onStart={handleScenarioComplete} />
-      )}
+  if (isSuperApp) {
+    let inner: React.ReactNode = null
+    switch (screen) {
+      case 'home':
+        inner = <HomeScreen onNext={goToMap} />
+        break
+      case 'map':
+        inner = <MapScreen onNext={goToRideAlmostThere} onBack={() => goBack('map', 'home')} />
+        break
+      case 'ride_almost_there':
+        inner = <RideAlmostThereScreen onNext={goToTripComplete} />
+        break
+      case 'trip_complete':
+        inner = (
+          <TripCompleteScreen condition={condition} config={config} onNext={goToTask2Instruction} />
+        )
+        break
+      case 'service2_entry':
+        inner =
+          config.service2 === 'courier' ? (
+            <CourierEntryScreen
+              config={config}
+              onNext={handleService2EntryNext}
+              onBack={() => goBack('service2_entry', 'task2_instruction')}
+            />
+          ) : (
+            <EatsEntryScreen
+              config={config}
+              onNext={handleService2EntryNext}
+              onBack={() => goBack('service2_entry', 'task2_instruction')}
+            />
+          )
+        break
+      case 'service2_delivery':
+        inner = <CourierDeliveryScreen onNext={handleService2TaskNext} />
+        break
+      case 'service2_restaurant':
+        inner = (
+          <EatsRestaurantScreen
+            onNext={handleService2TaskNext}
+            onBack={() => goBack('service2_restaurant', 'service2_entry')}
+            parentEventId={service2EntryEventId}
+          />
+        )
+        break
+      case 'service2_complete':
+        inner =
+          config.service2 === 'courier' ? (
+            <CourierCompleteScreen config={config} onNext={handleTaskCompletion} />
+          ) : (
+            <EatsCompleteScreen config={config} onNext={handleTaskCompletion} />
+          )
+        break
+    }
 
-      {screen === 'home' && (
-        <HomeScreen 
-          onNext={goToMap} 
-          service2Tab={rideCompleted ? config.service2 : undefined}
-          onService2TabClick={rideCompleted ? goToService2Entry : undefined}
+    const taskPhase = isTask2 ? 2 : 1
+    return (
+      <PhoneFrame
+        overlay={
+          <>
+            <TaskIndicator label={activeTask.indicator} onHelp={() => setHelpNonce((n) => n + 1)} />
+            <GuidanceBanner
+              key={taskPhase}
+              text={activeTask.guidanceText}
+              thresholdMs={config.guidanceThresholdMs}
+              helpNonce={helpNonce}
+            />
+          </>
+        }
+      >
+        {inner}
+      </PhoneFrame>
+    )
+  }
+
+  // Research pages (full-browser, no phone frame).
+  switch (screen) {
+    case 'consent':
+      return <ConsentScreen onConsent={handleConsentComplete} />
+    case 'scenario_instruction':
+      return <ScenarioInstructionScreen config={config} onStart={handleScenarioComplete} />
+    case 'task1_instruction':
+      return (
+        <TaskInstructionScreen
+          task={config.task1}
+          taskNumber={1}
+          totalTasks={2}
+          onStart={() => setScreen('home')}
         />
-      )}
-      
-      {screen === 'map' && <MapScreen onNext={goToRideAlmostThere} onBack={handleBackToHome} />}
-      
-      {screen === 'ride_almost_there' && <RideAlmostThereScreen onNext={goToTripComplete} />}
-      
-      {screen === 'trip_complete' && (
-        <TripCompleteScreen 
-          condition={condition} 
-          config={config} 
-          onNext={config.banner ? goToService2Entry : () => setScreen('home')} 
+      )
+    case 'task2_instruction':
+      return (
+        <TaskInstructionScreen
+          task={config.task2}
+          taskNumber={2}
+          totalTasks={2}
+          onStart={() => setScreen('service2_entry')}
         />
-      )}
-
-      {screen === 'service2_entry' && config.service2 === 'courier' && (
-        <CourierEntryScreen config={config} onNext={handleService2EntryNext} />
-      )}
-
-      {screen === 'service2_entry' && config.service2 === 'eats' && (
-        <EatsEntryScreen config={config} onNext={handleService2EntryNext} />
-      )}
-
-      {screen === 'service2_delivery' && (
-        <CourierDeliveryScreen onNext={handleService2TaskNext} />
-      )}
-
-      {screen === 'service2_restaurant' && (
-        <EatsRestaurantScreen 
-            onNext={handleService2TaskNext} 
-            onBack={() => setScreen('service2_entry')}
-            parentEventId={service2EntryEventId} 
-        />
-      )}
-
-      {screen === 'service2_complete' && config.service2 === 'courier' && (
-        <CourierCompleteScreen config={config} onNext={handleTaskCompletion} />
-      )}
-
-      {screen === 'service2_complete' && config.service2 === 'eats' && (
-        <EatsCompleteScreen config={config} onNext={handleTaskCompletion} />
-      )}
-
-      {screen === 'survey' && (
+      )
+    case 'survey':
+      return (
         <PostTaskSurvey
           onComplete={handleSurveyComplete}
           onAttentionCheckFail={handleAttentionCheckFailure}
         />
-      )}
-
-      {screen === 'questionnaire' && (
+      )
+    case 'questionnaire':
+      return (
         <BackgroundQuestionnaire
           onComplete={handleQuestionnaireComplete}
           onAttentionCheckFail={handleAttentionCheckFailure}
         />
-      )}
-
-      {screen === 'terminated' && <CompletionScreen variant="terminated" />}
-
-      {screen === 'finished' && <CompletionScreen variant="completed" />}
-    </div>
-  )
+      )
+    case 'terminated':
+      return <CompletionScreen variant="terminated" />
+    case 'finished':
+      return <CompletionScreen variant="completed" />
+    default:
+      return null
+  }
 }

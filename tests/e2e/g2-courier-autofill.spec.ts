@@ -4,6 +4,7 @@ import {
   completeRidePhase,
   assertBannerVisible,
   advanceToService2,
+  completeCourierEntry,
 } from './shared/helpers'
 
 test.describe('G2 — Ride + Courier, Auto-fill', () => {
@@ -31,24 +32,18 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await completeRidePhase(page)
     await advanceToService2(page, true) // via banner
 
-    // Courier tab active
-    await expect(page.getByText('Courier')).toBeVisible()
+    // Courier entry shown
+    await expect(page.getByText('Sender Details')).toBeVisible()
   })
 
   test('G2 Courier Entry: sender address auto-populated', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
 
-    // Auto-filled address visible
-    await expect(page.getByTestId('sender-address-autofilled')).toBeVisible()
-    await expect(page.getByTestId('sender-address-empty')).not.toBeVisible()
-
-    // Address content
-    await expect(page.getByText('Rue Saint-Laurent - spot 01')).toBeVisible()
+    // Sender input auto-populated with the suggested value
+    await expect(page.getByTestId('input-sender-address')).toHaveValue('Rue Saint-Laurent - spot 01')
+    await expect(page.getByText('SUGGESTED')).toBeVisible()
     await expect(page.getByText(/Near 100 Rue saint-LAURENT/i)).toBeVisible()
-
-    // Edit link
-    await expect(page.getByText('Edit')).toBeVisible()
   })
 
   test('G2 Courier Entry: categorized pickup options (Express/Standard)', async ({ page }) => {
@@ -72,9 +67,9 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
 
-    // Select express option
+    // Select express option, fill addresses, confirm
     await page.getByTestId('pickup-option-express').click()
-    await page.getByTestId('btn-confirm-pickup').click()
+    await completeCourierEntry(page)
 
     // Delivery in progress
     await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })

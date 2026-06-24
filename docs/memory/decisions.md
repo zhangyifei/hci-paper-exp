@@ -125,3 +125,23 @@
 **Decision**: Replace the survey overview figure with a grouped boxplot chart that shows all four constructs within each condition, rather than a separate mean-and-interval summary.
 **Date**: 2026-04-03
 **Rationale**: The point-and-interval view still read as a different statistical summary from the boxplot-based charts below it and kept causing confusion about whether the survey overview was a boxplot. Grouped boxplots make Figure 3 and Figure 4 statistically consistent while preserving an all-constructs overview in a single figure.
+
+### ADR-024: Two Presentation Modes (Phone Frame vs Full-Browser Research Pages)
+**Decision**: Move the device frame out of the global layout into a `PhoneFrame` component used only by Super App task screens; render all research pages (consent, study intro/scenario, per-task instructions, both questionnaires, completion/termination) full-browser via a `ResearchPage` container.
+**Date**: 2026-06-24
+**Rationale**: Implements the SuperApp PDF requirement that only the interactive Super App appears inside a mobile-phone frame, while research pages are responsive, centered, comfortable-reading-width pages. Landing `/` and `/stats` now also render full-browser.
+
+### ADR-025: Per-Task Instruction Pages, Persistent Indicator, and Idle Guidance Banner
+**Decision**: Split the combined scenario screen into per-task instruction pages (Task 1 before the ride, Task 2 before the second service) each with a "Start Task N" button; add a persistent task indicator and a non-blocking idle guidance banner (configurable `guidanceThresholdMs`, default 10s) sourced from new `task1`/`task2` config blocks.
+**Date**: 2026-06-24
+**Rationale**: Implements the PDF task-guidance spec. The banner and indicator are rendered as a `PhoneFrame` overlay; the banner is fully non-blocking (pointer-events only on its dismiss control) and positioned above the primary CTA so it never covers important controls. The ride→service2 manipulation (banner presence + auto-populate, validated by the MC survey items) is preserved; Task 2 instructions are shown equally to all conditions.
+
+### ADR-026: Fully Interactive Courier Entry
+**Decision**: Replace the simulated sender/recipient address displays with real controlled inputs (labels, focus states, validation, condition-gated `addressSuggestions`), selectable saved/recent recipient addresses with a clear selected state and Change control, and an always-active Confirm that validates on click.
+**Date**: 2026-06-24
+**Rationale**: Implements the PDF "Courier task interaction" requirements. Suggestions remain gated by condition so the manipulation is unchanged.
+
+### ADR-027: Active-Submit Validation and Paginated Feedback Survey
+**Decision**: Make both questionnaires full-browser with always-active submit buttons that validate on click (top warning banner, accessible per-item highlighting that is not colour-only, scroll-to/focus first unanswered, answers preserved). Paginate the post-task survey into two pages with a progress bar, "Page X of 2", sequential participant-facing numbering (internal codes hidden), and the attention check placed mid-survey.
+**Date**: 2026-06-24
+**Rationale**: Implements the PDF questionnaire and submit-behaviour requirements while keeping AC-failure termination intact.

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
+import BackButton from '../shared/BackButton'
 import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
@@ -9,9 +10,10 @@ import { enterScreen } from '@/lib/screen-tracker'
 interface EatsEntryScreenProps {
   config: ConditionConfig
   onNext: (eventId: string) => void
+  onBack: () => void
 }
 
-export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps) {
+export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScreenProps) {
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
 
   useEffect(() => {
@@ -70,9 +72,10 @@ export default function EatsEntryScreen({ config, onNext }: EatsEntryScreenProps
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in">
       <StatusBar />
+      <BackButton onClick={onBack} />
 
       {/* Tab Bar */}
-      <div className="flex items-center space-x-3 px-4 mt-[59px] mb-6 pt-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center space-x-3 px-4 mt-[104px] mb-6 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform">Rides</div>
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform flex items-center">
             <span className="mr-2 text-[18px]">🛵</span> Eats

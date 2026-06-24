@@ -230,3 +230,10 @@ Design mockups analyzed. Key findings per condition:
 - Replaced Figure 3 in `components/stats/SurveyChart.tsx` with a grouped boxplot overview that shows all four constructs within each condition.
 - Reused the shared boxplot summary math so the overview and the per-construct panels report the same quartile/whisker definitions.
 - Kept inline detail cards on the grouped overview so selected boxes expose exact quartiles, whiskers, max, and outlier values.
+
+### SuperApp PDF UI Overhaul (2026-06-24)
+- Added `components/shared/PhoneFrame.tsx` and `components/shared/ResearchPage.tsx`; moved the device frame out of `app/layout.tsx` and rescoped `app/globals.css` into `.phone-stage` / `.research-stage`. `ExperimentFlow` now wraps Super App screens in the phone frame and renders research pages full-browser.
+- Added per-task instruction pages (`components/Survey/TaskInstructionScreen.tsx`), a persistent `TaskIndicator`, and a non-blocking idle `GuidanceBanner`; extended `experiment-config.json`/`experiment-config.ts` with `task1`/`task2`, `guidanceThresholdMs`, and `addressSuggestions`, and the event schema with task/guidance/back/validation events.
+- Added a shared `BackButton` to the Courier/Eats entry screens and made the Courier sender/recipient fully interactive (real inputs, validation, condition-gated suggestions, selectable saved recipients).
+- Reworked `PostTaskSurvey` into a paginated, code-hidden, sequentially-numbered survey with active-submit validation (warning banner, accessible highlighting, scroll/focus), and gave `BackgroundQuestionnaire` the same full-browser active-submit treatment; `LikertScale` gained numbering/invalid props.
+- Updated Playwright helpers and specs for the new flow; `npx tsc --noEmit`, `npm run build`, and all 47 e2e tests pass.
