@@ -15,7 +15,6 @@
 ```bash
 npm install
 ```
-
 ### 2. Link to Vercel project
 ```bash
 vercel link
@@ -45,6 +44,22 @@ vercel env add STATS_SECRET production
 # Choose any strong random string, e.g.: openssl rand -hex 32
 ```
 > This protects the `/api/stats` and `/api/export` endpoints from public access.
+> The same secret (or `PAPER_STATS_SECRET`) gates the `/admin` batch dashboard.
+
+### 6. Apply the batch-management migration
+Run `scripts/migrate-add-batches.sql` once against the Supabase database
+(SQL editor or `psql`). It creates `test_batches`, `participant_assignments`,
+and the atomic `assign_participant()` function. Idempotent — safe to re-run.
+
+### 7. Start a batch before recruiting
+Open `/admin`, enter the secret, and **Start batch** (4 groups × 25 by
+default). Assignment requires an **active** batch — without one, real
+participants (those without a `?condition=` override) see the "Study Not Open"
+screen. When every group hits capacity they see "Study Full".
+
+**Prolific reconciliation**: the `/admin` roster links each `PROLIFIC_PID` to
+its group and completion status. Use *Copy completed PIDs* / *Download CSV* to
+approve payments for participants whose status is `completed`.
 
 ---
 

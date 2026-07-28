@@ -147,11 +147,11 @@ const SURVEY_ITEMS: SurveyItem[] = [
 
 /**
  * Participant-facing pagination. Items are split across two pages with the
- * attention check (AC1) placed in the middle of page 1. Internal codes
+ * attention check (AC1) placed in the middle of page 2. Internal codes
  * (CL1, AC1, …) are never shown — only sequential numbers 1…N.
  */
-const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'AC1', 'PU2', 'PU3', 'PU4']
-const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'MC1', 'MC2', 'MC3', 'MC4']
+const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']
+const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3', 'MC4']
 const ORDERED_CODES = [...PAGE_1_CODES, ...PAGE_2_CODES]
 const ITEM_BY_CODE: Record<string, SurveyItem> = Object.fromEntries(
   SURVEY_ITEMS.map((i) => [i.code, i]),

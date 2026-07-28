@@ -123,8 +123,8 @@ export async function completePostTaskSurvey(
   opts: { ac1Value?: number } = {},
 ) {
   const ac1Value = opts.ac1Value ?? 5
-  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'AC1', 'PU2', 'PU3', 'PU4']
-  const page2 = ['CI1', 'CI2', 'CI3', 'MC1', 'MC2', 'MC3', 'MC4']
+  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']
+  const page2 = ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3', 'MC4']
 
   const answer = async (code: string) => {
     const value = code === 'AC1' ? ac1Value : 4

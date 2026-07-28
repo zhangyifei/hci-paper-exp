@@ -14,6 +14,18 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Hide scrollbars on every study surface while keeping scroll functional.
+ * Research pages scroll the window (html/body); the phone view scrolls the
+ * device screen; both should read as a clean, chrome-free app. */
+html, body {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE / legacy Edge */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;                  /* Chrome / Safari / WebKit */
+}
+
 body {
   background-color: #ffffff;
 }
@@ -58,6 +70,13 @@ body {
   background-image: radial-gradient(ellipse at 50% 0%, #fafafe 0%, #ececf2 80%);
   padding: clamp(16px, 4vw, 48px) clamp(16px, 5vw, 40px);
   overflow-y: auto;
+}
+.research-stage::-webkit-scrollbar {
+  display: none;
+}
+.research-stage {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .research-container {
@@ -122,6 +141,13 @@ body {
   overflow-x: clip;
   background: #fff;
   position: relative;
+}
+.device-screen::-webkit-scrollbar {
+  display: none;
+}
+.device-screen {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* Dynamic Island */

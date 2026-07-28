@@ -1,32 +1,78 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { assignCondition } from '@/lib/assignment'
 import type { Condition } from '@/lib/experiment-config'
+import { CONDITIONS } from '@/lib/experiment-config'
+import type { AssignOutcome } from '@/lib/types'
 import { Suspense } from 'react'
+import StudyClosedScreen from '@/components/shared/StudyClosedScreen'
+
+function persistAndGo(
+  router: ReturnType<typeof useRouter>,
+  params: { pid: string; studyId: string; sessionId: string; condition: Condition; expSessionId: string },
+) {
+  sessionStorage.setItem('prolific_pid', params.pid)
+  sessionStorage.setItem('study_id', params.studyId)
+  sessionStorage.setItem('session_id_prolific', params.sessionId)
+  sessionStorage.setItem('condition', params.condition)
+  sessionStorage.setItem('exp_session_id', params.expSessionId)
+  router.replace(`/experiment/${params.condition}`)
+}
 
 function LandingInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [blocked, setBlocked] = useState<'full' | 'closed' | null>(null)
 
   useEffect(() => {
     const pid = searchParams.get('PROLIFIC_PID') ?? `anon_${crypto.randomUUID().slice(0, 8)}`
     const studyId = searchParams.get('STUDY_ID') ?? ''
     const sessionId = searchParams.get('SESSION_ID') ?? ''
     const conditionOverride = searchParams.get('condition')
+    const expSessionId = crypto.randomUUID()
 
-    const condition: Condition = assignCondition(pid, conditionOverride)
+    // Explicit override (debug / E2E): bypass the batch system entirely.
+    if (conditionOverride && CONDITIONS.includes(conditionOverride as Condition)) {
+      persistAndGo(router, {
+        pid,
+        studyId,
+        sessionId,
+        condition: conditionOverride as Condition,
+        expSessionId,
+      })
+      return
+    }
 
-    // Persist to sessionStorage so experiment pages can read them
-    sessionStorage.setItem('prolific_pid', pid)
-    sessionStorage.setItem('study_id', studyId)
-    sessionStorage.setItem('session_id_prolific', sessionId)
-    sessionStorage.setItem('condition', condition)
-    sessionStorage.setItem('exp_session_id', crypto.randomUUID())
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch('/api/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid, studyId, sessionId, expSessionId }),
+        })
+        const data: { outcome: AssignOutcome; condition: Condition | null } = await res.json()
+        if (cancelled) return
 
-    router.replace(`/experiment/${condition}`)
+        if ((data.outcome === 'assigned' || data.outcome === 'existing') && data.condition) {
+          persistAndGo(router, { pid, studyId, sessionId, condition: data.condition, expSessionId })
+          return
+        }
+        setBlocked(data.outcome === 'full' ? 'full' : 'closed')
+      } catch {
+        if (!cancelled) setBlocked('closed')
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
   }, [router, searchParams])
+
+  if (blocked) {
+    return <StudyClosedScreen variant={blocked} />
+  }
 
   return (
     <div className="flex items-center justify-center h-full min-h-[600px]">

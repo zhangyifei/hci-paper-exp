@@ -43,9 +43,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to insert events' }, { status: 500 })
     }
 
+    // Best-effort: keep the batch assignment's status in sync with lifecycle
+    // events so the admin dashboard reflects who finished vs. was invalidated.
+    // Matched by exp session id (events.session_id === assignment.exp_session_id).
+    await syncAssignmentStatus(events)
+
     return NextResponse.json({ ok: true, inserted: rows.length })
   } catch (err) {
     console.error('[api/events]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+/**
+ * Reflect completion / invalidation into `participant_assignments`. Runs after
+ * the events are stored and never blocks the response on failure — the events
+ * are the source of truth, this table is a convenience view for the admin.
+ */
+async function syncAssignmentStatus(events: ExperimentEvent[]): Promise<void> {
+  const sessionsFor = (name: string): string[] =>
+    Array.from(
+      new Set(
+        events
+          .filter((e) => e.eventName === name && e.sessionId)
+          .map((e) => e.sessionId),
+      ),
+    )
+
+  const completed = sessionsFor('experiment.completed')
+  const invalidated = sessionsFor('experiment.invalidated')
+
+  try {
+    if (completed.length > 0) {
+      await supabaseAdmin
+        .from('participant_assignments')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .in('exp_session_id', completed)
+        .neq('status', 'invalid')
+    }
+    if (invalidated.length > 0) {
+      await supabaseAdmin
+        .from('participant_assignments')
+        .update({ status: 'invalid', completed_at: new Date().toISOString() })
+        .in('exp_session_id', invalidated)
+    }
+  } catch (err) {
+    console.error('[api/events] assignment status sync failed:', err)
   }
 }

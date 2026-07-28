@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
@@ -57,6 +57,15 @@ const TASK2_SCREENS: Screen[] = [
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
+
+  // Every screen (and phone-frame screen) must start at the top. Without this,
+  // React swaps the screen content while the window keeps the previous page's
+  // scroll position, making a new page appear scrolled to the bottom.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0 })
+    }
+  }, [screen])
 
   const handleConsentComplete = () => {
     setScreen('scenario_instruction')
