@@ -67,7 +67,7 @@ test.describe('Onboarding — scenario instruction', () => {
 })
 
 test.describe('Post-task survey — items + attention check', () => {
-  test('G1: survey is paginated, hides codes, AC1 on page 1, MC items on page 2', async ({ page }) => {
+  test('G1: survey is paginated, hides codes, AC1 on page 2, MC items on page 2', async ({ page }) => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
@@ -84,15 +84,16 @@ test.describe('Post-task survey — items + attention check', () => {
     // Internal codes are hidden from participants
     await expect(page.getByText('CL1', { exact: true })).toHaveCount(0)
 
-    // AC1 present on page 1 with its numeric legend
-    await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
-    await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
+    // Page 1 holds the usability item; the attention check is NOT here anymore
     await expect(page.getByText('I found this super app easy to use for these consecutive tasks.')).toBeVisible()
+    await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
-    // Page 2 holds the manipulation-check items
+    // Page 2 holds the attention check (with its numeric legend) and MC items
     await expect(page.getByText('The second service felt different from the ride service.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 2')
+    await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
+    await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
     await expect(page.getByText('The second service felt different from the ride service.')).toBeVisible()
     await expect(page.getByText('The two service tasks required different kinds of actions.')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toBeVisible()
@@ -107,16 +108,16 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-delivery-complete').click({ force: true })
 
-    // Answer page 1 fully (AC1 = 5)
-    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'AC1', 'PU2', 'PU3', 'PU4']) {
-      const value = code === 'AC1' ? 5 : 4
-      await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
+    // Answer page 1 fully
+    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']) {
+      await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-survey-continue').click({ force: true })
 
-    // Leave one page-2 item unanswered, then submit
-    for (const code of ['CI1', 'CI2', 'CI3', 'MC1', 'MC2', 'MC3']) {
-      await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
+    // Leave one page-2 item unanswered, then submit (AC1 = 5)
+    for (const code of ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3']) {
+      const value = code === 'AC1' ? 5 : 4
+      await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-submit-survey').click({ force: true })
 

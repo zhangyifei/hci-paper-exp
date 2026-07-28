@@ -1,5 +1,21 @@
 # Architecture Decisions Log
 
+## 2026-07-27
+
+### ADR-006: Batch-Based Balanced Assignment (supersedes ADR-001 assignment)
+**Decision**: Replace client-side hash assignment with server-side, batch-scoped balanced assignment. An admin starts a **batch** (`test_batches`) holding 4 groups × `group_size` (default 25). On landing, `POST /api/assign` calls the atomic Postgres RPC `assign_participant`, which locks the active batch row and places the participant into the **least-filled group** (random tiebreak), capped at `group_size`.
+**Rationale**: Requirement — collect an equal number per group (25) and avoid the drift that hash-mod-4 allows. The `FOR UPDATE` lock prevents concurrent over-fill.
+**Idempotency**: `UNIQUE(batch_id, prolific_pid)` — re-entry returns the same group.
+**Overrides**: `?condition=Gx` still bypasses the batch system (debug + E2E). Legacy `GET /api/assign` (hash) retained for those paths.
+**Outcomes**: `assigned | existing | full | no_active_batch`. `full`/`no_active_batch` show `StudyClosedScreen`. **Operational impact**: an active batch MUST exist or real participants are turned away.
+
+### ADR-007: Prolific Linkage & Completion Status
+**Decision**: `participant_assignments` stores `prolific_pid` / `prolific_session_id` so admins can reconcile payments. `/api/events` best-effort syncs assignment `status` from lifecycle events (`experiment.completed` → completed, `experiment.invalidated` → invalid), matched by `exp_session_id = events.session_id`. Admin dashboard at `/admin` (password gate, `x-stats-password`) lists batches, per-group progress, and a payable roster (copy completed PIDs / CSV).
+
+### ADR-008: Attention Check on Survey Page 2
+**Decision**: Move AC1 from post-task-survey page 1 to page 2 (mid-page). Every study screen also resets scroll to top on change; scrollbars hidden.
+**Rationale**: Requirement (0727 revise list) — keep attention checks off the first page and always land at the top of a page.
+
 ## 2026-03-01
 
 ### ADR-001: Between-Subjects Design
