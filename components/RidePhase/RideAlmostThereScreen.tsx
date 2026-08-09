@@ -130,7 +130,7 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
            <div className="w-2 h-2 bg-black rounded-full mt-2 mr-4 opacity-30"></div>
            <div>
             <div className="text-[11px] text-gray-500 font-bold uppercase tracking-wide mb-0.5">Drop off</div>
-            <div className="text-[15px] font-medium text-gray-500">Pierre-Elliott-Trudeau Airport</div>
+            <div className="text-[15px] font-medium text-gray-500">1000 Saint-Catherine Street West</div>
           </div>
         </div>
       </div>

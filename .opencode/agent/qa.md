@@ -54,7 +54,7 @@ tests/
 | Check | G1 | G2 | G3 | G4 |
 |-------|----|----|----|----|
 | Trip Complete banner | absent | present (Courier) | absent | present (Eats) |
-| Service2 address auto-filled | ✗ | ✓ "Rue Saint-Laurent - spot 01" | ✗ | ✓ "Rue Saint-Laurent - spot 01" |
+| Service2 address auto-filled | ✗ | ✓ "1000 Saint-Catherine Street West" | ✗ | ✓ "1000 Saint-Catherine Street West" |
 | Service2 list type | generic courier | by-destination courier | citywide popular eats | distance-sorted eats |
 | Pickup/Order button | "Confirm pickup" | "Confirm pickup" | restaurant → "Order Food" | restaurant → "Order Food" |
 

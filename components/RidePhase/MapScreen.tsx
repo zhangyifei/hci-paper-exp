@@ -1,24 +1,36 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import { logger } from '@/lib/logger'
 import { enterScreen } from '@/lib/screen-tracker'
 
 interface MapScreenProps {
-  onNext: () => void
+  onNext: (ridePrice: number) => void
   onBack: () => void
 }
 
+const RIDE_OPTIONS = [
+  { id: 'voya-x', label: 'Voya X', price: 12.59 },
+  { id: 'comfort', label: 'Comfort', price: 14.33 },
+  { id: 'premier', label: 'Premier', price: 18.11 },
+]
+
 export default function MapScreen({ onNext, onBack }: MapScreenProps) {
+  const [selected, setSelected] = useState('voya-x')
 
   useEffect(() => {
-    logger.trackEvent('ride.option_selected', 'ride', 'ride_in_progress', { payload: { optionId: 'voya-x', optionLabel: 'Voya X', price: 12.59 } })
     const cleanup = enterScreen('map', 'ride')
     return cleanup
   }, [])
-  
+
+  const handleSelect = (id: string, label: string, price: number) => {
+    setSelected(id)
+    logger.trackEvent('ride.option_selected', 'ride', 'ride_in_progress', { payload: { optionId: id, optionLabel: label, price } })
+  }
+
   const handleChoose = () => {
-    logger.trackEvent('ride.confirmed', 'ride', 'ride_submitting')
-    onNext()
+    const opt = RIDE_OPTIONS.find((o) => o.id === selected) ?? RIDE_OPTIONS[0]
+    logger.trackEvent('ride.confirmed', 'ride', 'ride_submitting', { payload: { optionId: opt.id, price: opt.price } })
+    onNext(opt.price)
   }
 
   return (
@@ -68,8 +80,8 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
         <h2 className="text-[20px] font-bold mb-4 text-center tracking-tight">Choose a ride</h2>
         
         <div className="space-y-2">
-          {/* Voya X — Selected */}
-          <div className="border-[2px] border-black rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white shadow-sm cursor-pointer relative active:scale-[0.98] transition-all">
+          {/* Voya X */}
+          <div onClick={() => handleSelect('voya-x', 'Voya X', 12.59)} data-testid="ride-option-voya-x" className={`rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white shadow-sm cursor-pointer relative active:scale-[0.98] transition-all ${selected === 'voya-x' ? 'border-[2px] border-black' : 'border border-gray-100'}`}>
             <div className="absolute -top-2.5 right-4 bg-[#1f1f1f] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">Faster</div>
             <div className="flex items-center">
               <div className="w-[54px] h-[40px] relative overflow-hidden rounded-lg mr-2 flex-shrink-0">
@@ -87,7 +99,7 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
           </div>
 
           {/* Comfort */}
-          <div className="border border-gray-100 rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer">
+          <div onClick={() => handleSelect('comfort', 'Comfort', 14.33)} data-testid="ride-option-comfort" className={`rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer ${selected === 'comfort' ? 'border-[2px] border-black' : 'border border-gray-100'}`}>
             <div className="flex items-center">
               <div className="w-[54px] h-[40px] relative overflow-hidden rounded-lg mr-2 flex-shrink-0 grayscale opacity-80">
                 <div
@@ -104,7 +116,7 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
           </div>
 
           {/* Premier */}
-          <div className="border border-gray-100 rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer">
+          <div onClick={() => handleSelect('premier', 'Premier', 18.11)} data-testid="ride-option-premier" className={`rounded-[12px] p-3 pr-4 flex items-center justify-between bg-white active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer ${selected === 'premier' ? 'border-[2px] border-black' : 'border border-gray-100'}`}>
             <div className="flex items-center">
               <div className="w-[54px] h-[40px] relative overflow-hidden rounded-lg mr-2 flex-shrink-0 grayscale opacity-80">
                 <div
@@ -128,7 +140,7 @@ export default function MapScreen({ onNext, onBack }: MapScreenProps) {
             data-testid="btn-choose-uber-x"
             className="w-full h-[54px] bg-black text-white rounded-[12px] font-bold text-[17px] shadow-lg active:scale-[0.97] transition-all flex items-center justify-center"
           >
-            Choose Voya X
+            Choose {RIDE_OPTIONS.find((o) => o.id === selected)?.label ?? 'Voya X'}
           </button>
         </div>
       </div>

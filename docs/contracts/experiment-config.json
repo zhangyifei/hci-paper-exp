@@ -16,7 +16,7 @@
     "addressLabel": null,
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, send a package to 1000 Saint-Catherine Street West using the Courier service.",
+    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -28,7 +28,7 @@
     "task2": {
       "title": "Arrange a courier pickup",
       "service": "Courier",
-      "goal": "Send a package to 1000 Saint-Catherine Street West using the Courier service.",
+      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
       "infoToEnter": "The sender and recipient addresses",
       "indicator": "Task 2 of 2: Arrange a courier pickup",
       "guidanceText": "Task reminder: Use Courier to arrange the package pickup."
@@ -41,16 +41,16 @@
     "addressSuggestions": true,
     "guidanceThresholdMs": 10000,
     "listUI": "categorized-by-destination",
-    "bannerText": "Need to send a package? 5+ Courier drivers available nearby",
+    "bannerText": "Need to send a package? Courier services are available for pickup at 1000 Saint-Catherine Street West",
     "bannerCTA": "Send Now",
     "pickupOptions": [
       { "id": "express", "label": "Express (15min)", "price": 12 },
       { "id": "standard", "label": "Standard (1hr)", "price": 8 }
     ],
-    "addressLabel": "Rue Saint-Laurent - spot 01",
-    "addressSublabel": "Near 100 Rue saint-LAURENT",
+    "addressLabel": "1000 Saint-Catherine Street West",
+    "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the suggested \"Send Now\" option to send a package to the same destination.",
+    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -62,7 +62,7 @@
     "task2": {
       "title": "Arrange a courier pickup",
       "service": "Courier",
-      "goal": "Send a package to the same destination using the Courier service.",
+      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
       "infoToEnter": "The sender and recipient addresses",
       "indicator": "Task 2 of 2: Arrange a courier pickup",
       "guidanceText": "Task reminder: Use Courier to arrange the package pickup."
@@ -81,7 +81,7 @@
     "addressLabel": null,
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, order food using the Eats service.",
+    "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -93,7 +93,7 @@
     "task2": {
       "title": "Order food",
       "service": "Eats",
-      "goal": "Order food using the Eats service.",
+      "goal": "Order food and have it delivered to 1000 Saint-Catherine Street West using the Eats service.",
       "infoToEnter": "Your delivery address",
       "indicator": "Task 2 of 2: Order food",
       "guidanceText": "Task reminder: Use Eats to order food."
@@ -106,13 +106,13 @@
     "addressSuggestions": true,
     "guidanceThresholdMs": 10000,
     "listUI": "distance-filtered",
-    "bannerText": "Arrived at your destination 3+ restaurants nearby",
+    "bannerText": "Ready to order food? Restaurants are available for delivery to 1000 Saint-Catherine Street West",
     "bannerCTA": "Eat",
     "pickupOptions": [],
-    "addressLabel": "Rue Saint-Laurent - spot 01",
-    "addressSublabel": "Near 100 Rue saint-LAURENT",
+    "addressLabel": "1000 Saint-Catherine Street West",
+    "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the suggested \"Eat\" option to order food near the same destination.",
+    "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -124,7 +124,7 @@
     "task2": {
       "title": "Order food",
       "service": "Eats",
-      "goal": "Order food near the same destination using the Eats service.",
+      "goal": "Order food and have it delivered to 1000 Saint-Catherine Street West using the Eats service.",
       "infoToEnter": "Your delivery address",
       "indicator": "Task 2 of 2: Order food",
       "guidanceText": "Task reminder: Use Eats to order food."

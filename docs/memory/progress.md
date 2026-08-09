@@ -237,3 +237,59 @@ Design mockups analyzed. Key findings per condition:
 - Added a shared `BackButton` to the Courier/Eats entry screens and made the Courier sender/recipient fully interactive (real inputs, validation, condition-gated suggestions, selectable saved recipients).
 - Reworked `PostTaskSurvey` into a paginated, code-hidden, sequentially-numbered survey with active-submit validation (warning banner, accessible highlighting, scroll/focus), and gave `BackgroundQuestionnaire` the same full-browser active-submit treatment; `LikertScale` gained numbering/invalid props.
 - Updated Playwright helpers and specs for the new flow; `npx tsc --noEmit`, `npm run build`, and all 47 e2e tests pass.
+
+---
+
+## Phase 10 — 0809 Revision (Package Details + destination consistency)
+**Date**: 2026-08-09
+**Status**: ✅ Complete (Phases 1–2, 4–6 of `docs/0809/ui-update-plan.md`; Phase 3 deferred)
+
+### Changes
+- **New screen** `components/Service2Phase/PackageDetailsScreen.tsx` inserted in the courier
+  flow (`service2_entry → service2_package_details → service2_delivery`), common to G1 & G2.
+  The interactive "What are you sending?" selector was moved off `CourierEntryScreen`; added an
+  optional "Note for courier" field.
+- **Timing DV** relocated: `markService2Complete()` + `service2.task.complete` now fire on the
+  Package Details "Continue" (was Courier Entry "Confirm Pickup"), threading the entry event id.
+- **Destination unified** to `1000 Saint-Catherine Street West` on Trip Complete (all conditions),
+  Ride "almost here" drop-off, Courier delivery drop-off, and Courier Delivery Complete; ride
+  fare `$28.92 → $21.40` (delivery fee `$14.75` unchanged).
+- **Contracts**: `event-schema.json` gains `service2.package_details.viewed`, `service2.item_selected`.
+- **Deferred (Phase 3)**: manipulation-sensitive auto-fill address (`config.addressLabel` in G2/G4)
+  left unchanged pending sender-vs-recipient sign-off.
+
+### Verification
+- `npm run type-check` → ✅ clean
+- `npm run build` → ✅ clean
+- `npx playwright test` (G1–G4 courier + eats) → ✅ 28 passed (16 courier + 12 eats)
+- Note: local port 3000 was contended by another project on IPv6 `localhost`; ran against
+  `127.0.0.1` for the suite (Playwright config reverted to `localhost`).
+
+## Phase 11 — 0809 Revision §4 (dynamic prices) + §5 (delivery-details redesign)
+**Date**: 2026-08-09
+**Status**: ✅ Complete
+
+### Changes
+- **§4 dynamic prices**:
+  - `MapScreen` ride options are now selectable — Voya X `$12.59` (default), Comfort `$14.33`,
+    Premier `$18.11` (`data-testid="ride-option-{id}"`); the selected price threads via
+    `ExperimentFlow` `ridePrice` state into `TripCompleteScreen` (was hardcoded `$21.40`).
+  - Courier pickup fee threads via `courierFee` (selected `config.pickupOptions[].price`) into
+    `CourierCompleteScreen` (was hardcoded `$14.75`).
+  - Eats total (`$22.00`) already consistent — no change.
+- **§5 delivery-details redesign**: `PackageDetailsScreen` → "Add delivery details" with a
+  **TASK 2 OF 2** pill header (tab bar dropped) and fields: item type (Package/Keys/Document),
+  package size (`package-size-{id}`, default Medium), estimated weight (`input-package-weight`),
+  fragile toggle (`toggle-fragile`), delivery notes (`input-delivery-notes`, 0/250).
+- **Flow reorder**: Courier Entry button relabeled "Continue" (`btn-courier-continue`);
+  "Confirm Pickup" (`btn-confirm-pickup`) moved to the delivery-details step where the timing DV
+  (`markService2Complete` + `service2.task.complete`) fires.
+- **Tests**: helpers + G1/G2 specs updated for the renamed buttons; G1 now asserts the dynamic
+  Trip Complete fares (`$12.59`, and `$14.33` via `ride-option-comfort`) and the courier fee
+  (`$8.00`) on Delivery Complete.
+
+### Verification
+- `npm run type-check` → ✅ clean
+- `npx playwright test` (G1–G4 courier + eats + post-task survey) → ✅ 37 passed
+- Ran against `127.0.0.1` due to the IPv6 `localhost:3000` contention; Playwright config reverted
+  to `localhost`.

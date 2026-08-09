@@ -3,13 +3,13 @@ import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import BackButton from '../shared/BackButton'
 import { logger } from '@/lib/logger'
-import { markService2Entry, markService2Complete } from '@/lib/timing'
+import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
 import { enterScreen } from '@/lib/screen-tracker'
 
 interface CourierEntryScreenProps {
   config: ConditionConfig
-  onNext: () => void
+  onNext: (eventId: string, fee: number) => void
   onBack: () => void
 }
 
@@ -22,22 +22,22 @@ interface SavedAddress {
 }
 
 const SAVED_ADDRESSES: SavedAddress[] = [
-  { id: 'rue-mcgill', name: 'Rue McGill', detail: '3008, Rue McGill, Montreal', tag: 'RECENT', icon: '🕒' },
-  { id: 'saint-louis', name: 'Saint-Louis', detail: '1502, Rue Saint-Louis, Montreal', icon: '📍' },
+  { id: 'rue-mcgill', name: '3008 Rue McGill', detail: '3008 Rue McGill, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: '1502 Rue Saint-Louis, Montreal', icon: '📍' },
 ]
 
 const SENDER_SUGGESTIONS = [
-  'Rue Saint-Laurent - spot 01, Montreal',
-  '100 Rue Saint-Laurent, Montreal',
   '1000 Saint-Catherine Street West, Montreal',
+  '750 Rue Peel, Montreal',
+  '680 Rue Sherbrooke Ouest, Montreal',
 ]
 
 /** Selectable saved/recent sender places so participants can tap instead of
  *  typing. Present in every condition (a normal app feature); the auto-populate
  *  pre-fill remains the condition manipulation. */
 const SAVED_SENDER_PLACES: SavedAddress[] = [
-  { id: 'sender-saint-laurent', name: 'Rue Saint-Laurent - spot 01', detail: '100 Rue Saint-Laurent, Montreal', tag: 'RECENT', icon: '🕒' },
-  { id: 'sender-mcgill', name: 'Rue McGill', detail: '3008 Rue McGill, Montreal', icon: '📍' },
+  { id: 'sender-saint-catherine', name: '1000 Saint-Catherine Street West', detail: '1000 Saint-Catherine Street West, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'sender-peel', name: '750 Rue Peel', detail: '750 Rue Peel, Montreal', icon: '📍' },
 ]
 
 /** A valid address has a street number and a street name. */
@@ -147,10 +147,10 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { sender: senderAddress, recipient: recipientAddress },
     })
-    logger.trackEvent('service2.task.submitting', 'service2', 'service2_task_submitting')
-    const duration = markService2Complete()
-    logger.trackEvent('service2.task.complete', 'service2', 'service2_task_complete', { durationMs: duration ?? 0, parentEventId: service2EntryEventId })
-    onNext()
+    // Task-completion timing now fires on the Package Details step so the DV
+    // spans the full arranging flow (see PackageDetailsScreen).
+    const fee = config.pickupOptions.find((o) => o.id === selectedOption)?.price ?? 0
+    onNext(service2EntryEventId, fee)
   }
 
   const senderError = (senderTouched || showErrors) && !senderValid
@@ -239,7 +239,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
           {senderError && (
             <p id="sender-error" data-testid="sender-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-1">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Enter a valid street address (e.g. 100 Rue Saint-Laurent).
+              Enter a valid street address (e.g. 1000 Saint-Catherine Street West).
             </p>
           )}
         </div>
@@ -331,31 +331,16 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
           </div>
         </div>
 
-        {/* Item Types */}
-        <div className="mb-8">
-          <h2 className="text-[13px] font-bold text-black tracking-wide mb-3">What are you sending?</h2>
-          <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
-              <div className="bg-black text-white px-5 py-2.5 rounded-[12px] text-[13px] font-bold flex items-center shadow-md whitespace-nowrap active:scale-95 transition-transform">
-                  <span className="mr-2">📦</span> Package
-              </div>
-               <div className="bg-white border border-gray-200 text-black px-5 py-2.5 rounded-[12px] text-[13px] font-bold flex items-center shadow-sm whitespace-nowrap active:scale-95 transition-transform">
-                  <span className="mr-2">🔑</span> Keys
-              </div>
-               <div className="bg-white border border-gray-200 text-black px-5 py-2.5 rounded-[12px] text-[13px] font-bold flex items-center shadow-sm whitespace-nowrap active:scale-95 transition-transform">
-                  <span className="mr-2">📄</span> Documents
-              </div>
-          </div>
-        </div>
       </div>
 
       {/* Confirm Button */}
       <div className="sticky bottom-[70px] w-full px-4 pb-4 pt-4 bg-gradient-to-t from-white via-white to-transparent z-10">
           <button
             onClick={handleConfirm}
-            data-testid="btn-confirm-pickup"
+            data-testid="btn-courier-continue"
             className="w-full h-[54px] rounded-[16px] font-bold text-[17px] shadow-lg transition-all active:scale-[0.97] flex items-center justify-center bg-black text-white hover:bg-gray-900"
           >
-            Confirm Pickup
+            Continue
           </button>
       </div>
 

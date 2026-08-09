@@ -112,14 +112,14 @@ export default function CourierDeliveryScreen({ onNext }: CourierDeliveryScreenP
            <div className="w-2 h-2 bg-black rounded-full mt-2 mr-4"></div>
            <div>
             <div className="text-[11px] text-gray-500 font-bold uppercase tracking-wide mb-0.5">Drop off</div>
-            <div className="text-[15px] font-medium text-black">Spot-01, Rue McGill</div>
+            <div className="text-[15px] font-medium text-black">3008 Rue McGill</div>
           </div>
         </div>
         <div className="flex items-start">
            <div className="w-2 h-2 bg-gray-300 rounded-full mt-2 mr-4"></div>
            <div>
             <div className="text-[11px] text-gray-500 font-bold uppercase tracking-wide mb-0.5">Address</div>
-            <div className="text-[15px] font-medium text-gray-400">100 Rue McGill</div>
+            <div className="text-[15px] font-medium text-gray-400">Old Montreal, Montreal</div>
           </div>
         </div>
       </div>
