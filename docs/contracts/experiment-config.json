@@ -17,6 +17,7 @@
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
     "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After you arrive, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -51,6 +52,7 @@
     "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
     "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After you arrive, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -82,6 +84,7 @@
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
     "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After you arrive, use the Eats service to order food to be delivered to 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -113,6 +116,7 @@
     "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
     "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After you arrive, use the Eats service to order food to be delivered to 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",

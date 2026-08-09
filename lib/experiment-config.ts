@@ -41,6 +41,9 @@ export interface ConditionConfig {
   addressSublabel: string | null
   rideTaskInstruction: string
   service2TaskInstruction: string
+  /** One-paragraph narrative shown on the scenario screen (shared within each
+   *  L/H pair; the manipulation is app flow, not the story). */
+  scenarioDescription: string
   task1: TaskInfo
   task2: TaskInfo
 }
