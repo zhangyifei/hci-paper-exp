@@ -59,6 +59,14 @@ export default function ScenarioInstructionScreen({
           </p>
         </div>
 
+        {/* Scenario narrative */}
+        <p
+          className="mb-6 text-[15px] text-black leading-relaxed"
+          data-testid="scenario-description"
+        >
+          {config.scenarioDescription}
+        </p>
+
         {/* Fictional-prototype note */}
         <div className="mb-6 rounded-[12px] border border-amber-200 bg-amber-50 px-4 py-3">
           <p className="text-[13px] text-amber-800 leading-relaxed">

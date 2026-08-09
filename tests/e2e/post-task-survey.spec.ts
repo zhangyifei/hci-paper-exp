@@ -43,6 +43,9 @@ test.describe('Onboarding — scenario instruction', () => {
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
+    await expect(page.getByTestId('scenario-description')).toContainText(
+      'You are meeting a friend at 1000 Saint-Catherine Street West'
+    )
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveText(RIDE_INSTRUCTION)
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
       'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
@@ -62,6 +65,9 @@ test.describe('Onboarding — scenario instruction', () => {
 
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
       'order food and have it delivered to 1000 Saint-Catherine Street West'
+    )
+    await expect(page.getByTestId('scenario-description')).toContainText(
+      'use the Eats service to order food'
     )
   })
 })
