@@ -36,6 +36,8 @@
         "service2.task.complete",
         "service2.task.error",
         "service2.complete.viewed",
+        "service2.package_details.viewed",
+        "service2.item_selected",
         "screen.entered",
         "screen.first_interaction",
         "screen.exited",

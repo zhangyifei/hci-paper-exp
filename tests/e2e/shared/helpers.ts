@@ -147,12 +147,17 @@ export async function completePostTaskSurvey(
 export async function completeCourierEntry(page: Page) {
   const sender = page.getByTestId('input-sender-address')
   await sender.click({ force: true })
-  await sender.fill('100 Rue Saint-Laurent, Montreal')
+  await sender.fill('1000 Saint-Catherine Street West')
 
   // Pick a saved recipient address.
   await page.getByTestId('saved-address-rue-mcgill').click({ force: true })
   await expect(page.getByTestId('recipient-selected')).toBeVisible()
 
+  await page.getByTestId('btn-courier-continue').click({ force: true })
+
+  // Delivery-details step (common to G1 & G2): pick an item type and confirm.
+  await expect(page.getByTestId('screen-package-details')).toBeVisible({ timeout: 10000 })
+  await page.getByTestId('item-type-package').click({ force: true })
   await page.getByTestId('btn-confirm-pickup').click({ force: true })
 }
 

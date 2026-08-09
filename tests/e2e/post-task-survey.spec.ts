@@ -45,7 +45,7 @@ test.describe('Onboarding — scenario instruction', () => {
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveText(RIDE_INSTRUCTION)
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
-      'send a package to 1000 Saint-Catherine Street West using the Courier service'
+      'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
     )
 
     // Start advances into the Task 1 instruction page, then the ride task
@@ -61,7 +61,7 @@ test.describe('Onboarding — scenario instruction', () => {
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
-      'use the suggested "Eat" option to order food near the same destination'
+      'order food and have it delivered to 1000 Saint-Catherine Street West'
     )
   })
 })

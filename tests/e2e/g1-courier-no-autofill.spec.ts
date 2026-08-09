@@ -44,8 +44,20 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
   test('ride phase completes and shows Trip Complete', async ({ page }) => {
     await completeRidePhase(page)
     await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible()
-    await expect(page.getByText('Rue Saint-Laurent')).toBeVisible()
-    await expect(page.getByText('$28.92')).toBeVisible()
+    await expect(page.getByText('1000 Saint-Catherine Street West')).toBeVisible()
+    await expect(page.getByText('$12.59')).toBeVisible()
+  })
+
+  test('selected ride option price carries to Trip Complete', async ({ page }) => {
+    const destination = page.getByTestId('input-destination')
+    await destination.click({ force: true })
+    await destination.fill('1000 Saint-Catherine Street West')
+    await page.getByTestId('btn-start-ride').click({ force: true })
+    await page.getByTestId('ride-option-comfort').click({ force: true })
+    await page.getByTestId('btn-choose-uber-x').click({ force: true })
+    await page.waitForTimeout(4000)
+    await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('$14.33')).toBeVisible()
   })
 
   test('G1 Trip Complete: no banner shown', async ({ page }) => {
@@ -97,7 +109,29 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await page.waitForTimeout(3000)
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 5000 })
 
+    // Courier fee carries from the selected pickup option (Small = $8).
+    await expect(page.getByText('$8.00')).toBeVisible()
+
     // No "Popular nearby" section for G1
     await expect(page.getByText('Popular nearby')).not.toBeVisible()
+  })
+
+  test('G1 Courier: delivery-details page appears before pickup confirmation', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, false)
+
+    await page.getByTestId('pickup-option-small').click({ force: true })
+    await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
+    await page.getByTestId('saved-address-rue-mcgill').click({ force: true })
+    await page.getByTestId('btn-courier-continue').click({ force: true })
+
+    // New dedicated delivery-details step (selector moved off the entry screen).
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
+    await expect(page.getByText('Add delivery details')).toBeVisible()
+    await expect(page.getByText('What are you sending?')).toBeVisible()
+    await page.getByTestId('item-type-documents').click({ force: true })
+    await page.getByTestId('btn-confirm-pickup').click({ force: true })
+
+    await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })
   })
 })

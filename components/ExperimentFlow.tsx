@@ -9,6 +9,7 @@ import MapScreen from './RidePhase/MapScreen'
 import RideAlmostThereScreen from './RidePhase/RideAlmostThereScreen'
 import TripCompleteScreen from './TripCompletePhase/TripCompleteScreen'
 import CourierEntryScreen from './Service2Phase/CourierEntryScreen'
+import PackageDetailsScreen from './Service2Phase/PackageDetailsScreen'
 import CourierDeliveryScreen from './Service2Phase/CourierDeliveryScreen'
 import CourierCompleteScreen from './Service2Phase/CourierCompleteScreen'
 import EatsEntryScreen from './Service2Phase/EatsEntryScreen'
@@ -37,6 +38,7 @@ type Screen =
   | 'trip_complete'
   | 'task2_instruction'
   | 'service2_entry'
+  | 'service2_package_details'
   | 'service2_delivery'
   | 'service2_restaurant'
   | 'service2_complete'
@@ -49,6 +51,7 @@ const TASK1_SCREENS: Screen[] = ['home', 'map', 'ride_almost_there', 'trip_compl
 /** Super App screens belonging to Task 2 (the second service). */
 const TASK2_SCREENS: Screen[] = [
   'service2_entry',
+  'service2_package_details',
   'service2_delivery',
   'service2_restaurant',
   'service2_complete',
@@ -57,6 +60,9 @@ const TASK2_SCREENS: Screen[] = [
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
+  // Prices the participant selected, carried to the completion screens (§4).
+  const [ridePrice, setRidePrice] = useState<number>(12.59)
+  const [courierFee, setCourierFee] = useState<number>(config.pickupOptions[0]?.price ?? 0)
 
   // Every screen (and phone-frame screen) must start at the top. Without this,
   // React swaps the screen content while the window keeps the previous page's
@@ -126,19 +132,25 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   // State transitions
   const goToMap = () => setScreen('map')
-  const goToRideAlmostThere = () => setScreen('ride_almost_there')
+  const goToRideAlmostThere = (price: number) => {
+    setRidePrice(price)
+    setScreen('ride_almost_there')
+  }
   const goToTripComplete = () => setScreen('trip_complete')
   const goToTask2Instruction = () => setScreen('task2_instruction')
 
-  const handleService2EntryNext = (eventId?: string) => {
+  const handleService2EntryNext = (eventId?: string, fee?: number) => {
     if (eventId) setService2EntryEventId(eventId)
+    if (typeof fee === 'number') setCourierFee(fee)
 
     if (config.service2 === 'courier') {
-      setScreen('service2_delivery')
+      setScreen('service2_package_details')
     } else {
       setScreen('service2_restaurant')
     }
   }
+
+  const goToService2Delivery = () => setScreen('service2_delivery')
 
   const handleService2TaskNext = () => {
     setScreen('service2_complete')
@@ -168,7 +180,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'trip_complete':
         inner = (
-          <TripCompleteScreen condition={condition} config={config} onNext={goToTask2Instruction} />
+          <TripCompleteScreen condition={condition} config={config} ridePrice={ridePrice} onNext={goToTask2Instruction} />
         )
         break
       case 'service2_entry':
@@ -187,6 +199,15 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
             />
           )
         break
+      case 'service2_package_details':
+        inner = (
+          <PackageDetailsScreen
+            onNext={goToService2Delivery}
+            onBack={() => goBack('service2_package_details', 'service2_entry')}
+            parentEventId={service2EntryEventId}
+          />
+        )
+        break
       case 'service2_delivery':
         inner = <CourierDeliveryScreen onNext={handleService2TaskNext} />
         break
@@ -202,7 +223,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       case 'service2_complete':
         inner =
           config.service2 === 'courier' ? (
-            <CourierCompleteScreen config={config} onNext={handleTaskCompletion} />
+            <CourierCompleteScreen config={config} courierFee={courierFee} onNext={handleTaskCompletion} />
           ) : (
             <EatsCompleteScreen config={config} onNext={handleTaskCompletion} />
           )

@@ -30,8 +30,7 @@ interface SavedPlace {
 /** Selectable saved/recent delivery places so participants can tap instead of
  *  typing. Present whenever the address is not auto-populated. */
 const SAVED_DELIVERY_PLACES: SavedPlace[] = [
-  { id: 'mcgill', name: '3008 Rue McGill', detail: 'Old Montreal', tag: 'RECENT', icon: '🕒' },
-  { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: 'Home', icon: '🏠' },
+  { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
 ]
 
 export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScreenProps) {
@@ -156,9 +155,9 @@ export default function EatsEntryScreen({ config, onNext, onBack }: EatsEntryScr
                  <div className="bg-white rounded-[16px] p-4 border border-green-500 shadow-[0_4px_12px_rgba(22,163,74,0.08)] relative active:scale-[0.99] transition-transform" data-testid="deliver-address-autofilled">
                     <div className="flex items-center mb-1">
                          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold mr-2 border border-green-200">SUGGESTED</span>
-                         <div className="font-bold text-[15px] text-black">{config.addressLabel || 'Rue Saint-Laurent - spot 01'}</div>
+                         <div className="font-bold text-[15px] text-black">{config.addressLabel || '1000 Saint-Catherine Street West'}</div>
                     </div>
-                    <div className="text-[13px] text-green-600 font-medium pl-20">{config.addressSublabel || 'Near 100 Rue saint-LAURENT'}</div>
+                    <div className="text-[13px] text-green-600 font-medium pl-20">{config.addressSublabel || 'Downtown, Montreal'}</div>
                     <div className="absolute top-4 right-4 text-[13px] text-gray-400 font-bold cursor-pointer" onClick={handleAddressEdit}>Edit</div>
                  </div>
               ) : (

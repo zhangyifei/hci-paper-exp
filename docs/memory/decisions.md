@@ -1,5 +1,58 @@
 # Architecture Decisions Log
 
+## 2026-08-09
+
+### ADR-009: Dedicated Package Details step in the Courier flow
+**Decision**: Insert a new `service2_package_details` screen between `service2_entry`
+(Confirm Pickup) and `service2_delivery`. The interactive "What are you sending?"
+selector (Package / Keys / Documents) was **moved off** `CourierEntryScreen` into this
+new `PackageDetailsScreen`, which also adds an optional "Note for courier" field.
+**Scope**: Common to **both** G1 and G2; it is **not** a between-subjects manipulation
+(no `config` branch). Source: 0809 revision mockups (annotation "Add Package Details Page").
+**Instrumentation**: new events `service2.package_details.viewed` and `service2.item_selected`
+(added to `docs/contracts/event-schema.json`); screen tracked as `service2_package_details`.
+
+### ADR-010: Task-2 completion timing relocated; destination unified
+**Decision**: Moved `markService2Complete()` + `service2.task.complete` from the Courier
+Entry "Confirm Pickup" handler to the Package Details "Continue" handler, so the task-2
+duration DV spans the full arranging flow (mirrors the Eats pattern where completion fires
+on the final restaurant step). `service2.task.submitting` also fires on Continue.
+**Also**: unified the ride/courier destination display to **`1000 Saint-Catherine Street West`**
+across Trip Complete (all conditions), Ride "almost here" drop-off, Courier delivery
+drop-off, and Courier Delivery Complete; ride fare changed **`$28.92` → `$21.40`**
+(delivery fee `$14.75` unchanged). Source: 0809 annotations A/B + full-consistency sweep.
+**Scenario-authoritative addresses (0809 revision PDF)**: G1≡G2 and G3≡G4 must share the
+same scenario/task text; the L-vs-H difference comes only from app flow (auto-fill + banner),
+not from addresses/prices/task wording. Address map: **Ride destination** (all) =
+`1000 Saint-Catherine Street West`; **Courier pickup/sender** = `1000 Saint-Catherine Street West`,
+**Courier delivery/recipient** = `3008 Rue McGill`; **Food delivery** (G3/G4) =
+`1000 Saint-Catherine Street West` (McGill removed from food flows). Both H auto-fills
+(`config.addressLabel` for G2 sender and G4 delivery) carry the ride destination
+`1000 Saint-Catherine Street West`.
+
+### ADR-011: Dynamic selected-option pricing (PDF §4) + delivery-details redesign (PDF §5)
+**Decision (§4 — prices reflect the selected option)**: The ride card list
+(`MapScreen`) is now **interactive** — three selectable options Voya X `$12.59`
+(default), Comfort `$14.33`, Premier `$18.11`. The chosen price threads through
+`ExperimentFlow` state (`ridePrice`) into `TripCompleteScreen` (replacing the
+hardcoded `$21.40`). Likewise the Courier pickup fee threads via `courierFee`
+(= selected `config.pickupOptions[].price`) into `CourierCompleteScreen` (replacing
+the hardcoded `$14.75`). The Eats order total (`$22.00`) was already consistent
+between `EatsRestaurantScreen` and `EatsCompleteScreen`, so no change. Selection is
+logged (`ride.option_selected` / `service2.item_selected`) but is **not** a
+between-subjects manipulation.
+**Decision (§5 — delivery-details page)**: `PackageDetailsScreen` was redesigned into
+"Add delivery details" (helper: "Tell us what you're sending and add any handling
+instructions."), with a **TASK 2 OF 2** pill header (tab bar dropped) and fields:
+What are you sending? (Package / Keys / Document), Package size (Small / Medium /
+Large, default Medium), Estimated weight (optional, kg), Fragile item toggle, and
+Delivery notes (optional, 0/250). It remains common to G1 & G2 (no `config` branch).
+**Flow reorder**: the Courier **Entry** button is now "Continue"
+(`data-testid="btn-courier-continue"`); "Confirm Pickup"
+(`data-testid="btn-confirm-pickup"`) moved to the delivery-details step, which is
+where `markService2Complete()` + `service2.task.complete` fire (unchanged timing DV
+semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
+
 ## 2026-07-27
 
 ### ADR-006: Batch-Based Balanced Assignment (supersedes ADR-001 assignment)

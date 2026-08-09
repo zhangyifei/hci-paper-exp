@@ -20,8 +20,8 @@ test.describe('G4 — Ride + Eats, Auto-fill', () => {
     await completeRidePhase(page)
 
     await assertBannerVisible(page, 'Eat')
-    await expect(page.getByText(/Arrived at your destination/i)).toBeVisible()
-    await expect(page.getByText(/3\+ restaurants nearby/i)).toBeVisible()
+    await expect(page.getByText(/Ready to order food/i)).toBeVisible()
+    await expect(page.getByText(/delivery to 1000 Saint-Catherine Street West/i)).toBeVisible()
 
     // No footnote
     await expect(page.getByText(/To continue, tap/)).not.toBeVisible()
@@ -45,8 +45,8 @@ test.describe('G4 — Ride + Eats, Auto-fill', () => {
     await expect(page.getByTestId('deliver-address-empty')).not.toBeVisible()
 
     // Address content
-    await expect(page.getByText('Rue Saint-Laurent - spot 01')).toBeVisible()
-    await expect(page.getByText(/Near 100 Rue saint-LAURENT/i)).toBeVisible()
+    await expect(page.getByText('1000 Saint-Catherine Street West')).toBeVisible()
+    await expect(page.getByText(/Downtown, Montreal/i)).toBeVisible()
 
     // Edit link
     await expect(page.getByText('Edit')).toBeVisible()

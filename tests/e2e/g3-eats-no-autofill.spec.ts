@@ -44,8 +44,8 @@ test.describe('G3 — Ride + Eats, No Auto-fill', () => {
 
     // Selectable saved places are offered while the field is empty.
     await expect(page.getByTestId('delivery-saved-places')).toBeVisible()
-    await page.getByTestId('delivery-saved-mcgill').click({ force: true })
-    await expect(page.getByTestId('input-delivery-address')).toHaveValue('3008 Rue McGill')
+    await page.getByTestId('delivery-saved-saint-catherine').click({ force: true })
+    await expect(page.getByTestId('input-delivery-address')).toHaveValue('1000 Saint-Catherine Street West')
 
     // A valid selection lets restaurant selection proceed.
     await page.getByText('Souvlaki Bar').first().click()

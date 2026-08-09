@@ -7,10 +7,11 @@ import { enterScreen } from '@/lib/screen-tracker'
 interface TripCompleteScreenProps {
   condition: Condition
   config: ConditionConfig
+  ridePrice: number
   onNext: () => void
 }
 
-export default function TripCompleteScreen({ condition, config, onNext }: TripCompleteScreenProps) {
+export default function TripCompleteScreen({ condition, config, ridePrice, onNext }: TripCompleteScreenProps) {
   
   useEffect(() => {
     logger.trackEvent('trip_complete.viewed', 'trip_complete', 'trip_complete_confirmed')
@@ -61,9 +62,9 @@ export default function TripCompleteScreen({ condition, config, onNext }: TripCo
         <div className="flex justify-between items-start mb-4">
           <div>
             <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">Destination</div>
-            <div className="font-bold text-[17px] text-black">Rue Saint-Laurent</div>
+            <div className="font-bold text-[17px] text-black">1000 Saint-Catherine Street West</div>
           </div>
-          <div className="font-bold text-[17px] text-black">$28.92</div>
+          <div className="font-bold text-[17px] text-black">${ridePrice.toFixed(2)}</div>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
           <div className="bg-green-600 h-1.5 rounded-full w-full"></div>

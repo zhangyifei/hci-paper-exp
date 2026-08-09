@@ -22,7 +22,7 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
 
     await assertBannerVisible(page, 'Send Now')
     await expect(page.getByText(/Need to send a package/i)).toBeVisible()
-    await expect(page.getByText(/5\+ Courier drivers available nearby/i)).toBeVisible()
+    await expect(page.getByText(/pickup at 1000 Saint-Catherine Street West/i)).toBeVisible()
 
     // No footnote (banner is present)
     await expect(page.getByText(/To continue, tap/)).not.toBeVisible()
@@ -41,9 +41,9 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await advanceToService2(page, true)
 
     // Sender input auto-populated with the suggested value
-    await expect(page.getByTestId('input-sender-address')).toHaveValue('Rue Saint-Laurent - spot 01')
+    await expect(page.getByTestId('input-sender-address')).toHaveValue('1000 Saint-Catherine Street West')
     await expect(page.getByText('SUGGESTED')).toBeVisible()
-    await expect(page.getByText(/Near 100 Rue saint-LAURENT/i)).toBeVisible()
+    await expect(page.getByText(/Downtown, Montreal/i)).toBeVisible()
   })
 
   test('G2 Courier Entry: categorized pickup options (Express/Standard)', async ({ page }) => {
@@ -80,5 +80,21 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
 
     // G2-specific: Popular nearby section
     await expect(page.getByText('Popular nearby')).toBeVisible()
+  })
+
+  test('G2 Courier: delivery-details page appears before pickup confirmation', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, true)
+
+    await page.getByTestId('pickup-option-express').click({ force: true })
+    await page.getByTestId('saved-address-rue-mcgill').click({ force: true })
+    await page.getByTestId('btn-courier-continue').click({ force: true })
+
+    // New dedicated delivery-details step (common to G1 & G2).
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
+    await expect(page.getByTestId('item-type-package')).toBeVisible()
+    await page.getByTestId('btn-confirm-pickup').click({ force: true })
+
+    await expect(page.getByText(/Your delivery is.*almost here/i)).toBeVisible({ timeout: 5000 })
   })
 })

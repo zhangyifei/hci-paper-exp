@@ -6,6 +6,7 @@ import { enterScreen } from '@/lib/screen-tracker'
 
 interface CourierCompleteScreenProps {
   config: ConditionConfig
+  courierFee: number
   onNext: () => void
 }
 
@@ -30,7 +31,7 @@ const NEARBY = [
   },
 ]
 
-export default function CourierCompleteScreen({ config, onNext }: CourierCompleteScreenProps) {
+export default function CourierCompleteScreen({ config, courierFee, onNext }: CourierCompleteScreenProps) {
   useEffect(() => {
     logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
     const cleanup = enterScreen('service2_complete_courier', 'service2')
@@ -82,9 +83,9 @@ export default function CourierCompleteScreen({ config, onNext }: CourierComplet
           <div className="flex justify-between items-start mb-4">
             <div>
               <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">Delivered to</div>
-              <div className="font-bold text-[17px] text-black">Rue Saint-Laurent</div>
+              <div className="font-bold text-[17px] text-black">3008 Rue McGill</div>
             </div>
-            <div className="font-bold text-[17px] text-black">$14.75</div>
+            <div className="font-bold text-[17px] text-black">${courierFee.toFixed(2)}</div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
             <div className="bg-green-500 h-1.5 rounded-full w-full"></div>
