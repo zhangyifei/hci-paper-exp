@@ -71,7 +71,7 @@ async function syncAssignmentStatus(events: ExperimentEvent[]): Promise<void> {
     )
 
   const completed = sessionsFor('experiment.completed')
-  const invalidated = sessionsFor('experiment.invalidated')
+  const invalidated = invalidatedSessions(events)
 
   try {
     if (completed.length > 0) {
@@ -81,13 +81,40 @@ async function syncAssignmentStatus(events: ExperimentEvent[]): Promise<void> {
         .in('exp_session_id', completed)
         .neq('status', 'invalid')
     }
-    if (invalidated.length > 0) {
+    for (const { sessionId, reason } of invalidated) {
       await supabaseAdmin
         .from('participant_assignments')
-        .update({ status: 'invalid', completed_at: new Date().toISOString() })
-        .in('exp_session_id', invalidated)
+        .update({
+          status: 'invalid',
+          invalid_reason: reason,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('exp_session_id', sessionId)
     }
   } catch (err) {
     console.error('[api/events] assignment status sync failed:', err)
   }
+}
+
+interface InvalidatedSession {
+  sessionId: string
+  reason: string | null
+}
+
+/** Unique invalidated sessions in this batch, each with its recorded reason. */
+function invalidatedSessions(events: ExperimentEvent[]): InvalidatedSession[] {
+  const bySession = new Map<string, string | null>()
+  for (const e of events) {
+    if (e.eventName !== 'experiment.invalidated' || !e.sessionId) continue
+    if (!bySession.has(e.sessionId)) bySession.set(e.sessionId, invalidationReason(e))
+  }
+  return Array.from(bySession, ([sessionId, reason]) => ({ sessionId, reason }))
+}
+
+function invalidationReason(e: ExperimentEvent): string | null {
+  const p = e.payload as { reason?: unknown; failedCheck?: unknown } | undefined
+  const reason = typeof p?.reason === 'string' ? p.reason : null
+  const check = typeof p?.failedCheck === 'string' ? p.failedCheck : null
+  if (reason && check) return `${reason}:${check}`
+  return reason ?? check
 }

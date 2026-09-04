@@ -12,6 +12,7 @@ interface AssignmentRow {
   group_condition: ParticipantAssignment['groupCondition']
   exp_session_id: string | null
   status: ParticipantAssignment['status']
+  invalid_reason: string | null
   assigned_at: string
   completed_at: string | null
 }
@@ -53,6 +54,7 @@ export async function GET(
       groupCondition: row.group_condition,
       expSessionId: row.exp_session_id,
       status: row.status,
+      invalidReason: row.invalid_reason,
       assignedAt: row.assigned_at,
       completedAt: row.completed_at,
     }
