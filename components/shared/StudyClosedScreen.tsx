@@ -5,24 +5,47 @@ import ResearchPage from './ResearchPage'
 
 /**
  * Shown when a participant lands but cannot be placed into the study:
- *   - "full":   every group in the active batch has reached capacity.
- *   - "closed": no batch is currently open for recruitment.
+ *   - "full":    every group in the active batch has reached capacity.
+ *   - "closed":  no batch is currently open for recruitment.
+ *   - "already": this participant already completed (or was invalidated) and
+ *                cannot retake the test.
  *
  * Mirrors the calm, single-column look of the completion screen so a turned
  * -away participant still sees a polished, trustworthy page.
  */
 interface StudyClosedScreenProps {
-  variant: 'full' | 'closed'
+  variant: 'full' | 'closed' | 'already'
+}
+
+const COPY: Record<
+  StudyClosedScreenProps['variant'],
+  { testId: string; title: string; body: string }
+> = {
+  full: {
+    testId: 'screen-study-full',
+    title: 'Study Full',
+    body: 'Thank you for your interest. This study has already reached the number of participants we need, so no further responses can be collected right now.',
+  },
+  closed: {
+    testId: 'screen-study-closed',
+    title: 'Study Not Open',
+    body: 'This study is not currently open for participation. Please return to Prolific — you have not started the task and will not be penalised.',
+  },
+  already: {
+    testId: 'screen-already-participated',
+    title: 'Already Completed',
+    body: 'Our records show you have already taken part in this study, so it cannot be completed again. This does not affect any payment for your previous submission.',
+  },
 }
 
 export default function StudyClosedScreen({ variant }: StudyClosedScreenProps) {
-  const isFull = variant === 'full'
+  const copy = COPY[variant]
 
   return (
     <ResearchPage maxWidthClassName="max-w-[520px]">
       <div
         className="flex flex-col items-center justify-center text-center py-6 animate-fade-in"
-        data-testid={isFull ? 'screen-study-full' : 'screen-study-closed'}
+        data-testid={copy.testId}
       >
         <div className="relative mb-7">
           <div className="absolute inset-0 rounded-full blur-xl opacity-60 bg-gray-200" />
@@ -45,13 +68,11 @@ export default function StudyClosedScreen({ variant }: StudyClosedScreenProps) {
         </div>
 
         <h1 className="text-[28px] font-bold tracking-tight text-black mb-2.5">
-          {isFull ? 'Study Full' : 'Study Not Open'}
+          {copy.title}
         </h1>
 
         <p className="text-gray-500 text-[15px] leading-relaxed max-w-[340px]">
-          {isFull
-            ? 'Thank you for your interest. This study has already reached the number of participants we need, so no further responses can be collected right now.'
-            : 'This study is not currently open for participation. Please return to Prolific — you have not started the task and will not be penalised.'}
+          {copy.body}
         </p>
 
         <p className="mt-7 text-[13px] text-gray-400 font-medium">

@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { assignCondition } from '@/lib/assignment'
 import { CONDITIONS, type Condition } from '@/lib/experiment-config'
-import type { AssignOutcome } from '@/lib/types'
+import type { AssignOutcome, AssignmentStatus } from '@/lib/types'
 
 interface AssignResponse {
   outcome: AssignOutcome
   condition: Condition | null
   batchId: string | null
+  status: AssignmentStatus | null
 }
 
 /**
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
     body = await req.json()
   } catch {
     return NextResponse.json(
-      { outcome: 'no_active_batch', condition: null, batchId: null },
+      { outcome: 'no_active_batch', condition: null, batchId: null, status: null },
       { status: 400 },
     )
   }
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
   const pid = (body.pid ?? '').trim()
   if (!pid) {
     return NextResponse.json(
-      { outcome: 'no_active_batch', condition: null, batchId: null },
+      { outcome: 'no_active_batch', condition: null, batchId: null, status: null },
       { status: 400 },
     )
   }
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
   if (error) {
     console.error('[api/assign] rpc error:', error)
     return NextResponse.json(
-      { outcome: 'no_active_batch', condition: null, batchId: null },
+      { outcome: 'no_active_batch', condition: null, batchId: null, status: null },
       { status: 500 },
     )
   }
@@ -83,10 +84,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
   const group = (row?.out_group as string | null) ?? null
   const condition =
     group && CONDITIONS.includes(group as Condition) ? (group as Condition) : null
+  const status = (row?.out_status as AssignmentStatus | null) ?? null
 
   return NextResponse.json({
     outcome,
     condition,
     batchId: (row?.out_batch_id as string | null) ?? null,
+    status,
   })
 }

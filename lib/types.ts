@@ -59,6 +59,7 @@ export interface ParticipantAssignment {
   groupCondition: Condition
   expSessionId: string | null
   status: AssignmentStatus
+  invalidReason: string | null
   assignedAt: string
   completedAt: string | null
 }

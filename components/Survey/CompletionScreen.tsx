@@ -1,7 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import ResearchPage from '../shared/ResearchPage'
+
+// Give participants a moment to read the outcome before Prolific takes over.
+const REDIRECT_DELAY_MS = 2500
 
 /**
  * End-of-experiment screen with two variants:
@@ -18,6 +21,25 @@ interface CompletionScreenProps {
 
 export default function CompletionScreen({ variant }: CompletionScreenProps) {
   const isCompleted = variant === 'completed'
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const pid = sessionStorage.getItem('prolific_pid') ?? ''
+    const isDebug = sessionStorage.getItem('exp_debug_override') === '1'
+    // Skip the redirect for debug / E2E runs that have no real Prolific participant.
+    if (isDebug || !pid || pid.startsWith('anon_')) return
+
+    const url = isCompleted
+      ? process.env.NEXT_PUBLIC_PROLIFIC_COMPLETION_URL
+      : process.env.NEXT_PUBLIC_PROLIFIC_FAILED_URL
+    if (!url) return
+
+    setRedirectUrl(url)
+    const timer = setTimeout(() => {
+      window.location.href = url
+    }, REDIRECT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [isCompleted])
 
   return (
     <ResearchPage maxWidthClassName="max-w-[520px]">
@@ -94,10 +116,22 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
           </div>
         )}
 
-        {/* Close hint */}
-        <p className="mt-7 text-[13px] text-gray-400 font-medium">
-          You may now close this window.
-        </p>
+        {/* Return-to-Prolific redirect, or a close hint for non-Prolific runs */}
+        {redirectUrl ? (
+          <div className="mt-7 flex flex-col items-center gap-2">
+            <p className="text-[13px] text-gray-400 font-medium">Returning you to Prolific…</p>
+            <a
+              href={redirectUrl}
+              className="text-[13px] font-semibold text-blue-600 underline underline-offset-2"
+            >
+              Click here if you are not redirected
+            </a>
+          </div>
+        ) : (
+          <p className="mt-7 text-[13px] text-gray-400 font-medium">
+            You may now close this window.
+          </p>
+        )}
       </div>
     </ResearchPage>
   )

@@ -187,12 +187,14 @@ export default function AdminPage() {
   }
 
   function downloadRosterCsv(batch: BatchSummary) {
-    const header = 'prolific_pid,group,status,prolific_session_id,assigned_at,completed_at'
+    const header =
+      'prolific_pid,group,status,invalid_reason,prolific_session_id,assigned_at,completed_at'
     const lines = roster.map((p) =>
       [
         p.prolificPid,
         p.groupCondition,
         p.status,
+        p.invalidReason ?? '',
         p.prolificSessionId ?? '',
         p.assignedAt,
         p.completedAt ?? '',
@@ -393,6 +395,7 @@ export default function AdminPage() {
                               <th className="py-1.5 pr-3 font-semibold">Prolific PID</th>
                               <th className="py-1.5 pr-3 font-semibold">Group</th>
                               <th className="py-1.5 pr-3 font-semibold">Status</th>
+                              <th className="py-1.5 pr-3 font-semibold">Reason</th>
                               <th className="py-1.5 pr-3 font-semibold">Assigned</th>
                             </tr>
                           </thead>
@@ -418,6 +421,9 @@ export default function AdminPage() {
                                   >
                                     {p.status}
                                   </span>
+                                </td>
+                                <td className="py-1.5 pr-3 text-[12px] text-red-600">
+                                  {p.invalidReason ?? ''}
                                 </td>
                                 <td className="py-1.5 pr-3 text-gray-500 tabular-nums">
                                   {new Date(p.assignedAt).toLocaleString()}
