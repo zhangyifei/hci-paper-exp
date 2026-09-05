@@ -29,17 +29,35 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
     // Skip the redirect for debug / E2E runs that have no real Prolific participant.
     if (isDebug || !pid || pid.startsWith('anon_')) return
 
-    const url = isCompleted
-      ? process.env.NEXT_PUBLIC_PROLIFIC_COMPLETION_URL
-      : process.env.NEXT_PUBLIC_PROLIFIC_FAILED_URL
-    if (!url) return
+    const sessionId = sessionStorage.getItem('exp_session_id') ?? ''
+    if (!sessionId) return
 
-    setRedirectUrl(url)
-    const timer = setTimeout(() => {
-      window.location.href = url
-    }, REDIRECT_DELAY_MS)
-    return () => clearTimeout(timer)
-  }, [isCompleted])
+    // The server picks the completion vs. fail URL from recorded events — the
+    // codes are never exposed client-side and a fail can't be overridden to valid.
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    void (async () => {
+      try {
+        const res = await fetch('/api/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        })
+        const data: { url: string | null } = await res.json()
+        if (cancelled || !data.url) return
+        setRedirectUrl(data.url)
+        timer = setTimeout(() => {
+          window.location.href = data.url as string
+        }, REDIRECT_DELAY_MS)
+      } catch {
+        /* leave the participant on this screen; they can return to Prolific manually */
+      }
+    })()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <ResearchPage maxWidthClassName="max-w-[520px]">

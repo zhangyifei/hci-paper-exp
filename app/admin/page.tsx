@@ -195,13 +195,14 @@ export default function AdminPage() {
 
   function downloadRosterCsv(batch: BatchSummary) {
     const header =
-      'prolific_pid,group,status,prolific_action,invalid_reason,prolific_session_id,assigned_at,completed_at'
+      'prolific_pid,group,status,prolific_action,integrity,invalid_reason,prolific_session_id,assigned_at,completed_at'
     const lines = roster.map((p) =>
       [
         p.prolificPid,
         p.groupCondition,
         p.status,
         PROLIFIC_ACTION[p.status]?.label ?? '',
+        p.integrity ?? '',
         p.invalidReason ?? '',
         p.prolificSessionId ?? '',
         p.assignedAt,
@@ -401,7 +402,8 @@ export default function AdminPage() {
                         Prolific action: <b className="text-green-700">Approve</b> = pay (valid
                         completion) · <b className="text-red-600">Reject</b> = don’t pay (failed
                         attention check — see Reason) · <b className="text-gray-500">Pending</b> =
-                        started, not finished
+                        started, not finished · <b className="text-amber-600">⚠ review</b> = marked
+                        complete but event trail is incomplete — verify before paying
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
@@ -438,7 +440,7 @@ export default function AdminPage() {
                                     {p.status}
                                   </span>
                                 </td>
-                                <td className="py-1.5 pr-3">
+                                <td className="py-1.5 pr-3 whitespace-nowrap">
                                   <span
                                     className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                                       PROLIFIC_ACTION[p.status]?.className ?? ''
@@ -446,6 +448,14 @@ export default function AdminPage() {
                                   >
                                     {PROLIFIC_ACTION[p.status]?.label ?? '—'}
                                   </span>
+                                  {p.integrity === 'review' && (
+                                    <span
+                                      title="Completion recorded but event trail is incomplete — verify before approving"
+                                      className="ml-1.5 text-[11px] font-bold text-amber-600"
+                                    >
+                                      ⚠ review
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-1.5 pr-3 text-[12px] text-red-600">
                                   {p.invalidReason ?? ''}

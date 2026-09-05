@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { isAdminAuthorized } from '@/lib/admin-auth'
+import { evaluateOutcome } from '@/lib/session-eval'
 import type { ParticipantAssignment } from '@/lib/types'
 
 interface AssignmentRow {
@@ -60,5 +61,29 @@ export async function GET(
     }
   })
 
-  return NextResponse.json({ participants })
+  // Verify each completed session's event trail so a forged completion is flagged.
+  const sessionIds = participants
+    .map((p) => p.expSessionId)
+    .filter((s): s is string => Boolean(s))
+
+  const namesBySession = new Map<string, Set<string>>()
+  if (sessionIds.length > 0) {
+    const { data: evs } = await supabaseAdmin
+      .from('experiment_events')
+      .select('session_id, event_name')
+      .in('session_id', sessionIds)
+    for (const row of evs ?? []) {
+      const e = row as { session_id: string; event_name: string }
+      if (!namesBySession.has(e.session_id)) namesBySession.set(e.session_id, new Set())
+      namesBySession.get(e.session_id)!.add(e.event_name)
+    }
+  }
+
+  const verified: ParticipantAssignment[] = participants.map((p) => {
+    if (p.status !== 'completed' || !p.expSessionId) return p
+    const outcome = evaluateOutcome(namesBySession.get(p.expSessionId) ?? new Set())
+    return { ...p, integrity: outcome === 'valid' ? 'ok' : 'review' }
+  })
+
+  return NextResponse.json({ participants: verified })
 }

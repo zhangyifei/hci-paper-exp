@@ -60,6 +60,7 @@ export interface ParticipantAssignment {
   expSessionId: string | null
   status: AssignmentStatus
   invalidReason: string | null
+  integrity?: 'ok' | 'review' | null
   assignedAt: string
   completedAt: string | null
 }
