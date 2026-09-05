@@ -17,6 +17,13 @@ const STATUS_STYLE: Record<string, string> = {
   invalid: 'bg-red-50 text-red-700 border-red-200',
 }
 
+// Maps app status to the payment decision to take on Prolific.
+const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
+  completed: { label: 'Approve', className: 'bg-green-50 text-green-700 border-green-200' },
+  invalid: { label: 'Reject', className: 'bg-red-50 text-red-700 border-red-200' },
+  assigned: { label: 'Pending', className: 'bg-gray-50 text-gray-500 border-gray-200' },
+}
+
 const GROUP_COLOR: Record<string, string> = {
   G1: '#1d4ed8',
   G2: '#0369a1',
@@ -188,12 +195,13 @@ export default function AdminPage() {
 
   function downloadRosterCsv(batch: BatchSummary) {
     const header =
-      'prolific_pid,group,status,invalid_reason,prolific_session_id,assigned_at,completed_at'
+      'prolific_pid,group,status,prolific_action,invalid_reason,prolific_session_id,assigned_at,completed_at'
     const lines = roster.map((p) =>
       [
         p.prolificPid,
         p.groupCondition,
         p.status,
+        PROLIFIC_ACTION[p.status]?.label ?? '',
         p.invalidReason ?? '',
         p.prolificSessionId ?? '',
         p.assignedAt,
@@ -388,6 +396,13 @@ export default function AdminPage() {
                     ) : roster.length === 0 ? (
                       <p className="text-sm text-gray-400">No participants yet.</p>
                     ) : (
+                      <>
+                      <p className="text-[11px] text-gray-400 mb-2">
+                        Prolific action: <b className="text-green-700">Approve</b> = pay (valid
+                        completion) · <b className="text-red-600">Reject</b> = don’t pay (failed
+                        attention check — see Reason) · <b className="text-gray-500">Pending</b> =
+                        started, not finished
+                      </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
                           <thead>
@@ -395,6 +410,7 @@ export default function AdminPage() {
                               <th className="py-1.5 pr-3 font-semibold">Prolific PID</th>
                               <th className="py-1.5 pr-3 font-semibold">Group</th>
                               <th className="py-1.5 pr-3 font-semibold">Status</th>
+                              <th className="py-1.5 pr-3 font-semibold">Prolific action</th>
                               <th className="py-1.5 pr-3 font-semibold">Reason</th>
                               <th className="py-1.5 pr-3 font-semibold">Assigned</th>
                             </tr>
@@ -422,6 +438,15 @@ export default function AdminPage() {
                                     {p.status}
                                   </span>
                                 </td>
+                                <td className="py-1.5 pr-3">
+                                  <span
+                                    className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                                      PROLIFIC_ACTION[p.status]?.className ?? ''
+                                    }`}
+                                  >
+                                    {PROLIFIC_ACTION[p.status]?.label ?? '—'}
+                                  </span>
+                                </td>
                                 <td className="py-1.5 pr-3 text-[12px] text-red-600">
                                   {p.invalidReason ?? ''}
                                 </td>
@@ -433,6 +458,7 @@ export default function AdminPage() {
                           </tbody>
                         </table>
                       </div>
+                      </>
                     )}
                   </div>
                 )}
