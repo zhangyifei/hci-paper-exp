@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
   const completionUrl = process.env.PROLIFIC_COMPLETION_URL ?? null
   const failedUrl = process.env.PROLIFIC_FAILED_URL ?? null
 
-  // Failed → always the fail URL. Otherwise the completion URL (a genuine finisher
-  // is never stranded; an incomplete trail is flagged for review in /admin).
-  const url = outcome === 'failed' ? failedUrl : completionUrl
+  // Only a full valid trail yields the completion code; a failure yields the fail
+  // code; anything else yields no code (so the valid code can't be fished out).
+  const url =
+    outcome === 'valid' ? completionUrl : outcome === 'failed' ? failedUrl : null
 
   return NextResponse.json({ outcome, url })
 }
