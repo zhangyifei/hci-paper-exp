@@ -1,0 +1,6 @@
+# Keeps the secret docs/paper/prolific-env.conf out of CLI deploy uploads.
+# NOTE: docs/contracts/*.json IS imported at build time — do not exclude all of docs/.
+docs/paper
+.env
+.env.local
+.env*.local
