@@ -71,7 +71,7 @@ export default function ConsentScreen({ onConsent }: ConsentScreenProps) {
               This study examines users&rsquo; experiences when moving between related services in a
               fictional super app. You will complete two short prototype tasks and answer a
               questionnaire about your experience. The questionnaire was developed as part of a
-              master&rsquo;s thesis at HEC Montr&eacute;al. We estimate it should take about 5 minutes.
+              master&rsquo;s thesis at HEC Montr&eacute;al. We estimate it should take about 10 minutes.
               Since your first impressions best reflect your true opinions, please answer without
               hesitation. There is no time limit.
             </p>
