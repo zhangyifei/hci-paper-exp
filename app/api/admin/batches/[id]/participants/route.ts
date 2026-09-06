@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { isAdminAuthorized } from '@/lib/admin-auth'
-import { evaluateOutcome } from '@/lib/session-eval'
+import { evaluateOutcome, RELEVANT_EVENTS } from '@/lib/session-eval'
 import type { ParticipantAssignment } from '@/lib/types'
 
 interface AssignmentRow {
@@ -72,6 +72,7 @@ export async function GET(
       .from('experiment_events')
       .select('session_id, event_name')
       .in('session_id', sessionIds)
+      .in('event_name', RELEVANT_EVENTS)
     for (const row of evs ?? []) {
       const e = row as { session_id: string; event_name: string }
       if (!namesBySession.has(e.session_id)) namesBySession.set(e.session_id, new Set())

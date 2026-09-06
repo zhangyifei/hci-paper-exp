@@ -12,6 +12,10 @@ const REQUIRED_EVENTS = [
   'questionnaire.completed',
 ] as const
 
+// Only these event names affect the outcome — filtering trail queries to this
+// set keeps them small so a large batch never hits the DB row cap.
+export const RELEVANT_EVENTS: readonly string[] = [...FAILURE_EVENTS, ...REQUIRED_EVENTS]
+
 /** Classify a session from the set of event names it recorded. */
 export function evaluateOutcome(eventNames: Iterable<string>): SessionOutcome {
   const names = eventNames instanceof Set ? eventNames : new Set(eventNames)
