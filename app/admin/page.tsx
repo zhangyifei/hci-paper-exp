@@ -26,13 +26,6 @@ const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
   released: { label: 'Released', className: 'bg-gray-100 text-gray-400 border-gray-200' },
 }
 
-// Maps app status to the payment decision to take on Prolific.
-const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
-  completed: { label: 'Approve', className: 'bg-green-50 text-green-700 border-green-200' },
-  invalid: { label: 'Reject', className: 'bg-red-50 text-red-700 border-red-200' },
-  assigned: { label: 'Pending', className: 'bg-gray-50 text-gray-500 border-gray-200' },
-}
-
 const GROUP_COLOR: Record<string, string> = {
   G1: '#1d4ed8',
   G2: '#0369a1',
