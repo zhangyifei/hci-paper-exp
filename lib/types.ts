@@ -37,7 +37,7 @@ export interface ExperimentSession {
 
 // ── Batch test management ────────────────────────────────────────────────
 export type BatchStatus = 'active' | 'closed'
-export type AssignmentStatus = 'assigned' | 'completed' | 'invalid'
+export type AssignmentStatus = 'assigned' | 'completed' | 'invalid' | 'released'
 /** Result of an assignment attempt against the active batch. */
 export type AssignOutcome = 'assigned' | 'existing' | 'full' | 'no_active_batch'
 

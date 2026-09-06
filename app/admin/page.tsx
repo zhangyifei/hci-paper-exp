@@ -15,6 +15,7 @@ const STATUS_STYLE: Record<string, string> = {
   assigned: 'bg-blue-50 text-blue-700 border-blue-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   invalid: 'bg-red-50 text-red-700 border-red-200',
+  released: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
 // Maps app status to the payment decision to take on Prolific.
@@ -22,6 +23,7 @@ const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
   completed: { label: 'Approve', className: 'bg-green-50 text-green-700 border-green-200' },
   invalid: { label: 'Reject', className: 'bg-red-50 text-red-700 border-red-200' },
   assigned: { label: 'Pending', className: 'bg-gray-50 text-gray-500 border-gray-200' },
+  released: { label: 'Released', className: 'bg-gray-100 text-gray-400 border-gray-200' },
 }
 
 const GROUP_COLOR: Record<string, string> = {
@@ -218,6 +220,41 @@ export default function AdminPage() {
     URL.revokeObjectURL(url)
   }
 
+  async function releaseAssignment(assignmentId: string, batchId: string) {
+    if (
+      !window.confirm(
+        'Release this slot? The participant stops counting toward capacity so a replacement can be recruited.',
+      )
+    ) {
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/assignments/${assignmentId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ action: 'release' }),
+      })
+      if (!res.ok) {
+        setError(`Release failed (${res.status})`)
+        return
+      }
+      const r = await fetch(`/api/admin/batches/${batchId}/participants`, {
+        headers: { 'x-stats-password': password },
+      })
+      if (r.ok) {
+        const d: ParticipantsResponse = await r.json()
+        setRoster(d.participants)
+      }
+      await loadBatches()
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // ── Password gate ─────────────────────────────────────────────────────────
   if (!authed) {
     return (
@@ -403,7 +440,9 @@ export default function AdminPage() {
                         completion) · <b className="text-red-600">Reject</b> = don’t pay (failed
                         attention check — see Reason) · <b className="text-gray-500">Pending</b> =
                         started, not finished · <b className="text-amber-600">⚠ review</b> = marked
-                        complete but event trail is incomplete — verify before paying
+                        complete but event trail is incomplete — verify before paying ·{' '}
+                        <b>Release</b> frees an abandoned or rejected slot so a replacement can be
+                        recruited
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
@@ -415,6 +454,7 @@ export default function AdminPage() {
                               <th className="py-1.5 pr-3 font-semibold">Prolific action</th>
                               <th className="py-1.5 pr-3 font-semibold">Reason</th>
                               <th className="py-1.5 pr-3 font-semibold">Assigned</th>
+                              <th className="py-1.5 pr-3 font-semibold">Manage</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -462,6 +502,20 @@ export default function AdminPage() {
                                 </td>
                                 <td className="py-1.5 pr-3 text-gray-500 tabular-nums">
                                   {new Date(p.assignedAt).toLocaleString()}
+                                </td>
+                                <td className="py-1.5 pr-3">
+                                  {p.status === 'assigned' || p.status === 'completed' ? (
+                                    <button
+                                      onClick={() => releaseAssignment(p.id, batch.id)}
+                                      className="text-[11px] font-semibold px-2 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-50"
+                                    >
+                                      Release
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-400">
+                                      {p.status === 'released' ? 'released' : '—'}
+                                    </span>
+                                  )}
                                 </td>
                               </tr>
                             ))}

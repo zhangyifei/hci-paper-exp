@@ -79,7 +79,7 @@ async function syncAssignmentStatus(events: ExperimentEvent[]): Promise<void> {
         .from('participant_assignments')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
         .in('exp_session_id', completed)
-        .neq('status', 'invalid')
+        .not('status', 'in', '("invalid","released")')
     }
     for (const { sessionId, reason } of invalidated) {
       await supabaseAdmin

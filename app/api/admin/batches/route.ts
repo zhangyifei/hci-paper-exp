@@ -16,7 +16,7 @@ interface BatchRow {
 interface AssignmentRow {
   batch_id: string
   group_condition: Condition
-  status: 'assigned' | 'completed' | 'invalid'
+  status: 'assigned' | 'completed' | 'invalid' | 'released'
 }
 
 const MAX_GROUP_SIZE = 1000
@@ -38,7 +38,9 @@ function summarize(batch: BatchRow, assignments: AssignmentRow[]): BatchSummary 
     const g = rows.filter((r) => r.group_condition === group)
     return {
       group,
-      assigned: g.length,
+      // Only active slots (assigned + completed) occupy capacity; invalid and
+      // released rows are excluded so the bar matches assign_participant.
+      assigned: g.filter((r) => r.status === 'assigned' || r.status === 'completed').length,
       completed: g.filter((r) => r.status === 'completed').length,
       invalid: g.filter((r) => r.status === 'invalid').length,
       capacity: batch.group_size,
