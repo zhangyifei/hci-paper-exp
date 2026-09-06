@@ -15,6 +15,7 @@ const STATUS_STYLE: Record<string, string> = {
   assigned: 'bg-blue-50 text-blue-700 border-blue-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   invalid: 'bg-red-50 text-red-700 border-red-200',
+  released: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
 // Maps app status to the payment decision to take on Prolific.
@@ -22,6 +23,7 @@ const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
   completed: { label: 'Approve', className: 'bg-green-50 text-green-700 border-green-200' },
   invalid: { label: 'Reject', className: 'bg-red-50 text-red-700 border-red-200' },
   assigned: { label: 'Pending', className: 'bg-gray-50 text-gray-500 border-gray-200' },
+  released: { label: 'Released', className: 'bg-gray-100 text-gray-400 border-gray-200' },
 }
 
 const GROUP_COLOR: Record<string, string> = {
@@ -195,13 +197,14 @@ export default function AdminPage() {
 
   function downloadRosterCsv(batch: BatchSummary) {
     const header =
-      'prolific_pid,group,status,prolific_action,invalid_reason,prolific_session_id,assigned_at,completed_at'
+      'prolific_pid,group,status,prolific_action,integrity,invalid_reason,prolific_session_id,assigned_at,completed_at'
     const lines = roster.map((p) =>
       [
         p.prolificPid,
         p.groupCondition,
         p.status,
         PROLIFIC_ACTION[p.status]?.label ?? '',
+        p.integrity ?? '',
         p.invalidReason ?? '',
         p.prolificSessionId ?? '',
         p.assignedAt,
@@ -215,6 +218,41 @@ export default function AdminPage() {
     a.download = `batch_${batch.name.replace(/\s+/g, '_')}_roster.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function releaseAssignment(assignmentId: string, batchId: string) {
+    if (
+      !window.confirm(
+        'Release this slot? The participant stops counting toward capacity so a replacement can be recruited.',
+      )
+    ) {
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/assignments/${assignmentId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ action: 'release' }),
+      })
+      if (!res.ok) {
+        setError(`Release failed (${res.status})`)
+        return
+      }
+      const r = await fetch(`/api/admin/batches/${batchId}/participants`, {
+        headers: { 'x-stats-password': password },
+      })
+      if (r.ok) {
+        const d: ParticipantsResponse = await r.json()
+        setRoster(d.participants)
+      }
+      await loadBatches()
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
   // ── Password gate ─────────────────────────────────────────────────────────
@@ -401,7 +439,10 @@ export default function AdminPage() {
                         Prolific action: <b className="text-green-700">Approve</b> = pay (valid
                         completion) · <b className="text-red-600">Reject</b> = don’t pay (failed
                         attention check — see Reason) · <b className="text-gray-500">Pending</b> =
-                        started, not finished
+                        started, not finished · <b className="text-amber-600">⚠ review</b> = marked
+                        complete but event trail is incomplete — verify before paying ·{' '}
+                        <b>Release</b> frees an abandoned or rejected slot so a replacement can be
+                        recruited
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
@@ -413,6 +454,7 @@ export default function AdminPage() {
                               <th className="py-1.5 pr-3 font-semibold">Prolific action</th>
                               <th className="py-1.5 pr-3 font-semibold">Reason</th>
                               <th className="py-1.5 pr-3 font-semibold">Assigned</th>
+                              <th className="py-1.5 pr-3 font-semibold">Manage</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -438,7 +480,7 @@ export default function AdminPage() {
                                     {p.status}
                                   </span>
                                 </td>
-                                <td className="py-1.5 pr-3">
+                                <td className="py-1.5 pr-3 whitespace-nowrap">
                                   <span
                                     className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                                       PROLIFIC_ACTION[p.status]?.className ?? ''
@@ -446,12 +488,34 @@ export default function AdminPage() {
                                   >
                                     {PROLIFIC_ACTION[p.status]?.label ?? '—'}
                                   </span>
+                                  {p.integrity === 'review' && (
+                                    <span
+                                      title="Completion recorded but event trail is incomplete — verify before approving"
+                                      className="ml-1.5 text-[11px] font-bold text-amber-600"
+                                    >
+                                      ⚠ review
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-1.5 pr-3 text-[12px] text-red-600">
                                   {p.invalidReason ?? ''}
                                 </td>
                                 <td className="py-1.5 pr-3 text-gray-500 tabular-nums">
                                   {new Date(p.assignedAt).toLocaleString()}
+                                </td>
+                                <td className="py-1.5 pr-3">
+                                  {p.status === 'assigned' || p.status === 'completed' ? (
+                                    <button
+                                      onClick={() => releaseAssignment(p.id, batch.id)}
+                                      className="text-[11px] font-semibold px-2 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-50"
+                                    >
+                                      Release
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-400">
+                                      {p.status === 'released' ? 'released' : '—'}
+                                    </span>
+                                  )}
                                 </td>
                               </tr>
                             ))}

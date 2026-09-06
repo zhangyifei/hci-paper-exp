@@ -47,10 +47,12 @@ function LandingInner() {
         status: AssignmentStatus | null
       } = await res.json()
 
-      // A participant who already finished or was invalidated cannot retake the test.
+      // A participant who already finished, failed, or was released cannot retake the test.
       if (
         data.outcome === 'existing' &&
-        (data.status === 'completed' || data.status === 'invalid')
+        (data.status === 'completed' ||
+          data.status === 'invalid' ||
+          data.status === 'released')
       ) {
         setBlocked('already')
         return
