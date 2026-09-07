@@ -83,7 +83,7 @@ test.describe('Post-task survey — items + attention check', () => {
 
     // Page 1 of 2, nothing answered, Continue present, Submit not yet
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 2')
-    await expect(page.getByText('0 of 15 answered', { exact: true })).toBeVisible()
+    await expect(page.getByText('0 of 20 answered', { exact: true })).toBeVisible()
     await expect(page.getByTestId('btn-survey-continue')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toHaveCount(0)
 
@@ -95,13 +95,13 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
     // Page 2 holds the attention check (with its numeric legend) and MC items
-    await expect(page.getByText('The second service felt different from the ride service.')).toHaveCount(0)
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 2')
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
     await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
-    await expect(page.getByText('The second service felt different from the ride service.')).toBeVisible()
-    await expect(page.getByText('The two service tasks required different kinds of actions.')).toBeVisible()
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toBeVisible()
+    await expect(page.getByText('The steps for the second service were unlike those for booking the ride.')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toBeVisible()
     await expect(page.getByTestId('btn-survey-back')).toBeVisible()
   })
@@ -115,13 +115,13 @@ test.describe('Post-task survey — items + attention check', () => {
     await page.getByTestId('btn-delivery-complete').click({ force: true })
 
     // Answer page 1 fully
-    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']) {
+    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']) {
       await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-survey-continue').click({ force: true })
 
     // Leave one page-2 item unanswered, then submit (AC1 = 5)
-    for (const code of ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3']) {
+    for (const code of ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4']) {
       const value = code === 'AC1' ? 5 : 4
       await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
     }
@@ -132,7 +132,7 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByTestId('btn-submit-questionnaire')).toHaveCount(0)
 
     // Completing the last item allows submission
-    await page.getByTestId('likert-MC4-4').evaluate((n) => (n as HTMLButtonElement).click())
+    await page.getByTestId('likert-MC6-4').evaluate((n) => (n as HTMLButtonElement).click())
     await page.getByTestId('btn-submit-survey').click({ force: true })
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
   })
