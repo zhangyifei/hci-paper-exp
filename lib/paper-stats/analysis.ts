@@ -25,6 +25,9 @@ export interface SurveyAggregates {
   usability_mean: number
   continuance_mean: number
   manipulation_check_mean: number
+  // v2 splits the manipulation check into two constructs (null for pre-v2 data).
+  mc_interrelatedness_mean?: number | null
+  mc_heterogeneity_mean?: number | null
 }
 
 export interface SurveyResponses {
@@ -63,6 +66,8 @@ export interface SurveyConditionStats {
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
   manipCheck: { mean: number; sd: number; values: number[] }
+  mcInterrel?: { mean: number; sd: number; values: number[] } | null
+  mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }
 
 export interface GroupComparison {
@@ -153,13 +158,24 @@ export function getSurveyAggregates(
   const cognitiveLoad = aggregates.cognitive_load_mean
   const usability = aggregates.usability_mean
   const continuance = aggregates.continuance_mean
-  const manipulationCheck = aggregates.manipulation_check_mean
+  const legacyMc = aggregates.manipulation_check_mean
+  const mci = aggregates.mc_interrelatedness_mean
+  const mch = aggregates.mc_heterogeneity_mean
+  const mciNum = typeof mci === 'number' ? mci : null
+  const mchNum = typeof mch === 'number' ? mch : null
+  // v2 splits the MC; keep a combined value for display continuity.
+  const manipulationCheck =
+    typeof legacyMc === 'number'
+      ? legacyMc
+      : mciNum != null && mchNum != null
+        ? (mciNum + mchNum) / 2
+        : (mciNum ?? mchNum)
 
   if (
     typeof cognitiveLoad !== 'number' ||
     typeof usability !== 'number' ||
     typeof continuance !== 'number' ||
-    typeof manipulationCheck !== 'number'
+    manipulationCheck == null
   ) {
     return null
   }
@@ -169,6 +185,8 @@ export function getSurveyAggregates(
     usability_mean: usability,
     continuance_mean: continuance,
     manipulation_check_mean: manipulationCheck,
+    mc_interrelatedness_mean: mciNum,
+    mc_heterogeneity_mean: mchNum,
   }
 }
 
@@ -357,6 +375,12 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       const us = aggregates.map((aggregate) => aggregate.usability_mean)
       const ci = aggregates.map((aggregate) => aggregate.continuance_mean)
       const mc = aggregates.map((aggregate) => aggregate.manipulation_check_mean)
+      const mci = aggregates
+        .map((a) => a.mc_interrelatedness_mean)
+        .filter((v): v is number => typeof v === 'number')
+      const mch = aggregates
+        .map((a) => a.mc_heterogeneity_mean)
+        .filter((v): v is number => typeof v === 'number')
 
       return [
         condition,
@@ -366,6 +390,8 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
           usability: { mean: mean(us), sd: sd(us), values: us },
           continuance: { mean: mean(ci), sd: sd(ci), values: ci },
           manipCheck: { mean: mean(mc), sd: sd(mc), values: mc },
+          mcInterrel: mci.length ? { mean: mean(mci), sd: sd(mci), values: mci } : null,
+          mcHeterog: mch.length ? { mean: mean(mch), sd: sd(mch), values: mch } : null,
         } satisfies SurveyConditionStats,
       ]
     }),

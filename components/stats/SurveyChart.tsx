@@ -10,6 +10,8 @@ interface SurveyStat {
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
   manipCheck: { mean: number; sd: number; values: number[] }
+  mcInterrel?: { mean: number; sd: number; values: number[] } | null
+  mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }
 
 interface Props {
