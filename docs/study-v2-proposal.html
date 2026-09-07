@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study v2 — Changes &amp; C2 Proposal (Team Review)</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--muted:#5b6472;--line:#e4e7ec;--accent:#2f6bff;
+        --green:#1f9d55;--red:#d64545;--amber:#b7791f;--code:#f0f2f5}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 96px}
+  header.hero{background:linear-gradient(135deg,#0f2b46,#2f6bff);color:#fff;border-radius:16px;padding:32px 34px;box-shadow:0 1px 3px rgba(16,24,40,.1);margin-bottom:26px}
+  header.hero h1{margin:0 0 6px;font-size:25px;letter-spacing:-.3px}
+  header.hero p{margin:0;opacity:.92;font-size:14.5px;max-width:76ch}
+  .meta{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:3px 10px;border-radius:999px;font-size:12px}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:26px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  nav.toc strong{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+  nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  nav.toc a{color:var(--accent);text-decoration:none}nav.toc a:hover{text-decoration:underline}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px 28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  h2{font-size:19px;margin:0 0 12px;letter-spacing:-.2px}
+  h3{font-size:15px;margin:18px 0 6px}
+  p{margin:0 0 10px}ul,ol{margin:0 0 10px;padding-left:22px}li{margin:4px 0}
+  code{background:var(--code);padding:1.5px 6px;border-radius:5px;font-size:12.8px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13.2px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfc;font-weight:600;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  tbody tr:hover{background:#fafbfd}
+  .callout{border-radius:10px;padding:12px 16px;margin:10px 0 14px;font-size:13.6px;border:1px solid}
+  .callout.info{background:#eef4ff;border-color:#cfe0ff;color:#1b3a7a}
+  .callout.good{background:#eefaf1;border-color:#c7ecd3;color:#166534}
+  .callout.warn{background:#fff8ec;border-color:#f4e2bf;color:#8a5a00}
+  .callout.bad{background:#fdecec;border-color:#f4c9c9;color:#8a1f1f}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+  .tag.ok{background:#eefaf1;color:var(--green)}.tag.bad{background:#fdecec;color:var(--red)}
+  .tag.warn{background:#fff8ec;color:var(--amber)}.tag.new{background:#eaf1ff;color:var(--accent)}
+  .kv{display:grid;grid-template-columns:190px 1fr;gap:6px 14px;font-size:13.6px}
+  .kv div:nth-child(odd){color:var(--muted);font-weight:600}
+  .del{color:#8a1f1f;text-decoration:line-through;opacity:.7}
+  .add{color:#166534}
+  ol.steps{counter-reset:s;list-style:none;padding-left:0}
+  ol.steps>li{counter-increment:s;position:relative;padding-left:38px;margin:10px 0}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .filepath{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.2px;color:#1b3a7a}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+  .rec{border-left:4px solid var(--accent);background:#f5f8ff;padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Study v2 — Instrument &amp; Analysis Changes + Heterogeneity (C2) Proposal</h1>
+  <p>For team review. Summarizes the pilot evidence, the changes already implemented to optimize the study
+     (reverse-coded scales, split manipulation checks, v2-aware analysis), and a proposed structural
+     redesign of the heterogeneity manipulation if the next pilot confirms it is still weak.</p>
+  <div class="meta">
+    <span class="chip">HCI super-app 2×2 study</span>
+    <span class="chip">Branch: feat/study-v2-instruments · PR #17</span>
+    <span class="chip">Status: implemented, NOT deployed</span>
+    <span class="chip">2026-09-07</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#context">Context &amp; goal</a></li>
+    <li><a href="#evidence">Pilot evidence (N=12)</a></li>
+    <li><a href="#changes">Changes implemented (v2)</a></li>
+    <li><a href="#pipeline">Analysis pipeline update</a></li>
+    <li><a href="#status">Status &amp; verification</a></li>
+    <li><a href="#c2">Heterogeneity C2 proposal</a></li>
+    <li><a href="#decisions">Decisions for the team</a></li>
+    <li><a href="#next">Sequencing &amp; next steps</a></li>
+  </ol>
+</nav>
+
+<section id="context">
+  <h2>1 · Context &amp; goal</h2>
+  <p>The study is a <b>2 × 2 between-subjects</b> design: <b>feature interrelatedness</b> (bridge: absent /
+     present) × <b>feature heterogeneity</b> (low / high), testing a serial-mediation model
+     <b>interrelatedness → cognitive load → usability → continuance</b> (H1–H4).</p>
+  <p>A first pilot (N = 12, 3 per cell) was collected on Prolific. The data are <b>clean and valid</b>
+     (complete trails, attention checks passed, no straight-lining), but the analysis surfaced two
+     <b>design/measurement problems</b> that would prevent the hypotheses from being fairly tested at scale.
+     The goal of v2 is to fix those problems — to give H1–H4 a <b>fair, well-powered, valid test</b>, not to
+     force a particular result. Pre-registration is recommended.</p>
+</section>
+
+<section id="evidence">
+  <h2>2 · Pilot evidence (N = 12) — why we are changing things</h2>
+  <h3>Scales are reliable ✅</h3>
+  <table><thead><tr><th>Scale</th><th>Reliability</th></tr></thead><tbody>
+    <tr><td>Cognitive Load (3 items)</td><td>α = 0.83</td></tr>
+    <tr><td>Perceived Usability (4 items)</td><td>α = 0.89</td></tr>
+    <tr><td>Continuance Intention (3 items)</td><td>α = 0.90</td></tr>
+  </tbody></table>
+
+  <h3>Problem 1 — ceiling effect on usability &amp; continuance <span class="tag bad">blocks H4 + mediation</span></h3>
+  <table><thead><tr><th>Construct</th><th>Mean</th><th>SD</th><th>Range</th></tr></thead><tbody>
+    <tr><td>Cognitive Load</td><td>1.72</td><td>0.89</td><td>1.0–3.7</td></tr>
+    <tr><td><b>Usability</b></td><td>6.79</td><td><b>0.40</b></td><td>5.8–7.0</td></tr>
+    <tr><td><b>Continuance</b></td><td>6.58</td><td><b>0.61</b></td><td>5.3–7.0</td></tr>
+  </tbody></table>
+  <p>Everyone rated the app ~6.8/7 — there is almost no variance for usability→continuance effects to appear.
+     Correlation <b>PU–CI r = 0.30 (ns)</b> and the serial mediation indirect effect
+     <b>0.06, 95% CI [−0.78, 0.47] (includes 0)</b> — both artefacts of the restricted range.</p>
+
+  <h3>Problem 2 — the heterogeneity manipulation is not perceived <span class="tag bad">blocks H1</span></h3>
+  <table><thead><tr><th>Manipulation check</th><th>Contrast</th><th>t / d</th><th>Verdict</th></tr></thead><tbody>
+    <tr><td>Interrelatedness</td><td>present 6.67 vs absent 6.33</td><td>t(10)=1.24, d=0.72</td><td>weak (controls near ceiling)</td></tr>
+    <tr><td><b>Heterogeneity</b></td><td>high 5.50 vs low 5.42</td><td>t(10)=0.09, <b>d=0.05</b></td><td><b>failed — no separation</b></td></tr>
+  </tbody></table>
+
+  <div class="callout good"><b>The one clean win:</b> interrelatedness lowers cognitive load —
+     F(1,8)=6.06, p=.039, large η²=.43 — and CL–PU r=−0.85. The front half of the model holds; the ceiling
+     and the heterogeneity manipulation are what need fixing.</div>
+  <p class="callout warn"><b>Note:</b> the large Service-2 <i>time</i> effects are partly mechanical (auto-fill
+     removes typing steps; Courier vs Eats have different step counts), so time is treated as a
+     manipulation-realization check, not a clean DV.</p>
+</section>
+
+<section id="changes">
+  <h2>3 · Changes implemented (v2 instrument) <span class="tag new">IN PR #17</span></h2>
+  <p>Post-task survey grew from 15 → 20 items. Reverse-coded items are flipped (<code>8 − response</code>)
+     before averaging; raw responses are still stored.</p>
+
+  <h3>A. Break the PU/CI ceiling (reverse-coded + de-leading)</h3>
+  <table><thead><tr><th>Item</th><th>Change</th><th>Wording</th></tr></thead><tbody>
+    <tr><td>PU3</td><td><span class="tag warn">reword → reverse</span></td><td class="add">"Moving from the first service to the second took more steps than I expected."</td></tr>
+    <tr><td>PU5</td><td><span class="tag new">new · reverse</span></td><td class="add">"At some point I felt unsure how to get to or start the second service."</td></tr>
+    <tr><td>PU6</td><td><span class="tag new">new · reverse</span></td><td class="add">"Parts of completing the two tasks were more effortful than they needed to be."</td></tr>
+    <tr><td>CI4</td><td><span class="tag new">new · reverse</span></td><td class="add">"If another app could do these tasks, I would probably use it instead of this one."</td></tr>
+  </tbody></table>
+
+  <h3>B. Split the manipulation check into two constructs</h3>
+  <p>Previously one <code>manipulation_check</code>. Now scored separately so each factor can be validated:</p>
+  <table><thead><tr><th>Construct</th><th>Items</th><th>Notes</th></tr></thead><tbody>
+    <tr><td><b>MC-interrelatedness</b></td><td>MC1, MC2, MC5</td><td>MC2 made concrete ("my address was already filled in"); MC5 new reverse ("I had to enter my address again from scratch")</td></tr>
+    <tr><td><b>MC-heterogeneity</b> (C1, item-only)</td><td>MC3, MC4, MC6</td><td>MC3/MC4 reworded to concrete similarity judgments; MC6 new reverse ("the two services felt like basically the same kind of activity")</td></tr>
+  </tbody></table>
+  <div class="callout info"><b>C1 vs C2:</b> the item changes above (<b>C1</b>) sharpen how heterogeneity is
+     <i>measured</i>. They cannot create a difference that isn't there — that is what <b>C2</b> (§6) addresses.</div>
+</section>
+
+<section id="pipeline">
+  <h2>4 · Analysis pipeline update <span class="tag new">IN PR #17</span></h2>
+  <ul>
+    <li><b>Critical fix:</b> <span class="filepath">lib/paper-stats/analysis.ts</span> previously <i>required</i>
+       the old <code>manipulation_check_mean</code> key — v2 data (which stores the two split keys) would have
+       been <b>silently dropped</b> from all stats. It now accepts the split keys and keeps pre-v2 data working.</li>
+    <li>CL/PU/CI use the same aggregate keys and are already reverse-coded by the survey component — no change needed.</li>
+    <li>The <code>/stats</code> dashboard now shows <b>MC-I</b> and <b>MC-H</b> columns + raw values, so the team
+       can watch manipulation-check separation live during the validation pilot.</li>
+  </ul>
+</section>
+
+<section id="status">
+  <h2>5 · Status &amp; verification</h2>
+  <div class="kv">
+    <div>Branch / PR</div><div><code>feat/study-v2-instruments</code> → PR #17 (open, for review)</div>
+    <div>Deployed?</div><div><b>No</b> — nothing changes for participants until reviewed &amp; deployed</div>
+    <div>Build / types</div><div><code>npm run build</code> passes · <code>tsc --noEmit</code> clean · E2E specs updated</div>
+    <div>Existing pilot data</div><div>Unaffected — old instrument still analyzes correctly (backward compatible)</div>
+  </div>
+</section>
+
+<section id="c2">
+  <h2>6 · Heterogeneity redesign — the C2 proposal</h2>
+  <h3>The problem, restated</h3>
+  <p>A ride is a <b>location/address-driven booking</b>. Both current second services — <b>Courier</b>
+     (send a package) and <b>Eats</b> (deliver food) — are also address-driven delivery tasks, so relative to a
+     ride they sit at a <i>similar</i> "distance." Neither anchors an extreme, so participants perceive no
+     difference in similarity (d ≈ 0.05). Better wording (C1) cannot fix a manipulation that is structurally
+     flat; <b>C2 changes the actual second-service tasks</b> so low- vs high-heterogeneity are unmistakable.</p>
+
+  <div class="callout warn"><b>Design tension to resolve.</b> The <b>bridge</b> (interrelatedness) works by
+     <i>carrying data over</i> — auto-filling the ride's address into the second service. The more heterogeneous
+     you make that service (e.g. "pay a phone bill"), the <b>less shared data there is to carry over</b>, so the
+     two factors start to conflict. A good C2 pairing keeps <i>some</i> shared element (address) while making the
+     <i>activity</i> clearly different in kind.</p>
+
+  <h3>Candidate service pairings</h3>
+  <table>
+    <thead><tr><th>Option</th><th>Low heterogeneity</th><th>High heterogeneity</th><th>Pros</th><th>Cons</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>A — Max contrast</b></td>
+        <td>Ride → another ride / mobility (return trip, scooter)</td>
+        <td>Ride → non-transport (pay a utility bill, mobile top-up)</td>
+        <td>Strongest, unmistakable similarity contrast</td>
+        <td><b>Breaks address carry-over in the High cells</b> → the bridge manipulation weakens exactly where it's crossed with high heterogeneity</td>
+      </tr>
+      <tr>
+        <td><b>B — Balanced (recommended)</b></td>
+        <td>Ride → another mobility booking (return ride / scooter)</td>
+        <td>Ride → different but still address-anchored (grocery delivery, or a home service e.g. cleaning)</td>
+        <td>Preserves address carry-over in <i>all</i> cells; clear activity difference</td>
+        <td>Contrast is moderate, not extreme — must be validated</td>
+      </tr>
+      <tr>
+        <td><b>C — Minimal rebuild</b></td>
+        <td>Replace Courier with a clearly-similar mobility task (return ride)</td>
+        <td>Keep Eats (food) as the high-heterogeneity anchor</td>
+        <td>Smallest engineering change (only the low service changes); keeps Eats flow</td>
+        <td>Relies on "return ride vs food" being a big enough gap — uncertain</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="rec"><b>Recommendation:</b> if C2 is needed, prefer <b>Option B</b> (keeps the bridge valid across
+     all four cells while making the activities clearly different), with <b>Option C</b> as a lighter-weight
+     fallback. Option A gives the cleanest heterogeneity contrast but compromises the interrelatedness factor.</div>
+
+  <h3>Engineering scope (why C2 is a larger change)</h3>
+  <p>Unlike C1 (text only), C2 means building new experiment surfaces:</p>
+  <ul>
+    <li>New <b>Service-2 flow components</b> for the new task(s) (analogous to <span class="filepath">components/Service2Phase/Courier*</span> / <span class="filepath">Eats*</span>).</li>
+    <li>Updated <b>condition config</b> (<span class="filepath">docs/contracts/experiment-config.json</span>, <span class="filepath">lib/experiment-config.ts</span>) mapping G1–G4 to new services.</li>
+    <li>Re-implement the <b>bridge / auto-fill + banner</b> logic and <b>event instrumentation</b> for the new services.</li>
+    <li>New <b>E2E tests</b> and updated workflow/design docs.</li>
+  </ul>
+  <p>Estimated: a multi-day build plus a <b>theory decision</b> about which pairing best embodies "heterogeneity."</p>
+</section>
+
+<section id="decisions">
+  <h2>7 · Decisions for the team</h2>
+  <ol class="steps">
+    <li><b>Approve v2 item wording?</b> Review §3 (reverse-coded PU/CI, split MC). Adjust any wording before deploy.</li>
+    <li><b>Run the validation pilot as gate?</b> Deploy v2, collect ~8–10/cell, and check on <code>/stats</code>: is PU/CI variance restored (SD ≥ ~1.0), and do <b>MC-I</b> and <b>MC-H</b> separate (target Δ ≥ ~1.5)?</li>
+    <li><b>Is C2 needed?</b> If MC-H is still flat after C1, commit to C2 and pick a pairing (A / B / C above). If it separates, no C2 needed.</li>
+    <li><b>Pre-registration &amp; appendix.</b> Update the questionnaire appendix to v2 and pre-register the model + power targets before the full run.</li>
+  </ol>
+</section>
+
+<section id="next">
+  <h2>8 · Sequencing &amp; next steps</h2>
+  <ol>
+    <li>Team reviews PR #17 (this doc + the v2 diff).</li>
+    <li>Merge &amp; deploy v2 → run the <b>validation pilot (~8–10/cell)</b>.</li>
+    <li>Read the manipulation checks on <code>/stats</code>:
+        <ul><li>PU/CI variance restored <b>and</b> MC-I/MC-H separate → proceed to the <b>full run (~25–40/cell)</b>.</li>
+        <li>MC-H still flat → build <b>C2</b> (Option B/C), re-validate, then scale.</li></ul></li>
+    <li>Analyze with the pre-registered serial-mediation model.</li>
+  </ol>
+  <div class="callout info">Power targets once variance is restored: main effects ~13/cell; individual paths
+     (e.g. PU→CI) ~46 total; full serial mediation ~120–160 total — plan ≈ 25–40 per cell.</div>
+</section>
+
+<footer>HCI super-app study · v2 changes &amp; C2 proposal · prepared for team review · 2026-09-07</footer>
+
+</div>
+</body>
+</html>
