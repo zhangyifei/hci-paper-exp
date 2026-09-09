@@ -44,6 +44,8 @@ interface SurveyStat {
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
   manipCheck: { mean: number; sd: number; values: number[] }
+  mcInterrel?: { mean: number; sd: number; values: number[] } | null
+  mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }
 
 interface GroupComparison {
@@ -437,7 +439,7 @@ export default function StatsPage() {
             headers={['Condition', 'Service', 'Bridge', 'n (real)', 'n (completed)', 'Completion Rate']}
             rows={CONDITIONS.map((cond) => {
               const s = data.conditionStats[cond]
-              const svc = { G1: 'Courier', G2: 'Courier', G3: 'Eats', G4: 'Eats' }[cond]
+              const svc = { G1: 'Return ride', G2: 'Return ride', G3: 'Movie', G4: 'Movie' }[cond]
               const bridge = { G1: 'Absent', G2: 'Present', G3: 'Absent', G4: 'Present' }[cond]
               return [
                 <CondTag key="c" cond={cond} />,
@@ -493,7 +495,7 @@ export default function StatsPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <CondTag cond={cond} />
                     <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-                      {{ G1: 'Courier / No Bridge', G2: 'Courier / Bridge', G3: 'Eats / No Bridge', G4: 'Eats / Bridge' }[cond]}
+                      {{ G1: 'Return ride / No Bridge', G2: 'Return ride / Bridge', G3: 'Movie / No Bridge', G4: 'Movie / Bridge' }[cond]}
                     </span>
                   </div>
                   <div className="space-y-2 text-[12px]">
@@ -519,15 +521,15 @@ export default function StatsPage() {
         {/* ── Survey Scales ─────────────────────────────────────────────── */}
         <Section id="survey" title="Survey Scales">
           <p className="text-[13px] text-gray-500 mb-4">
-            All items measured on a 7-point Likert scale. CL = Cognitive Load (CL1–CL3; higher = more load); PU = Perceived Usability (PU1–PU2; higher = better); CI = Continuance Intention (CI1–CI2; higher = stronger intent); MC = Manipulation Check (MC1–MC2; higher = more recognized bridge).
+            All items on a 7-point Likert scale (reverse-coded items already flipped). CL = Cognitive Load (higher = more load); PU = Perceived Usability; CI = Continuance Intention; MC = combined Manipulation Check; MC-I = interrelatedness check; MC-H = heterogeneity check (MC-I/MC-H shown for v2 data).
           </p>
           <PaperTable
             caption="Table 3. Survey Scale Descriptives by Condition"
             note="Values represent condition means with standard deviations in parentheses."
-            headers={['Condition', 'n', 'CL M (SD)', 'PU M (SD)', 'CI M (SD)', 'MC M (SD)']}
+            headers={['Condition', 'n', 'CL M (SD)', 'PU M (SD)', 'CI M (SD)', 'MC M (SD)', 'MC-I M (SD)', 'MC-H M (SD)']}
             rows={CONDITIONS.map((cond) => {
               const s = data.surveyByCondition[cond]
-              if (!s) return [<CondTag key="c" cond={cond} />, 0, '—', '—', '—', '—']
+              if (!s) return [<CondTag key="c" cond={cond} />, 0, '—', '—', '—', '—', '—', '—']
               return [
                 <CondTag key="c" cond={cond} />,
                 s.n,
@@ -535,6 +537,8 @@ export default function StatsPage() {
                 msd(s.usability.mean, s.usability.sd),
                 msd(s.continuance.mean, s.continuance.sd),
                 msd(s.manipCheck.mean, s.manipCheck.sd),
+                s.mcInterrel ? msd(s.mcInterrel.mean, s.mcInterrel.sd) : '—',
+                s.mcHeterog ? msd(s.mcHeterog.mean, s.mcHeterog.sd) : '—',
               ]
             })}
           />
@@ -563,9 +567,11 @@ export default function StatsPage() {
                       { label: 'PU', vals: s.usability.values },
                       { label: 'CI', vals: s.continuance.values },
                       { label: 'MC', vals: s.manipCheck.values },
+                      ...(s.mcInterrel ? [{ label: 'MC-I', vals: s.mcInterrel.values }] : []),
+                      ...(s.mcHeterog ? [{ label: 'MC-H', vals: s.mcHeterog.values }] : []),
                     ].map(({ label, vals }) => (
                       <div key={label} className="flex gap-2">
-                        <span className="font-semibold text-gray-500 w-5 flex-shrink-0">{label}</span>
+                        <span className="font-semibold text-gray-500 w-8 flex-shrink-0">{label}</span>
                         <span className="font-mono text-gray-700">{vals.map((v) => f2(v)).join(', ')}</span>
                       </div>
                     ))}
@@ -585,7 +591,7 @@ export default function StatsPage() {
                 Factor A: Service Heterogeneity
               </p>
               <p className="text-[12px] text-gray-500 mb-3">
-                Low = Courier (G1+G2) · High = Eats (G3+G4)
+                Low = Return ride (G1+G2) · High = Movie (G3+G4)
               </p>
               <PaperTable
                 caption="Table 4a. Heterogeneity Comparison"

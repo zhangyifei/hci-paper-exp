@@ -100,7 +100,7 @@ export default function ScenarioInstructionScreen({
                 2
               </span>
               <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">
-                {config.service2 === 'courier' ? 'Courier task' : 'Eats task'}
+                {config.service2TaskLabel}
               </span>
             </div>
             <p

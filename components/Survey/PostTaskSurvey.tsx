@@ -6,17 +6,20 @@ import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
 
 /**
- * Post-task survey collecting subjective measures. Item wording matches the
- * post-task questionnaire (section B) of:
- *   docs/0613/Appendix_D_SuperApp_Questionnaire_HEC_06102026.docx
+ * Post-task survey collecting subjective measures. Item wording is based on the
+ * post-task questionnaire (section B) of
+ *   docs/0613/Appendix_D_SuperApp_Questionnaire_HEC_06102026.docx,
+ * revised for study v2 to reduce ceiling/acquiescence (reverse-coded items) and
+ * to split the manipulation checks into two constructs.
  *
- *   Cognitive Load (CL1-CL3)  — Raw TLX adapted, 1 (Very low) – 7 (Very high)
- *   Usability      (PU1-PU4)  — SUS adapted, 1 (Strongly disagree) – 7 (Strongly agree)
- *   Continuance    (CI1-CI3)  — future-use intent
- *   Manip. Checks  (MC1-MC4)  — prompt / data carryover / service differentiation
- *   Attention      (AC1)      — must select "Somewhat agree" (value 5). Scored
- *                              separately; never mixed into the constructs above.
+ *   Cognitive Load  (CL1-CL3)      — Raw TLX adapted, 1 (Very low) – 7 (Very high)
+ *   Usability       (PU1-PU6)      — SUS adapted; PU3/PU5/PU6 reverse-coded
+ *   Continuance     (CI1-CI4)      — future-use intent; CI4 reverse-coded
+ *   MC interrelated (MC1,MC2,MC5)  — prompting / data carry-over; MC5 reverse-coded
+ *   MC heterogeneity(MC3,MC4,MC6)  — service dissimilarity; MC6 reverse-coded
+ *   Attention       (AC1)          — must select "Somewhat agree" (5); scored separately.
  *
+ * Reverse-coded items are flipped (8 - response) before construct averaging.
  * All items use a 1–7 response scale (LikertScale default points = 7).
  */
 
@@ -32,6 +35,8 @@ interface PostTaskSurveyProps {
 interface SurveyItem {
   code: string
   construct: string
+  /** Reverse-coded item: scored as (8 - response) before averaging. */
+  reverse?: boolean
   question: string
   anchors: [string, string]
   /** Optional full per-point labels (rendered as a legend under the scale). */
@@ -74,13 +79,28 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'PU3',
     construct: 'usability',
-    question: 'The transition between the two services in the super app felt smooth.',
+    reverse: true,
+    question: 'Moving from the first service to the second took more steps than I expected.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU4',
     construct: 'usability',
     question: 'The super app made it easy to continue from the first service to the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'PU5',
+    construct: 'usability',
+    reverse: true,
+    question: 'At some point I felt unsure how to get to or start the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'PU6',
+    construct: 'usability',
+    reverse: true,
+    question: 'Parts of completing the two tasks were more effortful than they needed to be.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Continuance Intention ─────────────────────────────────────────
@@ -102,29 +122,51 @@ const SURVEY_ITEMS: SurveyItem[] = [
     question: 'I would choose this super app again for similar tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
-  // ── Manipulation Checks ──────────────────────────────────────────
+  {
+    code: 'CI4',
+    construct: 'continuance',
+    reverse: true,
+    question: 'If another app could do these tasks, I would probably use it instead of this one.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  // ── Manipulation check: interrelatedness ─────────────────────────
   {
     code: 'MC1',
-    construct: 'manipulation_check',
+    construct: 'mc_interrelatedness',
     question: 'The super app prompted me with the next service at the right moment.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC2',
-    construct: 'manipulation_check',
-    question: 'The super app automatically carried my data into the next service.',
+    construct: 'mc_interrelatedness',
+    question: 'My details (e.g., my address) were already filled in for the second service.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
+    code: 'MC5',
+    construct: 'mc_interrelatedness',
+    reverse: true,
+    question: 'I had to enter my address again from scratch for the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  // ── Manipulation check: heterogeneity ────────────────────────────
+  {
     code: 'MC3',
-    construct: 'manipulation_check',
-    question: 'The second service felt different from the ride service.',
+    construct: 'mc_heterogeneity',
+    question: 'The second service was a clearly different type of task from booking a ride.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC4',
-    construct: 'manipulation_check',
-    question: 'The two service tasks required different kinds of actions.',
+    construct: 'mc_heterogeneity',
+    question: 'The steps for the second service were unlike those for booking the ride.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC6',
+    construct: 'mc_heterogeneity',
+    reverse: true,
+    question: 'The two services felt like basically the same kind of activity.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Attention Check (scored separately, excluded from constructs) ──
@@ -150,8 +192,8 @@ const SURVEY_ITEMS: SurveyItem[] = [
  * attention check (AC1) placed in the middle of page 2. Internal codes
  * (CL1, AC1, …) are never shown — only sequential numbers 1…N.
  */
-const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']
-const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3', 'MC4']
+const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']
+const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
 const ORDERED_CODES = [...PAGE_1_CODES, ...PAGE_2_CODES]
 const ITEM_BY_CODE: Record<string, SurveyItem> = Object.fromEntries(
   SURVEY_ITEMS.map((i) => [i.code, i]),
@@ -239,7 +281,8 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
     for (const item of SURVEY_ITEMS) {
       if (item.construct === 'attention_check') continue
       if (!constructs[item.construct]) constructs[item.construct] = []
-      constructs[item.construct].push(responses[item.code])
+      // 7-point scale: reverse-coded items are flipped before averaging.
+      constructs[item.construct].push(item.reverse ? 8 - responses[item.code] : responses[item.code])
     }
     const aggregates: Record<string, number> = {}
     for (const [key, values] of Object.entries(constructs)) {

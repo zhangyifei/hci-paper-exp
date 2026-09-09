@@ -45,9 +45,6 @@ export default function RideAlmostThereScreen({ onNext }: RideAlmostThereScreenP
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-1.5 shadow-sm active:scale-95 transition-transform cursor-pointer">
-          <span className="text-xs font-bold text-black">Help</span>
-        </div>
       </div>
 
       {/* Heading */}

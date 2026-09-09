@@ -44,7 +44,6 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        <div className="font-semibold text-[13px] bg-gray-100 rounded-full px-4 py-1.5 active:bg-gray-200 transition-colors">Help</div>
       </div>
 
       <div className="text-center mb-8">
@@ -94,7 +93,7 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
 
            <div className="flex items-center mb-3 z-10">
              <div className="text-[40px] mr-4 shadow-sm rounded-full bg-white w-16 h-16 flex items-center justify-center border border-gray-50">
-                {config.service2 === 'courier' ? '📦' : '🍔'}
+                {config.service2Emoji}
              </div>
              <div>
                <div className="font-bold text-[17px] leading-tight mb-1 text-black">

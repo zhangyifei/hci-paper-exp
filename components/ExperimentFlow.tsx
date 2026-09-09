@@ -8,13 +8,12 @@ import HomeScreen from './RidePhase/HomeScreen'
 import MapScreen from './RidePhase/MapScreen'
 import RideAlmostThereScreen from './RidePhase/RideAlmostThereScreen'
 import TripCompleteScreen from './TripCompletePhase/TripCompleteScreen'
-import CourierEntryScreen from './Service2Phase/CourierEntryScreen'
-import PackageDetailsScreen from './Service2Phase/PackageDetailsScreen'
-import CourierDeliveryScreen from './Service2Phase/CourierDeliveryScreen'
-import CourierCompleteScreen from './Service2Phase/CourierCompleteScreen'
-import EatsEntryScreen from './Service2Phase/EatsEntryScreen'
-import EatsRestaurantScreen from './Service2Phase/EatsRestaurantScreen'
-import EatsCompleteScreen from './Service2Phase/EatsCompleteScreen'
+import ReturnRideEntryScreen from './Service2Phase/ReturnRideEntryScreen'
+import ReturnRideConfirmScreen from './Service2Phase/ReturnRideConfirmScreen'
+import ReturnRideCompleteScreen from './Service2Phase/ReturnRideCompleteScreen'
+import MovieEntryScreen from './Service2Phase/MovieEntryScreen'
+import MovieSeatsScreen from './Service2Phase/MovieSeatsScreen'
+import MovieCompleteScreen from './Service2Phase/MovieCompleteScreen'
 import BackgroundQuestionnaire from './Survey/BackgroundQuestionnaire'
 import ConsentScreen from './Survey/ConsentScreen'
 import ScenarioInstructionScreen from './Survey/ScenarioInstructionScreen'
@@ -38,9 +37,7 @@ type Screen =
   | 'trip_complete'
   | 'task2_instruction'
   | 'service2_entry'
-  | 'service2_package_details'
-  | 'service2_delivery'
-  | 'service2_restaurant'
+  | 'service2_detail'
   | 'service2_complete'
   | 'survey'
   | 'finished'
@@ -51,9 +48,7 @@ const TASK1_SCREENS: Screen[] = ['home', 'map', 'ride_almost_there', 'trip_compl
 /** Super App screens belonging to Task 2 (the second service). */
 const TASK2_SCREENS: Screen[] = [
   'service2_entry',
-  'service2_package_details',
-  'service2_delivery',
-  'service2_restaurant',
+  'service2_detail',
   'service2_complete',
 ]
 
@@ -62,7 +57,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
   // Prices the participant selected, carried to the completion screens (§4).
   const [ridePrice, setRidePrice] = useState<number>(12.59)
-  const [courierFee, setCourierFee] = useState<number>(config.pickupOptions[0]?.price ?? 0)
+  const [service2Fee, setService2Fee] = useState<number>(config.service2Options[0]?.price ?? 0)
 
   // Every screen (and phone-frame screen) must start at the top. Without this,
   // React swaps the screen content while the window keeps the previous page's
@@ -141,16 +136,9 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   const handleService2EntryNext = (eventId?: string, fee?: number) => {
     if (eventId) setService2EntryEventId(eventId)
-    if (typeof fee === 'number') setCourierFee(fee)
-
-    if (config.service2 === 'courier') {
-      setScreen('service2_package_details')
-    } else {
-      setScreen('service2_restaurant')
-    }
+    if (typeof fee === 'number') setService2Fee(fee)
+    setScreen('service2_detail')
   }
-
-  const goToService2Delivery = () => setScreen('service2_delivery')
 
   const handleService2TaskNext = () => {
     setScreen('service2_complete')
@@ -185,47 +173,43 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'service2_entry':
         inner =
-          config.service2 === 'courier' ? (
-            <CourierEntryScreen
+          config.service2 === 'return_ride' ? (
+            <ReturnRideEntryScreen
               config={config}
               onNext={handleService2EntryNext}
               onBack={() => goBack('service2_entry', 'task2_instruction')}
             />
           ) : (
-            <EatsEntryScreen
+            <MovieEntryScreen
               config={config}
               onNext={handleService2EntryNext}
               onBack={() => goBack('service2_entry', 'task2_instruction')}
             />
           )
         break
-      case 'service2_package_details':
-        inner = (
-          <PackageDetailsScreen
-            onNext={goToService2Delivery}
-            onBack={() => goBack('service2_package_details', 'service2_entry')}
-            parentEventId={service2EntryEventId}
-          />
-        )
-        break
-      case 'service2_delivery':
-        inner = <CourierDeliveryScreen onNext={handleService2TaskNext} />
-        break
-      case 'service2_restaurant':
-        inner = (
-          <EatsRestaurantScreen
-            onNext={handleService2TaskNext}
-            onBack={() => goBack('service2_restaurant', 'service2_entry')}
-            parentEventId={service2EntryEventId}
-          />
-        )
+      case 'service2_detail':
+        inner =
+          config.service2 === 'return_ride' ? (
+            <ReturnRideConfirmScreen
+              onNext={handleService2TaskNext}
+              onBack={() => goBack('service2_detail', 'service2_entry')}
+              parentEventId={service2EntryEventId}
+            />
+          ) : (
+            <MovieSeatsScreen
+              config={config}
+              onNext={handleService2TaskNext}
+              onBack={() => goBack('service2_detail', 'service2_entry')}
+              parentEventId={service2EntryEventId}
+            />
+          )
         break
       case 'service2_complete':
         inner =
-          config.service2 === 'courier' ? (
-            <CourierCompleteScreen config={config} courierFee={courierFee} onNext={handleTaskCompletion} />
+          config.service2 === 'return_ride' ? (
+            <ReturnRideCompleteScreen config={config} rideFee={service2Fee} onNext={handleTaskCompletion} />
           ) : (
-            <EatsCompleteScreen config={config} onNext={handleTaskCompletion} />
+            <MovieCompleteScreen config={config} onNext={handleTaskCompletion} />
           )
         break
     }

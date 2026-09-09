@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
-import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSurvey, completeCourierEntry } from './shared/helpers'
+import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSurvey, completeReturnRideEntry } from './shared/helpers'
 
 /**
  * Coverage for the new onboarding (consent + scenario) screens and the
@@ -37,18 +37,18 @@ test.describe('Onboarding — consent gate', () => {
 })
 
 test.describe('Onboarding — scenario instruction', () => {
-  test('G1 scenario shows ride + courier instructions from config', async ({ page }) => {
+  test('G1 scenario shows ride + return-ride instructions from config', async ({ page }) => {
     await landRaw(page, 'G1')
     await page.getByTestId('consent-acknowledge').click({ force: true })
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
     await expect(page.getByTestId('scenario-description')).toContainText(
-      'You are meeting a friend at 1000 Saint-Catherine Street West'
+      'You are visiting a friend at 1000 Saint-Catherine Street West'
     )
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveText(RIDE_INSTRUCTION)
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
-      'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
+      'book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill'
     )
 
     // Start advances into the Task 1 instruction page, then the ride task
@@ -58,16 +58,16 @@ test.describe('Onboarding — scenario instruction', () => {
     await expect(page.getByTestId('btn-start-ride')).toBeVisible()
   })
 
-  test('G4 scenario shows ride + eats instructions from config', async ({ page }) => {
+  test('G4 scenario shows ride + movie instructions from config', async ({ page }) => {
     await landRaw(page, 'G4')
     await page.getByTestId('consent-acknowledge').click({ force: true })
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
-      'order food and have it delivered to 1000 Saint-Catherine Street West'
+      'book two movie tickets at a cinema near 1000 Saint-Catherine Street West'
     )
     await expect(page.getByTestId('scenario-description')).toContainText(
-      'use the Eats service to order food'
+      'use the Cinema service to book two movie tickets'
     )
   })
 })
@@ -77,13 +77,13 @@ test.describe('Post-task survey — items + attention check', () => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
-    await completeCourierEntry(page)
-    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-delivery-complete').click({ force: true })
+    await completeReturnRideEntry(page)
+    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Page 1 of 2, nothing answered, Continue present, Submit not yet
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 2')
-    await expect(page.getByText('0 of 15 answered', { exact: true })).toBeVisible()
+    await expect(page.getByText('0 of 20 answered', { exact: true })).toBeVisible()
     await expect(page.getByTestId('btn-survey-continue')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toHaveCount(0)
 
@@ -95,13 +95,13 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
     // Page 2 holds the attention check (with its numeric legend) and MC items
-    await expect(page.getByText('The second service felt different from the ride service.')).toHaveCount(0)
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 2')
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
     await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
-    await expect(page.getByText('The second service felt different from the ride service.')).toBeVisible()
-    await expect(page.getByText('The two service tasks required different kinds of actions.')).toBeVisible()
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toBeVisible()
+    await expect(page.getByText('The steps for the second service were unlike those for booking the ride.')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toBeVisible()
     await expect(page.getByTestId('btn-survey-back')).toBeVisible()
   })
@@ -110,18 +110,18 @@ test.describe('Post-task survey — items + attention check', () => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
-    await completeCourierEntry(page)
-    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-delivery-complete').click({ force: true })
+    await completeReturnRideEntry(page)
+    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer page 1 fully
-    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4']) {
+    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']) {
       await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-survey-continue').click({ force: true })
 
     // Leave one page-2 item unanswered, then submit (AC1 = 5)
-    for (const code of ['CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3']) {
+    for (const code of ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4']) {
       const value = code === 'AC1' ? 5 : 4
       await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
     }
@@ -132,7 +132,7 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByTestId('btn-submit-questionnaire')).toHaveCount(0)
 
     // Completing the last item allows submission
-    await page.getByTestId('likert-MC4-4').evaluate((n) => (n as HTMLButtonElement).click())
+    await page.getByTestId('likert-MC6-4').evaluate((n) => (n as HTMLButtonElement).click())
     await page.getByTestId('btn-submit-survey').click({ force: true })
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
   })
@@ -142,10 +142,10 @@ test.describe('Post-task survey — items + attention check', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    // Drive the courier task to completion
-    await completeCourierEntry(page)
-    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-delivery-complete').click({ force: true })
+    // Drive the return-ride task to completion
+    await completeReturnRideEntry(page)
+    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer all 15 items with AC1 correct (5), then submit
     await expect(page.getByTestId('screen-survey')).toBeVisible()
@@ -161,9 +161,9 @@ test.describe('Post-task survey — items + attention check', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    await completeCourierEntry(page)
-    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-delivery-complete').click({ force: true })
+    await completeReturnRideEntry(page)
+    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer AC1 incorrectly (value 2 instead of 5)
     await expect(page.getByTestId('screen-survey')).toBeVisible()
@@ -179,9 +179,9 @@ test.describe('Post-task survey — items + attention check', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    await completeCourierEntry(page)
-    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-delivery-complete').click({ force: true })
+    await completeReturnRideEntry(page)
+    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Pass AC1
     await expect(page.getByTestId('screen-survey')).toBeVisible()
