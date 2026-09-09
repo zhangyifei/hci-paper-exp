@@ -141,7 +141,7 @@ test.describe('Stats dashboard access', () => {
     const stats = computePaperStats([])
 
     expect(stats.heterogeneityComparison.low).toEqual({
-      label: 'Low (G1+G2 Courier)',
+      label: 'Low (G1+G2 Return ride)',
       n: 0,
       cl: { mean: null, sd: null },
       pu: { mean: null, sd: null },
@@ -239,14 +239,14 @@ test.describe('Stats dashboard access', () => {
           surveyByCondition: { G1: null, G2: null, G3: null, G4: null },
           heterogeneityComparison: {
             low: {
-              label: 'Low (G1+G2 Courier)',
+              label: 'Low (G1+G2 Return ride)',
               n: 0,
               cl: { mean: null, sd: null },
               pu: { mean: null, sd: null },
               ci: { mean: null, sd: null },
             },
             high: {
-              label: 'High (G3+G4 Eats)',
+              label: 'High (G3+G4 Movie)',
               n: 0,
               cl: { mean: null, sd: null },
               pu: { mean: null, sd: null },
@@ -286,7 +286,7 @@ test.describe('Stats dashboard access', () => {
     await expect(dbRowsCard).toContainText('4')
     await expect(page.getByText('Table 4a. Heterogeneity Comparison')).toBeVisible()
     const lowHeterogeneityRow = page.locator('table').filter({
-      has: page.getByText('Low (G1+G2 Courier)'),
+      has: page.getByText('Low (G1+G2 Return ride)'),
     })
     await expect(lowHeterogeneityRow.first()).toContainText('—')
   })

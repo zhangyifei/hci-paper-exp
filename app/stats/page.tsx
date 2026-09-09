@@ -439,7 +439,7 @@ export default function StatsPage() {
             headers={['Condition', 'Service', 'Bridge', 'n (real)', 'n (completed)', 'Completion Rate']}
             rows={CONDITIONS.map((cond) => {
               const s = data.conditionStats[cond]
-              const svc = { G1: 'Courier', G2: 'Courier', G3: 'Eats', G4: 'Eats' }[cond]
+              const svc = { G1: 'Return ride', G2: 'Return ride', G3: 'Movie', G4: 'Movie' }[cond]
               const bridge = { G1: 'Absent', G2: 'Present', G3: 'Absent', G4: 'Present' }[cond]
               return [
                 <CondTag key="c" cond={cond} />,
@@ -495,7 +495,7 @@ export default function StatsPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <CondTag cond={cond} />
                     <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-                      {{ G1: 'Courier / No Bridge', G2: 'Courier / Bridge', G3: 'Eats / No Bridge', G4: 'Eats / Bridge' }[cond]}
+                      {{ G1: 'Return ride / No Bridge', G2: 'Return ride / Bridge', G3: 'Movie / No Bridge', G4: 'Movie / Bridge' }[cond]}
                     </span>
                   </div>
                   <div className="space-y-2 text-[12px]">
@@ -591,7 +591,7 @@ export default function StatsPage() {
                 Factor A: Service Heterogeneity
               </p>
               <p className="text-[12px] text-gray-500 mb-3">
-                Low = Courier (G1+G2) · High = Eats (G3+G4)
+                Low = Return ride (G1+G2) · High = Movie (G3+G4)
               </p>
               <PaperTable
                 caption="Table 4a. Heterogeneity Comparison"

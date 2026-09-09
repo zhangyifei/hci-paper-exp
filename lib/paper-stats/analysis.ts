@@ -421,14 +421,14 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
 
   const heterogeneityComparison = {
     low: {
-      label: 'Low (G1+G2 Courier)',
+      label: 'Low (G1+G2 Return ride)',
       n: low.length,
       cl: buildMeanSd(low.map((survey) => survey.cognitive_load_mean)),
       pu: buildMeanSd(low.map((survey) => survey.usability_mean)),
       ci: buildMeanSd(low.map((survey) => survey.continuance_mean)),
     },
     high: {
-      label: 'High (G3+G4 Eats)',
+      label: 'High (G3+G4 Movie)',
       n: high.length,
       cl: buildMeanSd(high.map((survey) => survey.cognitive_load_mean)),
       pu: buildMeanSd(high.map((survey) => survey.usability_mean)),

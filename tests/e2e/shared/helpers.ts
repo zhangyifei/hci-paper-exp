@@ -1,5 +1,20 @@
 import { Page, expect } from '@playwright/test'
 
+/**
+ * Tap a target by test id, scrolling it into view first and using a real
+ * (non-force) click. `click({ force: true })` skips scrolling AND hit-testing,
+ * so elements below the fold in the scrollable phone frame (deep cinema list,
+ * bottom CTAs on the taller service-2 screens) get clicked at off-screen
+ * coordinates and silently missed. A normal click auto-scrolls, waits for the
+ * element to receive events, and retries — the idle GuidanceBanner overlay is
+ * pointer-events-none so it never intercepts.
+ */
+async function tap(page: Page, testId: string) {
+  const el = page.getByTestId(testId)
+  await el.scrollIntoViewIfNeeded()
+  await el.click()
+}
+
 async function acceptConsent(page: Page) {
   const continueButton = page.getByTestId('btn-consent-continue')
   if (!(await continueButton.isVisible().catch(() => false))) {
@@ -141,24 +156,50 @@ export async function completePostTaskSurvey(
 }
 
 /**
- * Fill the interactive Courier entry form (sender + recipient + option) and
- * confirm. Works for both auto-fill (G2) and empty (G1) conditions.
+ * Complete the Return-ride entry (G1/G2): ensure the pickup is valid, pick a
+ * saved drop-off, keep the default ride tier, confirm, then confirm on the
+ * driver screen. Works for both auto-fill (G2) and empty (G1) conditions.
  */
-export async function completeCourierEntry(page: Page) {
-  const sender = page.getByTestId('input-sender-address')
-  await sender.click({ force: true })
-  await sender.fill('1000 Saint-Catherine Street West')
+export async function completeReturnRideEntry(page: Page) {
+  // Pickup: only fill when the empty field is shown (auto-fill hides it).
+  const pickupEmpty = page.getByTestId('pickup-address-empty')
+  if (await pickupEmpty.isVisible().catch(() => false)) {
+    await page.getByTestId('input-pickup-address').fill('1000 Saint-Catherine Street West')
+  }
 
-  // Pick a saved recipient address.
-  await page.getByTestId('saved-address-rue-mcgill').click({ force: true })
-  await expect(page.getByTestId('recipient-selected')).toBeVisible()
+  // Drop-off: pick a saved place.
+  await tap(page, 'dropoff-saved-rue-mcgill')
+  await expect(page.getByTestId('dropoff-selected')).toBeVisible()
 
-  await page.getByTestId('btn-courier-continue').click({ force: true })
+  // Default ride tier is pre-selected; confirm the ride.
+  await tap(page, 'btn-confirm-ride')
 
-  // Delivery-details step (common to G1 & G2): pick an item type and confirm.
-  await expect(page.getByTestId('screen-package-details')).toBeVisible({ timeout: 10000 })
-  await page.getByTestId('item-type-package').click({ force: true })
-  await page.getByTestId('btn-confirm-pickup').click({ force: true })
+  // Driver-confirm step (common to G1 & G2): confirm the return ride.
+  await expect(page.getByTestId('screen-return-ride-confirm')).toBeVisible({ timeout: 10000 })
+  await tap(page, 'btn-confirm-return-ride')
+}
+
+/**
+ * Complete the Movie entry (G3/G4): ensure the location is valid, select a
+ * showtime, choose two seats, then confirm tickets. Works for both auto-fill
+ * (G4) and empty (G3) conditions.
+ */
+export async function completeMovieEntry(page: Page) {
+  // Location: only fill when the empty field is shown (auto-fill hides it).
+  const locationEmpty = page.getByTestId('movie-location-empty')
+  if (await locationEmpty.isVisible().catch(() => false)) {
+    await page.getByTestId('input-movie-location').fill('1000 Saint-Catherine Street West')
+  }
+
+  // Pick a 7:10 PM showtime at the Forum cinema.
+  await tap(page, 'showtime-forum-710')
+  await tap(page, 'btn-select-cinema')
+
+  // Seat-selection step (common to G3 & G4): pick two available seats.
+  await expect(page.getByTestId('screen-movie-seats')).toBeVisible({ timeout: 10000 })
+  await tap(page, 'seat-A1')
+  await tap(page, 'seat-A2')
+  await tap(page, 'btn-confirm-tickets')
 }
 
 /**
@@ -180,8 +221,9 @@ export async function advanceToService2(page: Page, viaBanner = false) {
 
   await expect(
     page
-      .getByTestId('input-sender-address')
-      .or(page.getByTestId('deliver-address-empty'))
-      .or(page.getByTestId('deliver-address-autofilled')),
+      .getByTestId('pickup-address-empty')
+      .or(page.getByTestId('pickup-address-autofilled'))
+      .or(page.getByTestId('movie-location-empty'))
+      .or(page.getByTestId('movie-location-autofilled')),
   ).toBeVisible({ timeout: 10000 })
 }

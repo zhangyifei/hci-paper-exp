@@ -33,10 +33,10 @@ const COND_COLORS: Record<string, string> = {
 }
 
 const COND_SUBLABELS: Record<string, string> = {
-  G1: 'Courier · No Bridge',
-  G2: 'Courier · Bridge',
-  G3: 'Eats · No Bridge',
-  G4: 'Eats · Bridge',
+  G1: 'Return ride · No Bridge',
+  G2: 'Return ride · Bridge',
+  G3: 'Movie · No Bridge',
+  G4: 'Movie · Bridge',
 }
 
 export function BehavioralChart({ conditionStats }: Props) {

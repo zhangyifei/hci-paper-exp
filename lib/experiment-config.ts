@@ -1,14 +1,17 @@
 import experimentConfigJson from '@/docs/contracts/experiment-config.json'
 
 export type Condition = 'G1' | 'G2' | 'G3' | 'G4'
-export type Service2Type = 'courier' | 'eats'
+/** The second service crossed with interrelatedness (C2 heterogeneity redesign):
+ *  `return_ride` = low heterogeneity (near-identical mobility task);
+ *  `movie` = high heterogeneity (booking cinema tickets — a different activity). */
+export type Service2Type = 'return_ride' | 'movie'
 export type ListUIType =
   | 'generic-options'
   | 'categorized-by-destination'
   | 'citywide-popular'
   | 'distance-filtered'
 
-export interface PickupOption {
+export interface Service2Option {
   id: string
   label: string
   price: number
@@ -36,7 +39,12 @@ export interface ConditionConfig {
   listUI: ListUIType
   bannerText: string | null
   bannerCTA: string | null
-  pickupOptions: PickupOption[]
+  /** Emoji shown for the second service on the cross-sell banner. */
+  service2Emoji: string
+  /** Short label for the second service (e.g. "Return ride task", "Cinema task"). */
+  service2TaskLabel: string
+  /** Selectable options for the second service (ride tiers or ticket types). */
+  service2Options: Service2Option[]
   addressLabel: string | null
   addressSublabel: string | null
   rideTaskInstruction: string

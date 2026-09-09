@@ -1,6 +1,6 @@
 {
   "G1": {
-    "service2": "courier",
+    "service2": "return_ride",
     "banner": false,
     "autoPopulate": false,
     "addressSuggestions": false,
@@ -8,16 +8,18 @@
     "listUI": "generic-options",
     "bannerText": null,
     "bannerCTA": null,
-    "pickupOptions": [
-      { "id": "small", "label": "Small", "price": 8 },
-      { "id": "medium", "label": "Medium", "price": 12 },
-      { "id": "large", "label": "Large", "price": 24 }
+    "service2Emoji": "\uD83D\uDE95",
+    "service2TaskLabel": "Return ride task",
+    "service2Options": [
+      { "id": "economy", "label": "VoyaX", "price": 10.5 },
+      { "id": "comfort", "label": "Comfort", "price": 15 },
+      { "id": "xl", "label": "XL", "price": 22 }
     ],
     "addressLabel": null,
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
-    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to help them send a package. First, use Voya X to book a ride to this address. After you arrive, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "service2TaskInstruction": "After completing the ride task, use the Rides service to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Rides service again to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -27,32 +29,35 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Arrange a courier pickup",
-      "service": "Courier",
-      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
-      "infoToEnter": "The sender and recipient addresses",
-      "indicator": "Task 2 of 2: Arrange a courier pickup",
-      "guidanceText": "Task reminder: Use Courier to arrange the package pickup."
+      "title": "Book a return ride",
+      "service": "Rides",
+      "goal": "Book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Rides service.",
+      "infoToEnter": "The pickup and drop-off addresses",
+      "indicator": "Task 2 of 2: Book a return ride",
+      "guidanceText": "Task reminder: Use Rides to book your return trip."
     }
   },
   "G2": {
-    "service2": "courier",
+    "service2": "return_ride",
     "banner": true,
     "autoPopulate": true,
     "addressSuggestions": true,
     "guidanceThresholdMs": 10000,
     "listUI": "categorized-by-destination",
-    "bannerText": "Need to send a package? Courier services are available for pickup at 1000 Saint-Catherine Street West",
-    "bannerCTA": "Send Now",
-    "pickupOptions": [
-      { "id": "express", "label": "Express (15min)", "price": 12 },
-      { "id": "standard", "label": "Standard (1hr)", "price": 8 }
+    "bannerText": "Heading back later? Book a return ride from 1000 Saint-Catherine Street West",
+    "bannerCTA": "Book Ride",
+    "service2Emoji": "\uD83D\uDE95",
+    "service2TaskLabel": "Return ride task",
+    "service2Options": [
+      { "id": "economy", "label": "VoyaX", "price": 10.5 },
+      { "id": "comfort", "label": "Comfort", "price": 15 },
+      { "id": "xl", "label": "XL", "price": 22 }
     ],
     "addressLabel": "1000 Saint-Catherine Street West",
     "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
-    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to help them send a package. First, use Voya X to book a ride to this address. After you arrive, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "service2TaskInstruction": "After completing the ride task, use the Rides service to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Rides service again to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -62,16 +67,16 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Arrange a courier pickup",
-      "service": "Courier",
-      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
-      "infoToEnter": "The sender and recipient addresses",
-      "indicator": "Task 2 of 2: Arrange a courier pickup",
-      "guidanceText": "Task reminder: Use Courier to arrange the package pickup."
+      "title": "Book a return ride",
+      "service": "Rides",
+      "goal": "Book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Rides service.",
+      "infoToEnter": "The pickup and drop-off addresses",
+      "indicator": "Task 2 of 2: Book a return ride",
+      "guidanceText": "Task reminder: Use Rides to book your return trip."
     }
   },
   "G3": {
-    "service2": "eats",
+    "service2": "movie",
     "banner": false,
     "autoPopulate": false,
     "addressSuggestions": false,
@@ -79,12 +84,17 @@
     "listUI": "citywide-popular",
     "bannerText": null,
     "bannerCTA": null,
-    "pickupOptions": [],
+    "service2Emoji": "\uD83C\uDFAC",
+    "service2TaskLabel": "Cinema task",
+    "service2Options": [
+      { "id": "standard", "label": "Standard", "price": 13.5 },
+      { "id": "premium", "label": "Premium Recliner", "price": 18 }
+    ],
     "addressLabel": null,
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
-    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to have dinner together. First, use Voya X to book a ride to this address. After you arrive, use the Eats service to order food to be delivered to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, use the Cinema service to book two movie tickets at a cinema near 1000 Saint-Catherine Street West.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to watch a movie together. First, use Voya X to book a ride to this address. After you arrive, use the Cinema service to book two movie tickets at a cinema near 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -94,29 +104,34 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Order food",
-      "service": "Eats",
-      "goal": "Order food and have it delivered to 1000 Saint-Catherine Street West using the Eats service.",
-      "infoToEnter": "Your delivery address",
-      "indicator": "Task 2 of 2: Order food",
-      "guidanceText": "Task reminder: Use Eats to order food."
+      "title": "Book movie tickets",
+      "service": "Cinema",
+      "goal": "Book two movie tickets at a cinema near 1000 Saint-Catherine Street West using the Cinema service.",
+      "infoToEnter": "The cinema location and showtime",
+      "indicator": "Task 2 of 2: Book movie tickets",
+      "guidanceText": "Task reminder: Use Cinema to book your movie tickets."
     }
   },
   "G4": {
-    "service2": "eats",
+    "service2": "movie",
     "banner": true,
     "autoPopulate": true,
     "addressSuggestions": true,
     "guidanceThresholdMs": 10000,
     "listUI": "distance-filtered",
-    "bannerText": "Ready to order food? Restaurants are available for delivery to 1000 Saint-Catherine Street West",
-    "bannerCTA": "Eat",
-    "pickupOptions": [],
+    "bannerText": "Catch a movie nearby? Cinemas near 1000 Saint-Catherine Street West are available",
+    "bannerCTA": "Book Tickets",
+    "service2Emoji": "\uD83C\uDFAC",
+    "service2TaskLabel": "Cinema task",
+    "service2Options": [
+      { "id": "standard", "label": "Standard", "price": 13.5 },
+      { "id": "premium", "label": "Premium Recliner", "price": 18 }
+    ],
     "addressLabel": "1000 Saint-Catherine Street West",
     "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, order food and have it delivered to 1000 Saint-Catherine Street West.",
-    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to have dinner together. First, use Voya X to book a ride to this address. After you arrive, use the Eats service to order food to be delivered to 1000 Saint-Catherine Street West.",
+    "service2TaskInstruction": "After completing the ride task, use the Cinema service to book two movie tickets at a cinema near 1000 Saint-Catherine Street West.",
+    "scenarioDescription": "You are meeting a friend at 1000 Saint-Catherine Street West to watch a movie together. First, use Voya X to book a ride to this address. After you arrive, use the Cinema service to book two movie tickets at a cinema near 1000 Saint-Catherine Street West.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -126,12 +141,12 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Order food",
-      "service": "Eats",
-      "goal": "Order food and have it delivered to 1000 Saint-Catherine Street West using the Eats service.",
-      "infoToEnter": "Your delivery address",
-      "indicator": "Task 2 of 2: Order food",
-      "guidanceText": "Task reminder: Use Eats to order food."
+      "title": "Book movie tickets",
+      "service": "Cinema",
+      "goal": "Book two movie tickets at a cinema near 1000 Saint-Catherine Street West using the Cinema service.",
+      "infoToEnter": "The cinema location and showtime",
+      "indicator": "Task 2 of 2: Book movie tickets",
+      "guidanceText": "Task reminder: Use Cinema to book your movie tickets."
     }
   }
 }
