@@ -49,9 +49,7 @@ export async function completeBackgroundQuestionnaire(page: Page) {
     return
   }
 
-  // AC2 attention check must be answered "Rarely" to avoid termination.
   const answers = [
-    'questionnaire-option-AC2-rarely',
     'questionnaire-option-DEM1-25-34',
     'questionnaire-option-DEM2-male',
     'questionnaire-option-FAM1-weekly',
@@ -60,13 +58,12 @@ export async function completeBackgroundQuestionnaire(page: Page) {
     'questionnaire-option-SWI2-sometimes',
   ]
 
-  for (const [index, answerTestId] of answers.entries()) {
+  for (const answerTestId of answers) {
     const option = page.getByTestId(answerTestId)
     await option.scrollIntoViewIfNeeded()
     await option.evaluate((node) => {
       ;(node as HTMLButtonElement).click()
     })
-    await expect(page.getByText(`${index + 1} of ${answers.length} answered`, { exact: true })).toBeVisible()
   }
 
   await submitButton.click({ force: true })

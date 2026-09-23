@@ -369,8 +369,7 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
         {/* Progress */}
         <div className="mb-7">
           <div className="flex justify-between text-[12px] font-bold text-gray-500 mb-2">
-            <span data-testid="survey-page-indicator">Page {page + 1} of 2</span>
-            <span>{answeredCount} of {total} answered</span>
+            <span data-testid="survey-page-indicator">Page {page + 1} of 3</span>
           </div>
           <div
             className="h-2 bg-gray-100 rounded-full overflow-hidden"

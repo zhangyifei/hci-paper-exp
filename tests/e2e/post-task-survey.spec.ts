@@ -81,9 +81,8 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
-    // Page 1 of 2, nothing answered, Continue present, Submit not yet
-    await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 2')
-    await expect(page.getByText('0 of 20 answered', { exact: true })).toBeVisible()
+    // Page 1 of 3, Continue present, Submit not yet
+    await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 3')
     await expect(page.getByTestId('btn-survey-continue')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toHaveCount(0)
 
@@ -97,7 +96,7 @@ test.describe('Post-task survey — items + attention check', () => {
     // Page 2 holds the attention check (with its numeric legend) and MC items
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
-    await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 2')
+    await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 3')
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
     await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toBeVisible()
@@ -153,7 +152,7 @@ test.describe('Post-task survey — items + attention check', () => {
 
     // Background questionnaire now appears after the survey (docx order)
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('questionnaire-option-AC2-rarely')).toBeVisible()
+    await expect(page.getByTestId('questionnaire-option-SWI1-single-app')).toBeVisible()
   })
 
   test('G1: failing AC1 ends the test and never reaches the questionnaire', async ({ page }) => {
@@ -172,41 +171,5 @@ test.describe('Post-task survey — items + attention check', () => {
     // Terminated screen shown; questionnaire never reached
     await expect(page.getByTestId('screen-terminated')).toBeVisible({ timeout: 10000 })
     await expect(page.getByTestId('btn-submit-questionnaire')).not.toBeVisible()
-  })
-
-  test('G1: failing AC2 ends the test and never reaches the finished screen', async ({ page }) => {
-    await goToCondition(page, 'G1')
-    await completeRidePhase(page)
-    await advanceToService2(page, false)
-
-    await completeReturnRideEntry(page)
-    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
-    await page.getByTestId('btn-service2-done').click({ force: true })
-
-    // Pass AC1
-    await expect(page.getByTestId('screen-survey')).toBeVisible()
-    await completePostTaskSurvey(page, { ac1Value: 5 })
-
-    // Background questionnaire: answer AC2 incorrectly ("daily"), rest correct
-    await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
-    const wrongAnswers = [
-      'questionnaire-option-AC2-daily',
-      'questionnaire-option-DEM1-25-34',
-      'questionnaire-option-DEM2-male',
-      'questionnaire-option-FAM1-weekly',
-      'questionnaire-option-FAM2-4',
-      'questionnaire-option-SWI1-2',
-      'questionnaire-option-SWI2-sometimes',
-    ]
-    for (const testId of wrongAnswers) {
-      const option = page.getByTestId(testId)
-      await option.scrollIntoViewIfNeeded()
-      await option.evaluate((node) => (node as HTMLButtonElement).click())
-    }
-    await page.getByTestId('btn-submit-questionnaire').click({ force: true })
-
-    // Terminated, not finished
-    await expect(page.getByTestId('screen-terminated')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('screen-finished')).not.toBeVisible()
   })
 })

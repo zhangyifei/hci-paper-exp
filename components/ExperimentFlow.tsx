@@ -98,8 +98,8 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     }
   }
 
-  // Shared handler for both attention checks (AC1 in survey, AC2 in
-  // questionnaire). A failure ends the test and marks the session invalid.
+  // Attention-check handler (AC1 in the post-task survey).
+  // A failure ends the test and marks the session invalid.
   const handleAttentionCheckFailure = async (
     code: string,
     expected: string | number,
@@ -265,7 +265,6 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       return (
         <BackgroundQuestionnaire
           onComplete={handleQuestionnaireComplete}
-          onAttentionCheckFail={handleAttentionCheckFailure}
         />
       )
     case 'terminated':
