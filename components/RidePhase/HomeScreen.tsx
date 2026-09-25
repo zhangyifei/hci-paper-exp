@@ -9,6 +9,9 @@ interface HomeScreenProps {
   onNext: () => void
   service2Tab?: Service2Type
   onService2TabClick?: () => void
+  /** Which second service the study uses — only sets the second tab's label; does
+   *  NOT hide the Start-a-Ride button (that is driven by service2Tab). */
+  service2Kind?: Service2Type
 }
 
 /** A valid address has at least one number and some letters. */
@@ -33,7 +36,7 @@ const SAVED_DESTINATIONS: SavedPlace[] = [
   { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: 'Home', icon: '🏠' },
 ]
 
-export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: HomeScreenProps) {
+export default function HomeScreen({ onNext, service2Tab, onService2TabClick, service2Kind }: HomeScreenProps) {
   const [destination, setDestination] = useState('')
   const [focused, setFocused] = useState(false)
   const [showError, setShowError] = useState(false)
@@ -91,8 +94,8 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick }: 
         <div
           onClick={service2Tab === 'movie' ? onService2TabClick : undefined}
           className={`bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200 ${service2Tab === 'movie' ? 'cursor-pointer' : ''}`}
-          data-testid="tab-cinema"
-        >Cinema</div>
+          data-testid={service2Kind === 'courier' ? 'tab-courier' : 'tab-cinema'}
+        >{service2Kind === 'courier' ? 'Courier' : 'Cinema'}</div>
       </div>
 
       {/* Search Bar — destination input (tap a saved place or type) */}

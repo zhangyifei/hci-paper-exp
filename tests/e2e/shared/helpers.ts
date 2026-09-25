@@ -153,27 +153,28 @@ export async function completePostTaskSurvey(
 }
 
 /**
- * Complete the Return-ride entry (G1/G2): ensure the pickup is valid, pick a
- * saved drop-off, keep the default ride tier, confirm, then confirm on the
- * driver screen. Works for both auto-fill (G2) and empty (G1) conditions.
+ * Complete the Courier entry (G1/G2): ensure the sender is valid, pick a saved
+ * recipient, keep the default delivery option, continue, then fill package
+ * details and confirm pickup. Works for both auto-fill (G2) and empty (G1)
+ * conditions.
  */
-export async function completeReturnRideEntry(page: Page) {
-  // Pickup: only fill when the empty field is shown (auto-fill hides it).
-  const pickupEmpty = page.getByTestId('pickup-address-empty')
-  if (await pickupEmpty.isVisible().catch(() => false)) {
-    await page.getByTestId('input-pickup-address').fill('1000 Saint-Catherine Street West')
+export async function completeCourierEntry(page: Page) {
+  // Sender: only fill when the empty field is shown (auto-fill hides it).
+  const senderEmpty = page.getByTestId('sender-address-empty')
+  if (await senderEmpty.isVisible().catch(() => false)) {
+    await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
   }
 
-  // Drop-off: pick a saved place.
-  await tap(page, 'dropoff-saved-rue-mcgill')
-  await expect(page.getByTestId('dropoff-selected')).toBeVisible()
+  // Recipient: pick a saved place.
+  await tap(page, 'recipient-saved-rue-mcgill')
+  await expect(page.getByTestId('recipient-selected')).toBeVisible()
 
-  // Default ride tier is pre-selected; confirm the ride.
-  await tap(page, 'btn-confirm-ride')
+  // Default delivery option is pre-selected; continue.
+  await tap(page, 'btn-confirm-courier')
 
-  // Driver-confirm step (common to G1 & G2): confirm the return ride.
-  await expect(page.getByTestId('screen-return-ride-confirm')).toBeVisible({ timeout: 10000 })
-  await tap(page, 'btn-confirm-return-ride')
+  // Package-details step (common to G1 & G2): confirm pickup.
+  await expect(page.getByTestId('screen-package-details')).toBeVisible({ timeout: 10000 })
+  await tap(page, 'btn-confirm-pickup')
 }
 
 /**
@@ -218,8 +219,8 @@ export async function advanceToService2(page: Page, viaBanner = false) {
 
   await expect(
     page
-      .getByTestId('pickup-address-empty')
-      .or(page.getByTestId('pickup-address-autofilled'))
+      .getByTestId('sender-address-empty')
+      .or(page.getByTestId('sender-address-autofilled'))
       .or(page.getByTestId('movie-location-empty'))
       .or(page.getByTestId('movie-location-autofilled')),
   ).toBeVisible({ timeout: 10000 })

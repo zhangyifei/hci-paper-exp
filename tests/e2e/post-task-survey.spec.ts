@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
-import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSurvey, completeReturnRideEntry } from './shared/helpers'
+import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSurvey, completeCourierEntry } from './shared/helpers'
 
 /**
  * Coverage for the new onboarding (consent + scenario) screens and the
@@ -37,7 +37,7 @@ test.describe('Onboarding — consent gate', () => {
 })
 
 test.describe('Onboarding — scenario instruction', () => {
-  test('G1 scenario shows ride + return-ride instructions from config', async ({ page }) => {
+  test('G1 scenario shows ride + courier instructions from config', async ({ page }) => {
     await landRaw(page, 'G1')
     await page.getByTestId('consent-acknowledge').click({ force: true })
     await page.getByTestId('btn-consent-continue').click({ force: true })
@@ -48,7 +48,7 @@ test.describe('Onboarding — scenario instruction', () => {
     )
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveText(RIDE_INSTRUCTION)
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
-      'book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill'
+      'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
     )
 
     // Start advances into the Task 1 instruction page, then the ride task
@@ -77,8 +77,8 @@ test.describe('Post-task survey — items + attention check', () => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
-    await completeReturnRideEntry(page)
-    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await completeCourierEntry(page)
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Page 1 of 3, Continue present, Submit not yet
@@ -109,8 +109,8 @@ test.describe('Post-task survey — items + attention check', () => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
-    await completeReturnRideEntry(page)
-    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await completeCourierEntry(page)
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer page 1 fully
@@ -141,9 +141,9 @@ test.describe('Post-task survey — items + attention check', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    // Drive the return-ride task to completion
-    await completeReturnRideEntry(page)
-    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    // Drive the courier task to completion
+    await completeCourierEntry(page)
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer all 15 items with AC1 correct (5), then submit
@@ -160,8 +160,8 @@ test.describe('Post-task survey — items + attention check', () => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    await completeReturnRideEntry(page)
-    await expect(page.getByText('Ride Confirmed!', { exact: true })).toBeVisible({ timeout: 8000 })
+    await completeCourierEntry(page)
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer AC1 incorrectly (value 2 instead of 5)
