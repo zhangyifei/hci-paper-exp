@@ -1,6 +1,6 @@
 {
   "G1": {
-    "service2": "return_ride",
+    "service2": "courier",
     "banner": false,
     "autoPopulate": false,
     "addressSuggestions": false,
@@ -8,18 +8,18 @@
     "listUI": "generic-options",
     "bannerText": null,
     "bannerCTA": null,
-    "service2Emoji": "\uD83D\uDE95",
-    "service2TaskLabel": "Return ride task",
+    "service2Emoji": "\uD83D\uDCE6",
+    "service2TaskLabel": "Courier task",
     "service2Options": [
-      { "id": "economy", "label": "VoyaX", "price": 10.5 },
-      { "id": "comfort", "label": "Comfort", "price": 15 },
-      { "id": "xl", "label": "XL", "price": 22 }
+      { "id": "small", "label": "Small package", "price": 8 },
+      { "id": "medium", "label": "Medium package", "price": 12 },
+      { "id": "large", "label": "Large package", "price": 24 }
     ],
     "addressLabel": null,
     "addressSublabel": null,
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the Rides service to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
-    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Rides service again to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -29,35 +29,35 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Book a return ride",
-      "service": "Rides",
-      "goal": "Book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Rides service.",
-      "infoToEnter": "The pickup and drop-off addresses",
-      "indicator": "Task 2 of 2: Book a return ride",
-      "guidanceText": "Task reminder: Use Rides to book your return trip."
+      "title": "Send a package",
+      "service": "Courier",
+      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
+      "infoToEnter": "The sender and recipient addresses",
+      "indicator": "Task 2 of 2: Send a package",
+      "guidanceText": "Task reminder: Use Courier to send your package."
     }
   },
   "G2": {
-    "service2": "return_ride",
+    "service2": "courier",
     "banner": true,
     "autoPopulate": true,
     "addressSuggestions": true,
     "guidanceThresholdMs": 10000,
     "listUI": "categorized-by-destination",
-    "bannerText": "Heading back later? Book a return ride from 1000 Saint-Catherine Street West",
-    "bannerCTA": "Book Ride",
-    "service2Emoji": "\uD83D\uDE95",
-    "service2TaskLabel": "Return ride task",
+    "bannerText": "Need to send something? Send a package from 1000 Saint-Catherine Street West",
+    "bannerCTA": "Send Package",
+    "service2Emoji": "\uD83D\uDCE6",
+    "service2TaskLabel": "Courier task",
     "service2Options": [
-      { "id": "economy", "label": "VoyaX", "price": 10.5 },
-      { "id": "comfort", "label": "Comfort", "price": 15 },
-      { "id": "xl", "label": "XL", "price": 22 }
+      { "id": "small", "label": "Small package", "price": 8 },
+      { "id": "medium", "label": "Medium package", "price": 12 },
+      { "id": "large", "label": "Large package", "price": 24 }
     ],
     "addressLabel": "1000 Saint-Catherine Street West",
     "addressSublabel": "Downtown, Montreal",
     "rideTaskInstruction": "Book a ride to 1000 Saint-Catherine Street West.",
-    "service2TaskInstruction": "After completing the ride task, use the Rides service to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
-    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Rides service again to book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "service2TaskInstruction": "After completing the ride task, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
+    "scenarioDescription": "You are visiting a friend at 1000 Saint-Catherine Street West. First, use Voya X to book a ride to this address. After your visit, use the Courier service to send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill.",
     "task1": {
       "title": "Book a ride",
       "service": "Rides",
@@ -67,12 +67,12 @@
       "guidanceText": "Task reminder: Use Rides to book your trip."
     },
     "task2": {
-      "title": "Book a return ride",
-      "service": "Rides",
-      "goal": "Book a return ride from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Rides service.",
-      "infoToEnter": "The pickup and drop-off addresses",
-      "indicator": "Task 2 of 2: Book a return ride",
-      "guidanceText": "Task reminder: Use Rides to book your return trip."
+      "title": "Send a package",
+      "service": "Courier",
+      "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
+      "infoToEnter": "The sender and recipient addresses",
+      "indicator": "Task 2 of 2: Send a package",
+      "guidanceText": "Task reminder: Use Courier to send your package."
     }
   },
   "G3": {

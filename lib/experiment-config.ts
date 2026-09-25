@@ -2,9 +2,9 @@ import experimentConfigJson from '@/docs/contracts/experiment-config.json'
 
 export type Condition = 'G1' | 'G2' | 'G3' | 'G4'
 /** The second service crossed with interrelatedness (C2 heterogeneity redesign):
- *  `return_ride` = low heterogeneity (near-identical mobility task);
+ *  `courier` = low heterogeneity (sending a package — still an address/logistics task);
  *  `movie` = high heterogeneity (booking cinema tickets — a different activity). */
-export type Service2Type = 'return_ride' | 'movie'
+export type Service2Type = 'courier' | 'movie'
 export type ListUIType =
   | 'generic-options'
   | 'categorized-by-destination'

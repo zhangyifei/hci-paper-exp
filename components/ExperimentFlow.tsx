@@ -8,9 +8,9 @@ import HomeScreen from './RidePhase/HomeScreen'
 import MapScreen from './RidePhase/MapScreen'
 import RideAlmostThereScreen from './RidePhase/RideAlmostThereScreen'
 import TripCompleteScreen from './TripCompletePhase/TripCompleteScreen'
-import ReturnRideEntryScreen from './Service2Phase/ReturnRideEntryScreen'
-import ReturnRideConfirmScreen from './Service2Phase/ReturnRideConfirmScreen'
-import ReturnRideCompleteScreen from './Service2Phase/ReturnRideCompleteScreen'
+import CourierEntryScreen from './Service2Phase/CourierEntryScreen'
+import CourierDetailsScreen from './Service2Phase/CourierDetailsScreen'
+import CourierCompleteScreen from './Service2Phase/CourierCompleteScreen'
 import MovieEntryScreen from './Service2Phase/MovieEntryScreen'
 import MovieSeatsScreen from './Service2Phase/MovieSeatsScreen'
 import MovieCompleteScreen from './Service2Phase/MovieCompleteScreen'
@@ -158,7 +158,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     let inner: React.ReactNode = null
     switch (screen) {
       case 'home':
-        inner = <HomeScreen onNext={goToMap} />
+        inner = <HomeScreen onNext={goToMap} service2Kind={config.service2} />
         break
       case 'map':
         inner = <MapScreen onNext={goToRideAlmostThere} onBack={() => goBack('map', 'home')} />
@@ -173,8 +173,8 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'service2_entry':
         inner =
-          config.service2 === 'return_ride' ? (
-            <ReturnRideEntryScreen
+          config.service2 === 'courier' ? (
+            <CourierEntryScreen
               config={config}
               onNext={handleService2EntryNext}
               onBack={() => goBack('service2_entry', 'task2_instruction')}
@@ -189,8 +189,8 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'service2_detail':
         inner =
-          config.service2 === 'return_ride' ? (
-            <ReturnRideConfirmScreen
+          config.service2 === 'courier' ? (
+            <CourierDetailsScreen
               onNext={handleService2TaskNext}
               onBack={() => goBack('service2_detail', 'service2_entry')}
               parentEventId={service2EntryEventId}
@@ -206,8 +206,8 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'service2_complete':
         inner =
-          config.service2 === 'return_ride' ? (
-            <ReturnRideCompleteScreen config={config} rideFee={service2Fee} onNext={handleTaskCompletion} />
+          config.service2 === 'courier' ? (
+            <CourierCompleteScreen config={config} courierFee={service2Fee} onNext={handleTaskCompletion} />
           ) : (
             <MovieCompleteScreen config={config} onNext={handleTaskCompletion} />
           )
