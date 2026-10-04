@@ -78,6 +78,7 @@ export default function AdminPage() {
   const [openBatchId, setOpenBatchId] = useState<string | null>(null)
   const [roster, setRoster] = useState<ParticipantAssignment[]>([])
   const [rosterLoading, setRosterLoading] = useState(false)
+  const [exportingId, setExportingId] = useState<string | null>(null)
 
   const authHeaders = useCallback(
     (): HeadersInit => ({ 'x-stats-password': password, 'Content-Type': 'application/json' }),
@@ -218,6 +219,32 @@ export default function AdminPage() {
     a.download = `batch_${batch.name.replace(/\s+/g, '_')}_roster.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function exportExcel(batch: BatchSummary) {
+    setExportingId(batch.id)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/batches/${batch.id}/export`, {
+        headers: { 'x-stats-password': password },
+      })
+      if (!res.ok) {
+        setError(`Excel export failed (${res.status})`)
+        return
+      }
+      const disposition = res.headers.get('Content-Disposition') ?? ''
+      const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? `batch_${batch.id}_raw-data.xlsx`
+      const url = URL.createObjectURL(await res.blob())
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(`Excel export failed: ${String(err)}`)
+    } finally {
+      setExportingId(null)
+    }
   }
 
   async function releaseAssignment(assignmentId: string, batchId: string) {
@@ -381,6 +408,15 @@ export default function AdminPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => exportExcel(batch)}
+                      disabled={exportingId !== null}
+                      title="Download raw responses, scores, event log, disposition and codebook (.xlsx)"
+                      data-testid={`export-excel-${batch.id}`}
+                      className="text-sm px-3 h-9 rounded-lg border border-gray-200 bg-white font-semibold disabled:opacity-50"
+                    >
+                      {exportingId === batch.id ? 'Exporting…' : 'Export Excel'}
+                    </button>
                     <button
                       onClick={() => toggleRoster(batch.id)}
                       className="text-sm px-3 h-9 rounded-lg border border-gray-200 bg-white font-semibold"
