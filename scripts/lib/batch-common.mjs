@@ -62,8 +62,8 @@ export const ITEM_TEXT = {
   PU1: 'Easy to use for consecutive tasks', PU2: 'Could efficiently complete my goal', PU3: 'Moving to 2nd service took more steps than expected',
   PU4: 'Easy to continue from 1st to 2nd service', PU5: 'Felt unsure how to start the 2nd service', PU6: 'More effortful than needed',
   CI1: 'Would use again', CI2: 'Intend to use again', CI3: 'Would choose again', CI4: 'Would use another app instead',
-  MC1: 'Prompted with the next service at the right moment', MC2: 'Details already filled in', MC5: 'Had to enter address again',
-  MC3: '2nd service clearly a different type of task', MC4: 'Steps unlike booking the ride', MC6: 'Services felt like the same kind of activity',
+  MC1: 'Prompted with the next service at the right moment', MC2: 'Data carried into the next service', MC5: 'Had to enter address again',
+  MC3: '2nd service felt different from the ride', MC4: 'Tasks required different kinds of actions', MC6: 'Services felt like the same kind of activity',
 }
 // Verbatim participant-facing wording (components/Survey/*).
 export const ITEM_WORDING = {
@@ -80,11 +80,11 @@ export const ITEM_WORDING = {
   CI2: 'I intend to use this super app again if I need to complete similar tasks.',
   CI3: 'I would choose this super app again for similar tasks.',
   CI4: 'If another app could do these tasks, I would probably use it instead of this one.',
-  MC1: 'The super app prompted me with the next service at the right moment.',
-  MC2: 'My details (e.g., my address) were already filled in for the second service.',
+  MC1: 'The system prompted me with the next service at the right moment.',
+  MC2: 'The system automatically carried my data into the next service.',
   MC5: 'I had to enter my address again from scratch for the second service.',
-  MC3: 'The second service was a clearly different type of task from booking a ride.',
-  MC4: 'The steps for the second service were unlike those for booking the ride.',
+  MC3: 'The second service felt different from the ride service.',
+  MC4: 'The two service tasks required different kinds of actions.',
   MC6: 'The two services felt like basically the same kind of activity.',
   AC1: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
   DEM1: 'What is your age range?',
