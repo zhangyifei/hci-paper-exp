@@ -6,18 +6,21 @@ import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
 
 /**
- * Post-task survey. Item wording, order and scale anchors are VERBATIM from
- * section C of the Appendix D questionnaire (Manipulation Checks_2026-10-06.docx).
- * Do not rephrase.
+ * Post-task survey collecting subjective measures. Item wording is based on the
+ * post-task questionnaire (section B) of
+ *   docs/0613/Appendix_D_SuperApp_Questionnaire_HEC_06102026.docx,
+ * revised for study v2 to reduce ceiling/acquiescence (reverse-coded items) and
+ * to split the manipulation checks into two constructs.
  *
- *   Cognitive Load  (CL1-CL3)          — 1 (Very low / Not at all) – 7 (Very high / Very much)
- *   Usability       (PU1,PU2,PU7,PU4)  — PU7 is a new code so old reverse-coded PU3 data is never mis-scored
- *   Continuance     (CI1,CI3,CI2)      — codes kept by meaning (use / choose / intend), shown in doc order
- *   MC interrelated (MC1,MC2,MC5)      — MC5 reverse-coded
- *   MC heterogeneity(MC3,MC4,MC6)      — MC6 reverse-coded
- *   Attention       (AC1)              — NOT a doc item; must select "Somewhat agree" (5); scored separately.
+ *   Cognitive Load  (CL1-CL3)      — Raw TLX adapted, 1 (Very low) – 7 (Very high)
+ *   Usability       (PU1-PU6)      — SUS adapted; PU3/PU5/PU6 reverse-coded
+ *   Continuance     (CI1-CI4)      — future-use intent; CI4 reverse-coded
+ *   MC interrelated (MC1,MC2,MC5)  — prompting / data carry-over; MC5 reverse-coded
+ *   MC heterogeneity(MC3,MC4,MC6)  — service dissimilarity; MC6 reverse-coded
+ *   Attention       (AC1)          — must select "Somewhat agree" (5); scored separately.
  *
  * Reverse-coded items are flipped (8 - response) before construct averaging.
+ * All items use a 1–7 response scale (LikertScale default points = 7).
  */
 
 /** AC1 correct answer: "Somewhat agree" on the 1–7 scale. */
@@ -40,119 +43,138 @@ interface SurveyItem {
   pointLabels?: string[]
 }
 
-const CL_ANCHORS: [string, string] = ['Very low / Not at all', 'Very high / Very much']
-const AGREE_ANCHORS: [string, string] = ['Strongly disagree', 'Strongly agree']
-
 const SURVEY_ITEMS: SurveyItem[] = [
-  // ── Cognitive load ────────────────────────────────────────────────
+  // ── Cognitive Load (Raw TLX adapted, 1=Very low … 7=Very high) ─────
   {
     code: 'CL1',
     construct: 'cognitive_load',
-    question: 'How much mental activity was required to complete this task?',
-    anchors: CL_ANCHORS,
+    question: 'How much mental activity was required to complete these tasks?',
+    anchors: ['Very Low', 'Very High'],
   },
   {
     code: 'CL2',
     construct: 'cognitive_load',
     question: 'How hard did you have to work mentally to reach your performance?',
-    anchors: CL_ANCHORS,
+    anchors: ['Very Low', 'Very High'],
   },
   {
     code: 'CL3',
     construct: 'cognitive_load',
-    question: 'How stressed or annoyed did you feel during the task?',
-    anchors: CL_ANCHORS,
+    question: 'How stressed or annoyed did you feel during the tasks?',
+    anchors: ['Very Low', 'Very High'],
   },
-  // ── Perceived usability ───────────────────────────────────────────
+  // ── Perceived Usability (SUS adapted) ─────────────────────────────
   {
     code: 'PU1',
     construct: 'usability',
-    question: 'I found this system easy to use for these consecutive tasks.',
-    anchors: AGREE_ANCHORS,
+    question: 'I found this super app easy to use for these consecutive tasks.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU2',
     construct: 'usability',
-    question: 'I felt I could efficiently complete my goal using this system.',
-    anchors: AGREE_ANCHORS,
+    question: 'I felt I could efficiently complete my goal using this super app.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
-    code: 'PU7',
+    code: 'PU3',
     construct: 'usability',
-    question: 'The transition between the two services felt smooth.',
-    anchors: AGREE_ANCHORS,
+    reverse: true,
+    question: 'Moving from the first service to the second took more steps than I expected.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU4',
     construct: 'usability',
-    question: 'The app made it easy to continue from the first service to the second service.',
-    anchors: AGREE_ANCHORS,
+    question: 'The super app made it easy to continue from the first service to the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
-  // ── Continuance intention ─────────────────────────────────────────
+  {
+    code: 'PU5',
+    construct: 'usability',
+    reverse: true,
+    question: 'At some point I felt unsure how to get to or start the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'PU6',
+    construct: 'usability',
+    reverse: true,
+    question: 'Parts of completing the two tasks were more effortful than they needed to be.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  // ── Continuance Intention ─────────────────────────────────────────
   {
     code: 'CI1',
     construct: 'continuance',
-    question: 'I would use this system again for similar cross-service tasks.',
-    anchors: AGREE_ANCHORS,
-  },
-  {
-    code: 'CI3',
-    construct: 'continuance',
-    question: 'I would choose this app again when I need to move between related services.',
-    anchors: AGREE_ANCHORS,
+    question: 'I would use this super app again for similar service tasks.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'CI2',
     construct: 'continuance',
-    question: 'I intend to continue using this app if similar services are available.',
-    anchors: AGREE_ANCHORS,
+    question: 'I intend to use this super app again if I need to complete similar tasks.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'CI3',
+    construct: 'continuance',
+    question: 'I would choose this super app again for similar tasks.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'CI4',
+    construct: 'continuance',
+    reverse: true,
+    question: 'If another app could do these tasks, I would probably use it instead of this one.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Manipulation check: interrelatedness ─────────────────────────
   {
     code: 'MC1',
     construct: 'mc_interrelatedness',
     question: 'The system prompted me with the next service at the right moment.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC2',
     construct: 'mc_interrelatedness',
     question: 'The system automatically carried my data into the next service.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC5',
     construct: 'mc_interrelatedness',
     reverse: true,
     question: 'I had to enter my address again from scratch for the second service.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Manipulation check: heterogeneity ────────────────────────────
   {
     code: 'MC3',
     construct: 'mc_heterogeneity',
     question: 'The second service felt different from the ride service.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC4',
     construct: 'mc_heterogeneity',
     question: 'The two service tasks required different kinds of actions.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC6',
     construct: 'mc_heterogeneity',
     reverse: true,
     question: 'The two services felt like basically the same kind of activity.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
-  // ── Attention check (scored separately, excluded from constructs) ──
+  // ── Attention Check (scored separately, excluded from constructs) ──
   {
     code: AC1_CODE,
     construct: 'attention_check',
     question: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
-    anchors: AGREE_ANCHORS,
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
     pointLabels: [
       'Strongly disagree',
       'Disagree',
@@ -166,12 +188,12 @@ const SURVEY_ITEMS: SurveyItem[] = [
 ]
 
 /**
- * Participant-facing pagination, in doc order, with AC1 between the CI and MC
- * blocks on page 2 (as in the previous version). Internal codes are never
- * shown — only sequential numbers 1…N.
+ * Participant-facing pagination. Items are split across two pages with the
+ * attention check (AC1) placed in the middle of page 2. Internal codes
+ * (CL1, AC1, …) are never shown — only sequential numbers 1…N.
  */
-const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU7', 'PU4']
-const PAGE_2_CODES = ['CI1', 'CI3', 'CI2', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
+const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']
+const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
 const ORDERED_CODES = [...PAGE_1_CODES, ...PAGE_2_CODES]
 const ITEM_BY_CODE: Record<string, SurveyItem> = Object.fromEntries(
   SURVEY_ITEMS.map((i) => [i.code, i]),
@@ -253,6 +275,8 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
 
     const durationMs = Math.round(performance.now() - startedAt)
 
+    // Compute construct-level aggregates, excluding the attention check so it
+    // never contaminates cognitive load / usability / continuance / manip checks.
     const constructs: Record<string, number[]> = {}
     for (const item of SURVEY_ITEMS) {
       if (item.construct === 'attention_check') continue
@@ -270,7 +294,7 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
       payload: { responses, aggregates, durationMs },
     })
 
-    // A wrong AC1 answer ends the test and invalidates the session.
+    // Attention check: a wrong AC1 answer ends the test and invalidates the session.
     const ac1 = responses[AC1_CODE]
     if (ac1 !== AC1_CORRECT_VALUE) {
       onAttentionCheckFail(AC1_CODE, AC1_CORRECT_VALUE, ac1)
@@ -319,7 +343,8 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
         <div className="mb-6">
           <h1 className="text-[26px] font-bold tracking-tight text-black mb-2">Quick Feedback</h1>
           <p className="text-[14px] text-gray-500 leading-relaxed">
-            Please answer the following questions based on the task you just completed.
+            Please answer each question based on your experience with the tasks you just completed.
+            There are no right or wrong answers.
           </p>
         </div>
 
