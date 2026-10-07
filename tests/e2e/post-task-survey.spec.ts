@@ -94,13 +94,13 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
     // Page 2 holds the attention check (with its numeric legend) and MC items
-    await expect(page.getByText('The second service felt different from the ride service.')).toHaveCount(0)
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 3')
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
     await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
-    await expect(page.getByText('The second service felt different from the ride service.')).toBeVisible()
-    await expect(page.getByText('The two service tasks required different kinds of actions.')).toBeVisible()
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toBeVisible()
+    await expect(page.getByText('The steps for the second service were unlike those for booking the ride.')).toBeVisible()
     await expect(page.getByTestId('btn-submit-survey')).toBeVisible()
     await expect(page.getByTestId('btn-survey-back')).toBeVisible()
   })

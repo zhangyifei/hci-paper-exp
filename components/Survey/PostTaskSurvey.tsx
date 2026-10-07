@@ -133,13 +133,13 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'MC1',
     construct: 'mc_interrelatedness',
-    question: 'The system prompted me with the next service at the right moment.',
+    question: 'The super app prompted me with the next service at the right moment.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC2',
     construct: 'mc_interrelatedness',
-    question: 'The system automatically carried my data into the next service.',
+    question: 'My details (e.g., my address) were already filled in for the second service.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
@@ -153,13 +153,13 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'MC3',
     construct: 'mc_heterogeneity',
-    question: 'The second service felt different from the ride service.',
+    question: 'The second service was a clearly different type of task from booking a ride.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'MC4',
     construct: 'mc_heterogeneity',
-    question: 'The two service tasks required different kinds of actions.',
+    question: 'The steps for the second service were unlike those for booking the ride.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
