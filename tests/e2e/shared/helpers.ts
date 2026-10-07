@@ -54,7 +54,6 @@ export async function completeBackgroundQuestionnaire(page: Page) {
     'questionnaire-option-DEM2-male',
     'questionnaire-option-FAM1-weekly',
     'questionnaire-option-FAM2-4',
-    'questionnaire-option-SWI1-2',
     'questionnaire-option-SWI2-sometimes',
   ]
 
@@ -126,17 +125,16 @@ export async function assertNoBanner(page: Page) {
 }
 
 /**
- * Complete the 15-item post-task survey (14 constructs + AC1 attention check).
- * AC1 must be answered "Somewhat agree" (value 5) to avoid termination; all
- * other items default to value 4 unless overridden.
+ * Complete the 17-item post-task survey (16 doc items + AC1 attention check).
+ * AC1 must be "Somewhat agree" (5) to avoid termination; other items get 4.
  */
 export async function completePostTaskSurvey(
   page: Page,
   opts: { ac1Value?: number } = {},
 ) {
   const ac1Value = opts.ac1Value ?? 5
-  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']
-  const page2 = ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
+  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU7', 'PU4']
+  const page2 = ['CI1', 'CI3', 'CI2', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
 
   const answer = async (code: string) => {
     const value = code === 'AC1' ? ac1Value : 4

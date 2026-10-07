@@ -29,44 +29,47 @@ interface SelectItem {
   options: { label: string; value: string }[]
 }
 
+// Wording and options are VERBATIM from section A of the Appendix D questionnaire. Do not rephrase.
 const ITEMS: SelectItem[] = [
   {
     code: 'DEM1',
-    question: 'What is your age range?',
+    question: 'What is your age group?',
     options: [
       { label: '18–24', value: '18-24' },
       { label: '25–34', value: '25-34' },
       { label: '35–44', value: '35-44' },
       { label: '45–54', value: '45-54' },
-      { label: '55+', value: '55+' },
+      { label: '55–64', value: '55-64' },
+      { label: '65 or older', value: '65+' },
+      { label: 'Prefer not to answer', value: 'prefer-not-to-say' },
     ],
   },
   {
     code: 'DEM2',
     question: 'What is your gender?',
     options: [
-      { label: 'Male', value: 'male' },
-      { label: 'Female', value: 'female' },
-      { label: 'Non-binary', value: 'non-binary' },
-      { label: 'Prefer not to say', value: 'prefer-not-to-say' },
+      { label: 'Woman', value: 'female' },
+      { label: 'Man', value: 'male' },
+      { label: 'Non-binary / another gender identity', value: 'non-binary' },
+      { label: 'Prefer not to answer', value: 'prefer-not-to-say' },
     ],
   },
   {
     code: 'FAM1',
-    question: 'How often do you use multi-service (super) apps such as Grab, Gojek, WeChat, or similar?',
+    question: 'How often do you use mobile service applications such as ride-hailing, food delivery, courier, payment, or shopping apps?',
     options: [
       { label: 'Never', value: 'never' },
-      { label: 'A few times a year', value: 'rarely' },
-      { label: 'A few times a month', value: 'monthly' },
-      { label: 'A few times a week', value: 'weekly' },
+      { label: 'Rarely', value: 'rarely' },
+      { label: 'Monthly', value: 'monthly' },
+      { label: 'Weekly', value: 'weekly' },
       { label: 'Daily', value: 'daily' },
     ],
   },
   {
     code: 'FAM2',
-    question: 'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
+    question: 'How familiar are you with super apps or multi-service apps that combine several services in one platform?',
     options: [
-      { label: 'Not at all familiar', value: '1' },
+      { label: 'Not familiar at all', value: '1' },
       { label: 'Slightly familiar', value: '2' },
       { label: 'Moderately familiar', value: '3' },
       { label: 'Very familiar', value: '4' },
@@ -74,19 +77,8 @@ const ITEMS: SelectItem[] = [
     ],
   },
   {
-    code: 'SWI1',
-    question: 'When using a multi-service app in a single session, how many different services do you typically use?',
-    options: [
-      { label: 'Just one', value: '1' },
-      { label: '2 services', value: '2' },
-      { label: '3 services', value: '3' },
-      { label: '4 or more', value: '4+' },
-      { label: 'I only use single-service apps', value: 'single-app' },
-    ],
-  },
-  {
     code: 'SWI2',
-    question: 'How often do you switch between services mid-session (e.g. finish a ride, then order food without closing the app)?',
+    question: 'How often do you switch between different services or features within the same app?',
     options: [
       { label: 'Never', value: 'never' },
       { label: 'Rarely', value: 'rarely' },
@@ -101,7 +93,7 @@ const ITEMS: SelectItem[] = [
  * Participant-facing order. Internal codes (DEM1, …) are never shown —
  * only sequential numbers.
  */
-const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'SWI1', 'SWI2']
+const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'SWI2']
 const ITEM_BY_CODE: Record<string, SelectItem> = Object.fromEntries(ITEMS.map((i) => [i.code, i]))
 
 export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuestionnaireProps) {
