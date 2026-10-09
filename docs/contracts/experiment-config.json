@@ -4,10 +4,22 @@
     "banner": false,
     "autoPopulate": false,
     "addressSuggestions": false,
+    "service2EntryAddressTypeahead": false,
+    "service2EntryGuidanceText": "Task reminder: Enter the sender and recipient addresses, then choose a delivery option.",
+    "service2DetailGuidanceText": "Task reminder: Select the package details, then confirm pickup.",
+    "service2CompleteGuidanceText": "Task reminder: Tap Done to continue.",
+    "service2ResultsRequireAddress": null,
+    "rideSelectionGuidanceText": "Task reminder: Choose a ride option, then confirm your ride.",
+    "rideWaitingGuidanceText": "Task reminder: Wait for your ride to arrive.",
     "guidanceThresholdMs": 10000,
     "listUI": "generic-options",
     "bannerText": null,
     "bannerCTA": null,
+    "tripCompleteHint": null,
+    "tripCompleteGuidanceText": "Tap 'Back to Home' to return home and explore other services.",
+    "tripCompleteBackDestination": "home",
+    "showTripCompleteMap": true,
+    "underlineSecondaryAddressInScenario": true,
     "service2Emoji": "\uD83D\uDCE6",
     "service2TaskLabel": "Courier task",
     "service2Options": [
@@ -26,7 +38,7 @@
       "goal": "Book a ride to 1000 Saint-Catherine Street West.",
       "infoToEnter": "Your destination address",
       "indicator": "Task 1 of 2: Book a ride",
-      "guidanceText": "Task reminder: Use Rides to book your trip."
+      "guidanceText": "Task reminder: Enter 1000 Saint-Catherine Street West, then tap Start a Ride."
     },
     "task2": {
       "title": "Send a package",
@@ -34,7 +46,7 @@
       "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
       "infoToEnter": "The sender and recipient addresses",
       "indicator": "Task 2 of 2: Send a package",
-      "guidanceText": "Task reminder: Use Courier to send your package."
+      "guidanceText": "Task reminder: Tap Courier to send your package."
     }
   },
   "G2": {
@@ -42,10 +54,22 @@
     "banner": true,
     "autoPopulate": true,
     "addressSuggestions": true,
+    "service2EntryAddressTypeahead": true,
+    "service2EntryGuidanceText": "Task reminder: Enter 3008 Rue McGill as the recipient and choose a delivery option.",
+    "service2DetailGuidanceText": "Task reminder: Select the package details, then confirm pickup.",
+    "service2CompleteGuidanceText": "Task reminder: Tap Done to continue.",
+    "service2ResultsRequireAddress": null,
+    "rideSelectionGuidanceText": "Task reminder: Choose a ride option, then confirm your ride.",
+    "rideWaitingGuidanceText": "Task reminder: Wait for your ride to arrive.",
     "guidanceThresholdMs": 10000,
     "listUI": "categorized-by-destination",
     "bannerText": "Need to send something? Send a package from 1000 Saint-Catherine Street West",
     "bannerCTA": "Send Package",
+    "tripCompleteHint": null,
+    "tripCompleteGuidanceText": "Task reminder: Send a package to 3008 Rue McGill.",
+    "tripCompleteBackDestination": "service2",
+    "showTripCompleteMap": true,
+    "underlineSecondaryAddressInScenario": true,
     "service2Emoji": "\uD83D\uDCE6",
     "service2TaskLabel": "Courier task",
     "service2Options": [
@@ -64,7 +88,7 @@
       "goal": "Book a ride to 1000 Saint-Catherine Street West.",
       "infoToEnter": "Your destination address",
       "indicator": "Task 1 of 2: Book a ride",
-      "guidanceText": "Task reminder: Use Rides to book your trip."
+      "guidanceText": "Task reminder: Enter 1000 Saint-Catherine Street West, then tap Start a Ride."
     },
     "task2": {
       "title": "Send a package",
@@ -80,10 +104,22 @@
     "banner": false,
     "autoPopulate": false,
     "addressSuggestions": false,
+    "service2EntryAddressTypeahead": true,
+    "service2EntryGuidanceText": "Task reminder: Enter 1000 Saint-Catherine Street West, then choose a cinema and showtime.",
+    "service2DetailGuidanceText": "Task reminder: Select 2 seats, then confirm your tickets.",
+    "service2CompleteGuidanceText": "Task reminder: Tap Done to continue.",
+    "service2ResultsRequireAddress": "1000 Saint-Catherine Street West",
+    "rideSelectionGuidanceText": "Task reminder: Choose a ride option, then confirm your ride.",
+    "rideWaitingGuidanceText": "Task reminder: Wait for your ride to arrive.",
     "guidanceThresholdMs": 10000,
-    "listUI": "citywide-popular",
+    "listUI": "distance-filtered",
     "bannerText": null,
     "bannerCTA": null,
+    "tripCompleteHint": null,
+    "tripCompleteGuidanceText": "Tap 'Back to Home' to return home and explore other services.",
+    "tripCompleteBackDestination": "home",
+    "showTripCompleteMap": true,
+    "underlineSecondaryAddressInScenario": false,
     "service2Emoji": "\uD83C\uDFAC",
     "service2TaskLabel": "Cinema task",
     "service2Options": [
@@ -101,7 +137,7 @@
       "goal": "Book a ride to 1000 Saint-Catherine Street West.",
       "infoToEnter": "Your destination address",
       "indicator": "Task 1 of 2: Book a ride",
-      "guidanceText": "Task reminder: Use Rides to book your trip."
+      "guidanceText": "Task reminder: Enter 1000 Saint-Catherine Street West, then tap Start a Ride."
     },
     "task2": {
       "title": "Book movie tickets",
@@ -109,7 +145,7 @@
       "goal": "Book two movie tickets at a cinema near 1000 Saint-Catherine Street West using the Cinema service.",
       "infoToEnter": "The cinema location and showtime",
       "indicator": "Task 2 of 2: Book movie tickets",
-      "guidanceText": "Task reminder: Use Cinema to book your movie tickets."
+      "guidanceText": "Task reminder: Tap Cinema to book your movie tickets."
     }
   },
   "G4": {
@@ -117,10 +153,22 @@
     "banner": true,
     "autoPopulate": true,
     "addressSuggestions": true,
+    "service2EntryAddressTypeahead": false,
+    "service2EntryGuidanceText": "Task reminder: Choose a cinema and showtime near 1000 Saint-Catherine Street West.",
+    "service2DetailGuidanceText": "Task reminder: Select 2 seats, then confirm your tickets.",
+    "service2CompleteGuidanceText": "Task reminder: Tap Done to continue.",
+    "service2ResultsRequireAddress": null,
+    "rideSelectionGuidanceText": "Task reminder: Choose a ride option, then confirm your ride.",
+    "rideWaitingGuidanceText": "Task reminder: Wait for your ride to arrive.",
     "guidanceThresholdMs": 10000,
     "listUI": "distance-filtered",
     "bannerText": "Catch a movie nearby? Cinemas near 1000 Saint-Catherine Street West are available",
     "bannerCTA": "Book Tickets",
+    "tripCompleteHint": null,
+    "tripCompleteGuidanceText": "Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.",
+    "tripCompleteBackDestination": "service2",
+    "showTripCompleteMap": true,
+    "underlineSecondaryAddressInScenario": false,
     "service2Emoji": "\uD83C\uDFAC",
     "service2TaskLabel": "Cinema task",
     "service2Options": [
@@ -138,7 +186,7 @@
       "goal": "Book a ride to 1000 Saint-Catherine Street West.",
       "infoToEnter": "Your destination address",
       "indicator": "Task 1 of 2: Book a ride",
-      "guidanceText": "Task reminder: Use Rides to book your trip."
+      "guidanceText": "Task reminder: Enter 1000 Saint-Catherine Street West, then tap Start a Ride."
     },
     "task2": {
       "title": "Book movie tickets",

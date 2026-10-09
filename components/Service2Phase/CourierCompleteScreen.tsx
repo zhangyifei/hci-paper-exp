@@ -1,23 +1,15 @@
 import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
-import { ConditionConfig } from '@/lib/experiment-config'
+import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { enterScreen } from '@/lib/screen-tracker'
 
 interface CourierCompleteScreenProps {
-  config: ConditionConfig
   courierFee: number
   onNext: () => void
 }
 
-const EXPLORE = [
-  { icon: '🚕', label: 'Rides',   color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '📦', label: 'Courier', color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '🕒', label: 'Reserve', color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '🚌', label: 'Transit', color: 'bg-gray-100', border: 'border-gray-200' },
-]
-
-export default function CourierCompleteScreen({ config, courierFee, onNext }: CourierCompleteScreenProps) {
+export default function CourierCompleteScreen({ courierFee, onNext }: CourierCompleteScreenProps) {
   useEffect(() => {
     logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
     const cleanup = enterScreen('service2_complete_courier', 'service2')
@@ -63,7 +55,9 @@ export default function CourierCompleteScreen({ config, courierFee, onNext }: Co
           <div className="flex justify-between items-start mb-4">
             <div>
               <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">Delivering to</div>
-              <div className="font-bold text-[17px] text-black">3008 Rue McGill</div>
+              <div className="font-bold text-[17px] text-black">
+                <AddressText>3008 Rue McGill</AddressText>
+              </div>
             </div>
             <div className="font-bold text-[17px] text-black">${courierFee.toFixed(2)}</div>
           </div>
@@ -80,23 +74,6 @@ export default function CourierCompleteScreen({ config, courierFee, onNext }: Co
             <div className="text-green-600 font-bold text-[13px]">Track</div>
           </div>
         </div>
-
-        {/* Bridge cell only: Explore More */}
-        {config.autoPopulate && (
-          <div className="mb-6 animate-fade-in">
-            <h2 className="font-bold text-[19px] tracking-tight text-black mb-4">Explore More</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {EXPLORE.map((item) => (
-                <div key={item.label} className="flex flex-col items-center space-y-2 group active:scale-95 transition-transform">
-                  <div className={`w-16 h-16 ${item.color} border ${item.border} rounded-2xl flex items-center justify-center text-2xl shadow-sm`}>
-                    {item.icon}
-                  </div>
-                  <span className="text-[12px] font-medium text-gray-600">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <button
           onClick={onNext}

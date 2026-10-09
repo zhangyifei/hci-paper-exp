@@ -1,22 +1,13 @@
 import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
-import { ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 import { enterScreen } from '@/lib/screen-tracker'
 
 interface MovieCompleteScreenProps {
-  config: ConditionConfig
   onNext: () => void
 }
 
-const EXPLORE = [
-  { icon: '🚕', label: 'Rides',   color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '🎬', label: 'Cinema',  color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '🕒', label: 'Reserve', color: 'bg-gray-100', border: 'border-gray-200' },
-  { icon: '🚌', label: 'Transit', color: 'bg-gray-100', border: 'border-gray-200' },
-]
-
-export default function MovieCompleteScreen({ config, onNext }: MovieCompleteScreenProps) {
+export default function MovieCompleteScreen({ onNext }: MovieCompleteScreenProps) {
   useEffect(() => {
     logger.trackEvent('service2.complete.viewed', 'service2', 'service2_task_complete')
     const cleanup = enterScreen('service2_complete_movie', 'service2')
@@ -73,23 +64,6 @@ export default function MovieCompleteScreen({ config, onNext }: MovieCompleteScr
             <span className="font-bold text-[15px] text-black tracking-wider">SKY-4821</span>
           </div>
         </div>
-
-        {/* Bridge cell only: Explore More */}
-        {config.autoPopulate && (
-          <div className="mb-6 animate-fade-in">
-            <h2 className="font-bold text-[19px] tracking-tight text-black mb-4">Explore More</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {EXPLORE.map((item) => (
-                <div key={item.label} className="flex flex-col items-center space-y-2 group active:scale-95 transition-transform">
-                  <div className={`w-16 h-16 ${item.color} border ${item.border} rounded-2xl flex items-center justify-center text-2xl shadow-sm`}>
-                    {item.icon}
-                  </div>
-                  <span className="text-[12px] font-medium text-gray-600">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <button
           onClick={onNext}

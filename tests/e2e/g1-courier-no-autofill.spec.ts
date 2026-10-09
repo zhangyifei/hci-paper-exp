@@ -35,8 +35,21 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
   test('G1 Trip Complete: no banner shown', async ({ page }) => {
     await completeRidePhase(page)
     await assertNoBanner(page)
-    // Footnote text visible for G1
-    await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toBeVisible()
+    await expect(page.getByTestId('trip-complete-hint')).not.toBeVisible()
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      "Tap 'Back to Home' to return home and explore other services.",
+      { timeout: 12_000 },
+    )
+
+    await page.getByTestId('guidance-banner-dismiss').click()
+    await page.getByTestId('btn-back-to-home').click({ force: true })
+    await expect(page.getByTestId('input-destination')).toBeVisible()
+    await expect(page.getByTestId('tab-courier')).toBeVisible()
+    await expect(page.getByTestId('screen-courier-entry')).toHaveCount(0)
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Tap Courier to send your package.',
+      { timeout: 12_000 },
+    )
   })
 
   test('G1 Courier Entry: sender address is empty (no auto-fill)', async ({ page }) => {

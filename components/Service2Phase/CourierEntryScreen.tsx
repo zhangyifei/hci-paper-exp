@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import BackButton from '../shared/BackButton'
+import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
@@ -59,6 +60,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
   // Recipient address (editable; can be filled from saved/recent addresses).
   const [recipientAddress, setRecipientAddress] = useState<string>('')
   const [recipientTouched, setRecipientTouched] = useState(false)
+  const [recipientFocused, setRecipientFocused] = useState(false)
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
 
   const [showErrors, setShowErrors] = useState(false)
@@ -151,6 +153,10 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
 
   const senderError = (senderTouched || showErrors) && !senderValid
   const recipientError = (recipientTouched || showErrors) && !recipientValid
+  const showRecipientTypeahead =
+    config.service2EntryAddressTypeahead &&
+    recipientFocused &&
+    recipientAddress.trim().length > 0
 
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-courier-entry">
@@ -181,7 +187,9 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
             <div className="bg-white rounded-[16px] p-4 border border-green-500 shadow-[0_4px_12px_rgba(22,163,74,0.08)] relative" data-testid="sender-address-autofilled">
               <div className="flex items-center mb-1">
                 <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold mr-2 border border-green-200">SUGGESTED</span>
-                <div className="font-bold text-[15px] text-black">{config.addressLabel || '1000 Saint-Catherine Street West'}</div>
+                <div className="font-bold text-[15px] text-black">
+                  <AddressText>{config.addressLabel || '1000 Saint-Catherine Street West'}</AddressText>
+                </div>
               </div>
               <div className="text-[13px] text-green-600 font-medium">{config.addressSublabel || 'Downtown, Montreal'}</div>
             </div>
@@ -207,7 +215,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                 <div className="mt-2 rounded-[12px] border border-gray-100 overflow-hidden" data-testid="sender-suggestions">
                   {suggestionMatches.map((s) => (
                     <button key={s} type="button" onClick={() => handlePickSuggestion(s)} className="w-full text-left px-4 py-2.5 text-[14px] text-black active:bg-gray-50 border-b border-gray-50 last:border-0">
-                      {s}
+                      <AddressText>{s}</AddressText>
                     </button>
                   ))}
                 </div>
@@ -222,8 +230,13 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                     <button key={place.id} type="button" onClick={() => handlePickSenderSaved(place)} data-testid={`sender-saved-${place.id}`} className="w-full flex items-center text-left active:opacity-60 transition-opacity py-2">
                       <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{place.icon}</div>
                       <div className="flex-1 border-b border-gray-100 pb-3">
-                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">{place.name}{place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}</div>
-                        <div className="text-[13px] text-gray-500">{place.detail}</div>
+                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">
+                          <AddressText>{place.name}</AddressText>
+                          {place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}
+                        </div>
+                        <div className="text-[13px] text-gray-500">
+                          <AddressText>{place.detail}</AddressText>
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -240,7 +253,9 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
             <div className="bg-gray-50 rounded-[16px] p-4 border border-gray-200 flex items-center justify-between" data-testid="recipient-selected">
               <div className="flex items-center">
                 <span className="w-2.5 h-2.5 rounded-full bg-black mr-3 flex-shrink-0" />
-                <div className="font-bold text-[15px] text-black">{recipientAddress}</div>
+                <div className="font-bold text-[15px] text-black">
+                  <AddressText>{recipientAddress}</AddressText>
+                </div>
               </div>
               <button type="button" onClick={handleChangeRecipient} data-testid="btn-change-recipient" className="text-[13px] text-gray-400 font-bold">Change</button>
             </div>
@@ -254,7 +269,11 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   autoComplete="off"
                   value={recipientAddress}
                   onChange={(e) => handleRecipientChange(e.target.value)}
-                  onBlur={() => setRecipientTouched(true)}
+                  onFocus={() => setRecipientFocused(true)}
+                  onBlur={() => {
+                    setRecipientFocused(false)
+                    setRecipientTouched(true)
+                  }}
                   placeholder="Enter recipient address"
                   aria-label="Recipient address"
                   aria-invalid={recipientError}
@@ -262,18 +281,60 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   className="flex-1 bg-transparent outline-none text-[15px] font-medium text-black placeholder:text-gray-500"
                 />
               </div>
+              {showRecipientTypeahead && (
+                <div
+                  className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden"
+                  data-testid="recipient-suggestions"
+                >
+                  <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    Saved &amp; recent
+                  </p>
+                  {SAVED_RECIPIENTS.map((addr) => (
+                    <button
+                      key={addr.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handleSelectSaved(addr)}
+                      data-testid={`recipient-suggestion-${addr.id}`}
+                      className="w-full flex items-center text-left px-4 py-3 active:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">
+                        {addr.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[15px] flex items-center text-black">
+                          <AddressText>{addr.name}</AddressText>
+                          {addr.tag && (
+                            <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                              {addr.tag}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[13px] text-gray-500 truncate">
+                          <AddressText>{addr.detail}</AddressText>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {recipientError && (
                 <p data-testid="recipient-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Choose a saved address or enter a valid recipient address.</p>
               )}
-              {recipientAddress.trim().length === 0 && (
+              {!config.service2EntryAddressTypeahead && recipientAddress.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="recipient-saved-places">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
                   {SAVED_RECIPIENTS.map((addr) => (
                     <button key={addr.id} type="button" onClick={() => handleSelectSaved(addr)} data-testid={`recipient-saved-${addr.id}`} className="w-full flex items-center text-left active:opacity-60 transition-opacity py-2">
                       <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{addr.icon}</div>
                       <div className="flex-1 border-b border-gray-100 pb-3">
-                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">{addr.name}{addr.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{addr.tag}</span>}</div>
-                        <div className="text-[13px] text-gray-500">{addr.detail}</div>
+                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">
+                          <AddressText>{addr.name}</AddressText>
+                          {addr.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{addr.tag}</span>}
+                        </div>
+                        <div className="text-[13px] text-gray-500">
+                          <AddressText>{addr.detail}</AddressText>
+                        </div>
                       </div>
                     </button>
                   ))}

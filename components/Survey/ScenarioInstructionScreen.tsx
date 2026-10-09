@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react'
 import ResearchPage from '../shared/ResearchPage'
+import AddressText from '../shared/AddressText'
 import type { ConditionConfig } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 
@@ -64,7 +65,11 @@ export default function ScenarioInstructionScreen({
           className="mb-6 text-[15px] text-black leading-relaxed"
           data-testid="scenario-description"
         >
-          {config.scenarioDescription}
+          <AddressText
+            underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
+          >
+            {config.scenarioDescription}
+          </AddressText>
         </p>
 
         {/* Fictional-prototype note */}
@@ -90,7 +95,11 @@ export default function ScenarioInstructionScreen({
               className="text-[15px] font-semibold text-black leading-snug"
               data-testid="scenario-ride-instruction"
             >
-              {config.rideTaskInstruction}
+              <AddressText
+                underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
+              >
+                {config.rideTaskInstruction}
+              </AddressText>
             </p>
           </div>
 
@@ -107,7 +116,11 @@ export default function ScenarioInstructionScreen({
               className="text-[15px] font-semibold text-black leading-snug"
               data-testid="scenario-service2-instruction"
             >
-              {config.service2TaskInstruction}
+              <AddressText
+                underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
+              >
+                {config.service2TaskInstruction}
+              </AddressText>
             </p>
           </div>
         </div>

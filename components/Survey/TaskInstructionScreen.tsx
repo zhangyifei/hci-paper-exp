@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react'
 import ResearchPage from '../shared/ResearchPage'
+import AddressText from '../shared/AddressText'
 import type { TaskInfo } from '@/lib/experiment-config'
 import { logger } from '@/lib/logger'
 
@@ -61,7 +62,9 @@ export default function TaskInstructionScreen({
         {task.title}
       </h1>
 
-      <p className="mt-3 text-[16px] leading-relaxed text-gray-600">{task.goal}</p>
+      <p className="mt-3 text-[16px] leading-relaxed text-gray-600">
+        <AddressText>{task.goal}</AddressText>
+      </p>
 
       <dl className="mt-7 space-y-3">
         <div className="flex items-start gap-3 rounded-[14px] border border-gray-100 bg-gray-50 px-4 py-3.5">

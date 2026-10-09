@@ -23,6 +23,15 @@ test.describe('G4 — Ride + Movie, Auto-fill', () => {
     await assertBannerVisible(page, 'Book Tickets')
     await expect(page.getByText(/Catch a movie nearby/i)).toBeVisible()
     await expect(page.getByText(/Cinemas near 1000 Saint-Catherine Street West/i)).toBeVisible()
+    await expect(page.getByTestId('btn-back-to-home')).toHaveText('Back to Home')
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.',
+      { timeout: 12_000 },
+    )
+
+    await page.getByTestId('guidance-banner-dismiss').click()
+    await page.getByTestId('btn-back-to-home').click({ force: true })
+    await expect(page.getByTestId('screen-movie-entry')).toBeVisible()
   })
 
   test('G4 banner CTA navigates to Movie Entry', async ({ page }) => {
@@ -53,14 +62,13 @@ test.describe('G4 — Ride + Movie, Auto-fill', () => {
     await expect(page.getByText('0.4 km').first()).toBeVisible()
   })
 
-  test('G4 full flow: showtime → seats → Tickets Booked with Explore More', async ({ page }) => {
+  test('G4 full flow: showtime → seats → Tickets Booked without Explore More', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
 
     await completeMovieEntry(page)
 
     await expect(page.getByText('Tickets Booked!', { exact: true })).toBeVisible({ timeout: 5000 })
-    // G4-specific: Explore More section.
-    await expect(page.getByText('Explore More')).toBeVisible()
+    await expect(page.getByText('Explore More')).toHaveCount(0)
   })
 })

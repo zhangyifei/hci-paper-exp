@@ -293,3 +293,410 @@ Design mockups analyzed. Key findings per condition:
 - `npx playwright test` (G1–G4 courier + eats + post-task survey) → ✅ 37 passed
 - Ran against `127.0.0.1` due to the IPv6 `localhost:3000` contention; Playwright config reverted
   to `localhost`.
+
+---
+
+## Phase 12 — Study address emphasis
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Added `components/shared/AddressText.tsx` to apply consistent bold and underline styling to
+  `1000 Saint-Catherine Street West` and `3008 Rue McGill` without altering contract-owned copy.
+- Applied the shared formatter to scenario/task instructions and non-editable address labels in
+  the ride, trip-complete, Courier, and Cinema flows for G1–G4.
+
+### Verification
+- `npm run type-check` → ✅ clean
+- Headless Chrome render check across G1, G2, G3, and G4 → ✅ every rendered task-address mark
+  reports `font-weight: 700` and `text-decoration-line: underline`.
+
+---
+
+## Phase 13 — Ride destination typeahead
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Updated the shared Ride `Where to?` field so focus alone does not reveal destinations.
+- Added a three-character suggestion threshold; entering `100` shows three matching addresses
+  with `1000 Saint-Catherine Street West` first.
+- Added combobox/listbox accessibility attributes and preserved click-to-fill behavior.
+- Added a four-condition Playwright regression spec covering G1–G4.
+
+### Verification
+- `npm run type-check` → ✅ clean
+- `ride-destination-typeahead.spec.ts` in installed Chrome → ✅ 4 passed (G1–G4).
+
+---
+
+## Phase 14 — Destination-aware Ride reminder
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Updated `task1.guidanceText` in the experiment contract for G1–G4 to include
+  `1000 Saint-Catherine Street West`.
+- Updated the black idle `GuidanceBanner` to render recognized task addresses in bold and
+  underline through the shared `AddressText` component.
+- Added a four-condition Playwright regression spec for banner copy and computed address styles.
+
+### Verification
+- Contract reminder validation → ✅ all four conditions match.
+- `npm run type-check` → ✅ clean.
+- `ride-guidance-banner.spec.ts` in installed Chrome → ✅ 4 passed (G1–G4).
+
+---
+
+## Phase 15 — Guidance banner outside-click dismissal
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Added document-level outside-pointer detection while the guidance banner is visible.
+- Kept clicks inside the black banner inert and retained the explicit close button.
+- Outside clicks dismiss the banner without preventing the underlying task interaction.
+- Added dismissal method metadata (`outside_click` / `close_button`) to the existing
+  `guidance.banner_dismissed` event.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Updated `ride-guidance-banner.spec.ts` in installed Chrome → ✅ 4 passed (G1–G4), including
+  inside-click persistence and outside-click dismissal.
+
+---
+
+## Phase 16 — Guidance banner position adjustment
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Raised the shared task-reminder banner by 8 px (approximately 0.2 cm) for G1–G4.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 22 — Remove underline from 3008 Rue McGill
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Updated the shared address formatter so `3008 Rue McGill` is bold without an underline.
+- Preserved bold-and-underlined styling for `1000 Saint-Catherine Street West`.
+- Added a G1–G4 browser assertion for the Recent Trips address styling.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `ride-destination-typeahead.spec.ts` in installed Chrome → ✅ 4 passed (G1–G4).
+
+---
+
+## Phase 23 — G2/G4 Trip Complete button label
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Changed the G2 and G4 Trip Complete action label from `Done` to `Back to Home`.
+- The action label is now consistent across G1–G4; navigation behavior is unchanged.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G2/G4 Trip Complete Playwright checks → ✅ 2 passed.
+
+---
+
+## Phase 24 — Remove Task 2 instruction page
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Removed `task2_instruction` from the experiment screen state and render flow.
+- Trip Complete now advances directly to Courier or Cinema for G1–G4.
+- Preserved the Task 2 `task.started` event at the direct transition.
+- Updated Service 2 Back navigation to return to Trip Complete.
+- Updated shared Playwright navigation helpers to assert that Task 2 instructions do not appear.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused direct-entry Playwright checks for G1–G4 → ✅ 4 passed.
+
+---
+
+## Phase 21 — Set reminder 0.8 cm above bottom
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Positioned the shared task reminder exactly `0.8cm` above the bottom edge for G1–G4.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 20 — Revised bottom-relative reminder placement
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Positioned the shared task reminder exactly `0.2cm` above the bottom edge for G1–G4.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 18 — Remove G1 Trip Complete helper
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Added nullable `tripCompleteHint` to the experiment configuration contract.
+- Removed `Tap 'Back to Home' to return home and explore other services.` from G1.
+- Preserved the existing helper for G3 and kept it absent for banner conditions G2/G4.
+- Updated Trip Complete to render the helper from config instead of banner-based UI logic.
+
+### Verification
+- Contract validation → ✅ G1 is null and G3 retains the helper.
+- `npm run type-check` → ✅ clean.
+- Focused G1/G3 Trip Complete Playwright checks → ✅ 2 passed.
+
+---
+
+## Phase 19 — Bottom-relative reminder placement
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Positioned the shared task reminder exactly `0.5cm` above the bottom edge for G1–G4.
+- Replaced the previous `139px` offset with the requested physical CSS unit.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 17 — Lower guidance banner position
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Lowered the shared task-reminder banner by 19 px (approximately 0.5 cm) for G1–G4.
+- Updated the bottom offset from `158px` to `139px`.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 25 — G1/G2 scenario McGill underline
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Added a contract-controlled scenario underline setting for the secondary study address.
+- Underlined `3008 Rue McGill` in both the scenario narrative and Courier task card for G1/G2.
+- Preserved the non-underlined `3008 Rue McGill` styling in Recent Trips for all four groups.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Scenario Playwright checks in installed Chrome → ✅ 3 passed (including G1/G2 underline assertions).
+- Ride destination regression checks in installed Chrome → ✅ 4 passed (G1–G4).
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 26 — G2/G3 Trip Complete reminder and G3 map removal
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Changed the Trip Complete task reminder in G2/G3 to `Tap 'Back to Home' to return home and explore other services.`
+- Removed the large Trip Complete map image from G3 only.
+- Preserved the map image in G1, G2, and G4.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G2/G3 Trip Complete Playwright checks in installed Chrome → ✅ 2 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 27 — Remove G3 Back-to-Home sentence
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Removed `Tap 'Back to Home' to return home and explore other services.` from both G3 Trip Complete text locations.
+- Preserved the G2 reminder and the hidden G3 map.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G3 Trip Complete Playwright check in installed Chrome → ✅ 1 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 28 — Restore G3 Trip Complete map
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Restored the large map image on G3’s Trip Complete screen.
+- Kept the previously removed Back-to-Home sentence absent from G3.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G3 Trip Complete Playwright check in installed Chrome → ✅ 1 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 29 — Group-specific Service 1 completion reminders
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Set the Trip Complete reminder to the Back-to-Home instruction for G1/G3.
+- Set the Trip Complete reminder to `Task reminder: Send a package to 3008 Rue McGill.` for G2/G4.
+- Left all other Trip Complete content unchanged.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G1–G4 Trip Complete Playwright checks in installed Chrome → ✅ 5 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 30 — G1/G3 Back to Home routing
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Added a contract-controlled Trip Complete destination for each group.
+- G1/G3 Back to Home now returns to the initial Home/Rides screen instead of opening Service 2.
+- The Courier tab in G1 and Cinema tab in G3 now enter Service 2 after returning home.
+- G2/G4 retain their direct Service 2 transition.
+- Prevented the returned Home screen from logging a second `ride.started` event.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G1/G3 Home-routing and service-tab Playwright checks → ✅ 4 passed.
+- Focused G2/G4 direct-routing Playwright checks → ✅ 2 passed.
+- Final G1 Home-to-Courier regression check → ✅ 1 passed after retrying an unrelated landing redirect timeout.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 31 — Simplify G4 cinema reminder
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Changed G4’s final Service 1 reminder to `Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.`
+- Preserved G2’s package reminder and all other group copy.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G4 Trip Complete Playwright check in installed Chrome → ✅ 1 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 32 — Task 2 reminders on returned Home
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Switched the returned Home screen to Task 2 guidance after G1/G3 complete the ride.
+- G1 now shows `Task reminder: Use Courier to send your package.`
+- G3 now shows `Task reminder: Use Cinema to book your movie tickets.`
+- Preserved the ride reminder on the initial Home screen.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G1/G3 returned-Home reminder Playwright checks in installed Chrome → ✅ 2 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 33 — G2/G3 Service 2 typed address dropdowns
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- G2 recipient input now reveals exactly two Saved & Recent options after typing, with `3008 Rue McGill` first.
+- G3 cinema-location input now reveals exactly two Saved & Recent options after typing, with `1000 Saint-Catherine Street West` first.
+- Added page-specific reminders describing the recipient/delivery task in G2 and the location/cinema/showtime task in G3.
+- Kept G1/G4 entry behavior unchanged.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G2/G3 dropdown and reminder Playwright checks → ✅ 2 passed.
+- Complete G2/G3 Task 2 flow checks → ✅ 2 passed.
+- G1/G4 full-flow regression checks → ✅ 2 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 34 — Gate G3 nearby cinemas by task address
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Removed the initially visible Popular cinemas section from G3.
+- G3 now shows no cinema heading or cards until `1000 Saint-Catherine Street West` is entered or selected.
+- After the task address is selected, G3 displays `Cinemas near you` with distance-based results.
+- Preserved G4’s immediately visible nearby cinema list.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Focused G3 address-gating, nearby-results, typeahead, and full-flow Playwright checks → ✅ 4 passed.
+- G4 nearby-list and full-flow regression checks → ✅ 2 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 35 — Screen-aligned task reminder audit
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Audited reminder copy across all Super App screens in G1–G4.
+- Updated initial Home guidance to tell users to enter the task address and start the ride.
+- Added ride-selection and short ride-waiting reminders.
+- Preserved each group’s configured Trip Complete reminder.
+- Updated returned Home guidance to explicitly tell G1 users to tap Courier and G3 users to tap Cinema.
+- Added page-specific Service 2 entry reminders for G1–G4.
+- Added package-details and seat-selection reminders.
+- Added a completion reminder directing users to tap Done.
+- Remounted the guidance banner on every screen transition so stale copy cannot persist.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- Screen-alignment Playwright audit across ride, Courier, and Cinema screens → ✅ 4 paths passed.
+- Initial Home and returned-Home reminder regressions across G1–G4 → ✅ 6 passed.
+- `git diff --check` → ✅ clean.
+
+---
+
+## Phase 36 — Remove Explore More from G2/G4
+**Date**: 2026-10-08
+**Status**: ✅ Complete
+
+### Changes
+- Removed the Explore More heading and service grid from the G2 Courier completion screen.
+- Removed the Explore More heading and service grid from the G4 Cinema completion screen.
+- Preserved completion details, task reminders, and the Done action.
+
+### Verification
+- `npm run type-check` → ✅ clean.
+- G2/G4 full-flow Playwright checks → ✅ 2 passed.
+- `git diff --check` → ✅ clean.

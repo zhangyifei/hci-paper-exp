@@ -20,7 +20,23 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
   test('G3 Trip Complete: no banner shown', async ({ page }) => {
     await completeRidePhase(page)
     await assertNoBanner(page)
-    await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toBeVisible()
+    await expect(page.getByTestId('trip-complete-hint')).toHaveCount(0)
+    await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toHaveCount(0)
+    await expect(page.getByTestId('trip-complete-map')).toBeVisible()
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      "Tap 'Back to Home' to return home and explore other services.",
+      { timeout: 12_000 },
+    )
+
+    await page.getByTestId('guidance-banner-dismiss').click()
+    await page.getByTestId('btn-back-to-home').click({ force: true })
+    await expect(page.getByTestId('input-destination')).toBeVisible()
+    await expect(page.getByTestId('tab-cinema')).toBeVisible()
+    await expect(page.getByTestId('screen-movie-entry')).toHaveCount(0)
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Tap Cinema to book your movie tickets.',
+      { timeout: 12_000 },
+    )
   })
 
   test('G3 Movie Entry: location is empty (no auto-fill)', async ({ page }) => {
@@ -34,27 +50,49 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
     await expect(locationInput).toBeVisible()
     await expect(locationInput).toHaveValue('')
     await expect(locationInput).toHaveAttribute('placeholder', 'Enter a location')
+    await expect(page.getByText('Popular cinemas', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('Cinemas near you', { exact: true })).toHaveCount(0)
+    await expect(page.getByTestId('cinema-list')).toHaveCount(0)
   })
 
-  test('G3 location can be filled by tapping a saved place', async ({ page }) => {
+  test('G3 location typing shows two saved and recent options with the task address first', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    await expect(page.getByTestId('movie-saved-places')).toBeVisible()
-    await page.getByTestId('movie-saved-saint-catherine').click({ force: true })
+    await expect(page.getByTestId('movie-saved-places')).toHaveCount(0)
+    await page.getByTestId('input-movie-location').fill('1000')
+
+    const suggestions = page.getByTestId('movie-location-suggestions')
+    await expect(suggestions).toBeVisible()
+    await expect(suggestions.getByRole('button')).toHaveCount(2)
+    await expect(suggestions.getByRole('button').first()).toContainText(
+      '1000 Saint-Catherine Street West',
+    )
+    await expect(suggestions).toContainText('Saved & recent')
+
+    await page.getByTestId('movie-location-suggestion-saint-catherine').click()
     await expect(page.getByTestId('input-movie-location')).toHaveValue('1000 Saint-Catherine Street West')
+    await expect(page.getByText('Cinemas near you', { exact: true })).toBeVisible()
+    await expect(page.getByTestId('cinema-list')).toBeVisible()
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Enter 1000 Saint-Catherine Street West, then choose a cinema and showtime.',
+      { timeout: 12_000 },
+    )
   })
 
-  test('G3 Movie Entry: shows popular (citywide) cinema list', async ({ page }) => {
+  test('G3 Movie Entry: shows nearby cinemas only after the task address is selected', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
-    await expect(page.getByText('Popular cinemas')).toBeVisible()
-    await expect(page.getByText('Cinéma StarCité')).toBeVisible()
-    await expect(page.getByText('Cinéma IMAX du Centre')).toBeVisible()
+    await expect(page.getByTestId('cinema-list')).toHaveCount(0)
+    await page.getByTestId('input-movie-location').fill('1000')
+    await page.getByTestId('movie-location-suggestion-saint-catherine').click()
 
-    // No distance pills for the citywide list.
-    await expect(page.getByText('0.4 km')).not.toBeVisible()
+    await expect(page.getByText('Cinemas near you', { exact: true })).toBeVisible()
+    await expect(page.getByText('Cineplex Forum')).toBeVisible()
+    await expect(page.getByText('Cinéma Banque Scotia')).toBeVisible()
+    await expect(page.getByText('0.4 km').first()).toBeVisible()
+    await expect(page.getByText('0.7 km').first()).toBeVisible()
   })
 
   test('G3 full flow: location → showtime → seats → Tickets Booked', async ({ page }) => {

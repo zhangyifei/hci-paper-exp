@@ -165,8 +165,15 @@ export async function completeCourierEntry(page: Page) {
     await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
   }
 
-  // Recipient: pick a saved place.
-  await tap(page, 'recipient-saved-rue-mcgill')
+  // Recipient: G1 exposes saved places immediately; G2 reveals the same task
+  // address first in its two-option dropdown after the participant types.
+  const savedRecipient = page.getByTestId('recipient-saved-rue-mcgill')
+  if (await savedRecipient.isVisible().catch(() => false)) {
+    await tap(page, 'recipient-saved-rue-mcgill')
+  } else {
+    await page.getByTestId('input-recipient-address').fill('3008')
+    await tap(page, 'recipient-suggestion-rue-mcgill')
+  }
   await expect(page.getByTestId('recipient-selected')).toBeVisible()
 
   // Default delivery option is pre-selected; continue.
@@ -186,7 +193,8 @@ export async function completeMovieEntry(page: Page) {
   // Location: only fill when the empty field is shown (auto-fill hides it).
   const locationEmpty = page.getByTestId('movie-location-empty')
   if (await locationEmpty.isVisible().catch(() => false)) {
-    await page.getByTestId('input-movie-location').fill('1000 Saint-Catherine Street West')
+    await page.getByTestId('input-movie-location').fill('1000')
+    await tap(page, 'movie-location-suggestion-saint-catherine')
   }
 
   // Pick a 7:10 PM showtime at the Forum cinema.
@@ -201,21 +209,33 @@ export async function completeMovieEntry(page: Page) {
 }
 
 /**
- * Advance from Trip Complete to Service 2. The transition cue differs by
- * condition (banner CTA vs neutral continue), then a Task 2 instruction page
- * gates entry into the second service for all conditions.
+ * Advance from Trip Complete to Service 2. G1/G3 first return to Home and use
+ * the second-service tab; G2/G4 continue directly (or through the banner CTA).
  */
 export async function advanceToService2(page: Page, viaBanner = false) {
   if (viaBanner) {
     await page.getByTestId('btn-banner-cta').click({ force: true })
   } else {
     await page.getByTestId('btn-back-to-home').click({ force: true })
+
+    const homeDestination = page.getByTestId('input-destination')
+    const service2Entry = page
+      .getByTestId('sender-address-empty')
+      .or(page.getByTestId('sender-address-autofilled'))
+      .or(page.getByTestId('movie-location-empty'))
+      .or(page.getByTestId('movie-location-autofilled'))
+
+    await expect(homeDestination.or(service2Entry)).toBeVisible({ timeout: 10000 })
+    const returnedHome = await homeDestination.isVisible()
+    if (returnedHome) {
+      await page
+        .getByTestId('tab-courier')
+        .or(page.getByTestId('tab-cinema'))
+        .click({ force: true })
+    }
   }
 
-  // Task 2 instruction page → Start Task 2
-  const startTask = page.getByTestId('btn-start-task')
-  await expect(startTask).toBeVisible({ timeout: 10000 })
-  await startTask.click({ force: true })
+  await expect(page.getByTestId('screen-task-instruction-2')).not.toBeVisible()
 
   await expect(
     page

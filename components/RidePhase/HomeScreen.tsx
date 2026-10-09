@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
+import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { enterScreen } from '@/lib/screen-tracker'
 import type { Service2Type } from '@/lib/experiment-config'
@@ -28,13 +29,14 @@ interface SavedPlace {
   icon: string
 }
 
-/** Selectable saved/recent destinations so participants can tap instead of
- *  typing the full address. The task destination is offered as a recent place. */
-const SAVED_DESTINATIONS: SavedPlace[] = [
+/** Typeahead results shown only after the participant enters three characters. */
+const ADDRESS_SUGGESTIONS: SavedPlace[] = [
   { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
-  { id: 'mcgill', name: '3008 Rue McGill', detail: 'Old Montreal', icon: '📍' },
-  { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: 'Home', icon: '🏠' },
+  { id: 'saint-catherine-east', name: '1001 Rue Sainte-Catherine Est', detail: 'Quartier des spectacles, Montreal', icon: '📍' },
+  { id: 'mcgill-100', name: '100 Rue McGill', detail: 'Old Montreal', icon: '📍' },
 ]
+
+const MIN_SUGGESTION_QUERY_LENGTH = 3
 
 export default function HomeScreen({ onNext, service2Tab, onService2TabClick, service2Kind }: HomeScreenProps) {
   const [destination, setDestination] = useState('')
@@ -42,18 +44,20 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
   const [showError, setShowError] = useState(false)
 
   useEffect(() => {
-    logger.trackEvent('ride.started', 'ride', 'ride_in_progress')
+    // Returning here after Trip Complete is navigation, not a second ride start.
+    if (!service2Tab) {
+      logger.trackEvent('ride.started', 'ride', 'ride_in_progress')
+    }
     const cleanup = enterScreen('home', 'ride')
     return cleanup
-  }, [])
+  }, [service2Tab])
 
   const destinationValid = isValidAddress(destination)
 
   const query = destination.trim().toLowerCase()
-  const suggestions = focused
-    ? SAVED_DESTINATIONS.filter(
+  const suggestions = focused && query.length >= MIN_SUGGESTION_QUERY_LENGTH
+    ? ADDRESS_SUGGESTIONS.filter(
         (p) =>
-          query.length === 0 ||
           p.name.toLowerCase().includes(query) ||
           p.detail.toLowerCase().includes(query),
       )
@@ -92,8 +96,8 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
       <div className="flex items-center space-x-3 px-4 mt-[59px] mb-6 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform duration-200">Rides</div>
         <div
-          onClick={service2Tab === 'movie' ? onService2TabClick : undefined}
-          className={`bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200 ${service2Tab === 'movie' ? 'cursor-pointer' : ''}`}
+          onClick={service2Tab ? onService2TabClick : undefined}
+          className={`bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform duration-200 ${service2Tab ? 'cursor-pointer' : ''}`}
           data-testid={service2Kind === 'courier' ? 'tab-courier' : 'tab-cinema'}
         >{service2Kind === 'courier' ? 'Courier' : 'Cinema'}</div>
       </div>
@@ -118,6 +122,10 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
                 placeholder="Where to?"
                 aria-label="Destination address"
                 aria-invalid={showError}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="destination-suggestions"
+                aria-expanded={suggestions.length > 0}
                 data-testid="input-destination"
                 className="flex-1 min-w-0 bg-transparent outline-none text-[17px] font-semibold text-black placeholder:text-black placeholder:font-semibold"
               />
@@ -128,7 +136,7 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
           </div>
 
           {suggestions.length > 0 && (
-            <ul role="listbox" aria-label="Saved and recent destinations" data-testid="destination-suggestions" className="absolute z-40 left-0 right-0 mt-2 bg-white rounded-[16px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden">
+            <ul id="destination-suggestions" role="listbox" aria-label="Address suggestions" data-testid="destination-suggestions" className="absolute z-40 left-0 right-0 mt-2 bg-white rounded-[16px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden">
               {suggestions.map((place) => (
                 <li key={place.id} role="option" aria-selected={destination === place.name}>
                   <button
@@ -141,7 +149,7 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
                     <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[15px] flex-shrink-0">{place.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-[15px] text-black flex items-center">
-                        {place.name}
+                        <AddressText>{place.name}</AddressText>
                         {place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}
                       </div>
                       <div className="text-[13px] text-gray-500 truncate">{place.detail}</div>
@@ -155,7 +163,7 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
         {showError && (
           <p data-testid="destination-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Tap a saved place or enter your destination to continue.
+            Enter your destination or choose a matching suggestion to continue.
           </p>
         )}
       </div>
@@ -206,7 +214,9 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
               <span className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[16px]">📍</span>
               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Recent</span>
             </div>
-            <div className="font-bold text-[15px] text-black leading-tight truncate">{trip.name}</div>
+            <div className="font-bold text-[15px] text-black leading-tight truncate">
+              <AddressText>{trip.name}</AddressText>
+            </div>
             <div className="text-[13px] text-gray-500 mt-0.5 truncate">{trip.detail}</div>
             <div className="mt-3 inline-flex items-center text-[12px] font-bold text-black bg-gray-100 rounded-full px-3 py-1">Rebook · {trip.fare}</div>
           </div>

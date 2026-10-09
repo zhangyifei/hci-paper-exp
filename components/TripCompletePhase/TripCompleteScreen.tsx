@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import StatusBar from '../shared/StatusBar'
+import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
 import { enterScreen } from '@/lib/screen-tracker'
@@ -9,9 +10,16 @@ interface TripCompleteScreenProps {
   config: ConditionConfig
   ridePrice: number
   onNext: () => void
+  onBackToHome: () => void
 }
 
-export default function TripCompleteScreen({ condition, config, ridePrice, onNext }: TripCompleteScreenProps) {
+export default function TripCompleteScreen({
+  condition,
+  config,
+  ridePrice,
+  onNext,
+  onBackToHome,
+}: TripCompleteScreenProps) {
   
   useEffect(() => {
     logger.trackEvent('trip_complete.viewed', 'trip_complete', 'trip_complete_confirmed')
@@ -25,8 +33,7 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
   }
 
   const handleBackToHome = () => {
-    // In this experiment flow, "Back to Home" advances to the next phase (Service 2)
-    onNext()
+    onBackToHome()
   }
 
   return (
@@ -61,7 +68,9 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
         <div className="flex justify-between items-start mb-4">
           <div>
             <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">Destination</div>
-            <div className="font-bold text-[17px] text-black">1000 Saint-Catherine Street West</div>
+            <div className="font-bold text-[17px] text-black">
+              <AddressText>1000 Saint-Catherine Street West</AddressText>
+            </div>
           </div>
           <div className="font-bold text-[17px] text-black">${ridePrice.toFixed(2)}</div>
         </div>
@@ -71,16 +80,21 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
       </div>
 
       {/* Map Placeholder */}
-      <div className="w-full h-40 bg-gray-100 rounded-[20px] mb-8 relative overflow-hidden">
+      {config.showTripCompleteMap && (
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-75"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476973422084-e0fa66ff9456?auto=format&fit=crop&w=800&q=75')" }}
-        />
-        <div className="absolute inset-0 bg-black/20 rounded-[20px]" />
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl">📍</div>
+          data-testid="trip-complete-map"
+          className="w-full h-40 bg-gray-100 rounded-[20px] mb-8 relative overflow-hidden"
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-75"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476973422084-e0fa66ff9456?auto=format&fit=crop&w=800&q=75')" }}
+          />
+          <div className="absolute inset-0 bg-black/20 rounded-[20px]" />
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl">📍</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Conditional Banner - The "Super App" Cross-sell */}
       {config.banner && (
@@ -97,7 +111,7 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
              </div>
              <div>
                <div className="font-bold text-[17px] leading-tight mb-1 text-black">
-                 {config.bannerText}
+                 {config.bannerText && <AddressText>{config.bannerText}</AddressText>}
                </div>
              </div>
            </div>
@@ -118,13 +132,15 @@ export default function TripCompleteScreen({ condition, config, ridePrice, onNex
           data-testid="btn-back-to-home"
           className="w-full h-[54px] bg-gray-100 text-black rounded-[16px] font-bold text-[17px] active:bg-gray-200 active:scale-[0.98] transition-all mb-4"
         >
-          {config.banner ? 'Done' : 'Back to Home'}
+          Back to Home
         </button>
         
-        {/* Footnote for G1/G3 */}
-        {!config.banner && (
-          <p className="text-center text-[13px] text-gray-400 font-medium px-8 leading-relaxed">
-            Tap &apos;Back to Home&apos; to return home and explore other services.
+        {config.tripCompleteHint && (
+          <p
+            data-testid="trip-complete-hint"
+            className="text-center text-[13px] text-gray-400 font-medium px-8 leading-relaxed"
+          >
+            {config.tripCompleteHint}
           </p>
         )}
       </div>

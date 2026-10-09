@@ -50,12 +50,31 @@ test.describe('Onboarding — scenario instruction', () => {
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
       'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
     )
+    await expect(
+      page.getByTestId('scenario-description').getByText('3008 Rue McGill', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'underline')
+    await expect(
+      page.getByTestId('scenario-service2-instruction').getByText('3008 Rue McGill', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'underline')
 
     // Start advances into the Task 1 instruction page, then the ride task
     await page.getByTestId('btn-scenario-start').click({ force: true })
     await expect(page.getByTestId('btn-start-task')).toBeVisible()
     await page.getByTestId('btn-start-task').click({ force: true })
     await expect(page.getByTestId('btn-start-ride')).toBeVisible()
+  })
+
+  test('G2 scenario underlines 3008 Rue McGill', async ({ page }) => {
+    await landRaw(page, 'G2')
+    await page.getByTestId('consent-acknowledge').click({ force: true })
+    await page.getByTestId('btn-consent-continue').click({ force: true })
+
+    await expect(
+      page.getByTestId('scenario-description').getByText('3008 Rue McGill', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'underline')
+    await expect(
+      page.getByTestId('scenario-service2-instruction').getByText('3008 Rue McGill', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'underline')
   })
 
   test('G4 scenario shows ride + movie instructions from config', async ({ page }) => {

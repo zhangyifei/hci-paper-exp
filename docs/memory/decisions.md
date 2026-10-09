@@ -1,5 +1,97 @@
 # Architecture Decisions Log
 
+## 2026-10-08
+
+### ADR-031: Shared visual emphasis for study task addresses
+**Decision**: Render the two contract-owned task addresses — `1000 Saint-Catherine Street West`
+and `3008 Rue McGill` — in bold, underlined text through a shared `AddressText` component.
+Apply the formatter to research instructions and non-editable prototype address labels across
+G1–G4; keep address wording in `experiment-config.json` unchanged.
+**Rationale**: Makes the information participants must notice or enter easier to scan while
+preserving identical copy and behavior across conditions. Centralizing the presentation avoids
+condition-specific markup and prevents styling drift.
+
+### ADR-032: Ride destination uses a three-character typeahead
+**Decision**: In the shared Ride task for G1–G4, focusing the empty `Where to?` field no longer
+opens a saved-place list. Suggestions appear only after at least three typed characters. The query
+`100` returns three related results with `1000 Saint-Catherine Street West` ranked first; selecting
+a result fills the controlled destination input.
+**Rationale**: Requires participants to initiate address entry while retaining a lightweight,
+realistic autocomplete affordance. Applying the behavior in the shared `HomeScreen` keeps Task 1
+identical across all experimental conditions.
+
+### ADR-033: Ride idle reminder names the required destination
+**Decision**: Set the contract-owned Task 1 guidance text for G1–G4 to
+`Task reminder: Use Rides to book your trip to 1000 Saint-Catherine Street West.` and render the
+address through the shared bold/underline `AddressText` formatter inside `GuidanceBanner`.
+**Rationale**: The idle hint now gives stalled participants the destination needed to complete the
+Ride task while remaining identical across conditions. Keeping the wording in the experiment
+contract preserves the contract gate; the shared formatter keeps address styling consistent.
+
+### ADR-034: Guidance banners dismiss on outside interaction
+**Decision**: While an idle guidance banner is visible, a pointer press anywhere outside the black
+banner dismisses it and re-arms the idle timer. Pointer presses inside the banner do not dismiss it;
+the existing close button remains available. Dismissal events record `close_button` or
+`outside_click` in their payload.
+**Rationale**: Participants can clear the reminder naturally by resuming interaction with the task,
+without losing the explicit close affordance or blocking the underlying control they selected.
+
+### ADR-035: Raise guidance banner by approximately 0.2 cm
+**Decision**: Increase the shared guidance banner bottom offset from `150px` to `158px` across all
+conditions.
+**Rationale**: Adds approximately 0.2 cm of visual separation from the primary action area while
+preserving the same placement and behavior across G1–G4.
+
+### ADR-036: Lower guidance banner by approximately 0.5 cm
+**Decision**: Supersede ADR-035 by reducing the shared guidance banner bottom offset from `158px`
+to `139px` across all conditions.
+**Rationale**: Moves the reminder approximately 0.5 cm lower to align more closely with the primary
+action area while preserving identical placement across G1–G4.
+
+### ADR-037: Contract-control the Trip Complete helper text
+**Decision**: Add nullable `tripCompleteHint` copy to each condition config. Set it to `null` for
+G1, G2, and G4, and retain `Tap 'Back to Home' to return home and explore other services.` for G3.
+The Trip Complete UI renders the helper only when this contract field is non-null.
+**Rationale**: Removes the helper from G1 as requested without hardcoding condition checks in the
+component, while preserving the existing G3 experience through the contract gate.
+
+### ADR-038: Position guidance banner 0.5 cm above the bottom edge
+**Decision**: Supersede ADR-036 and set the shared guidance banner offset to the explicit CSS value
+`bottom: 0.5cm` for G1–G4.
+**Rationale**: Defines the requested position directly from the bottom edge instead of applying a
+relative pixel adjustment, ensuring one shared placement rule across all conditions.
+
+### ADR-039: Position guidance banner 0.2 cm above the bottom edge
+**Decision**: Supersede ADR-038 and set the shared guidance banner offset to `bottom: 0.2cm` for
+G1–G4.
+**Rationale**: Applies the revised bottom-relative position consistently across every condition.
+
+### ADR-040: Position guidance banner 0.8 cm above the bottom edge
+**Decision**: Supersede ADR-039 and set the shared guidance banner offset to `bottom: 0.8cm` for
+G1–G4.
+**Rationale**: Applies the revised bottom-relative position consistently across every condition.
+
+### ADR-041: Keep 3008 Rue McGill bold without an underline
+**Decision**: Update the shared `AddressText` formatter so `3008 Rue McGill` remains bold but is not
+underlined wherever it appears across G1–G4. Keep the existing bold-and-underlined treatment for
+`1000 Saint-Catherine Street West`.
+**Rationale**: Applies the requested address-specific visual treatment consistently without adding
+condition-specific markup.
+
+### ADR-042: Use “Back to Home” on every Trip Complete action
+**Decision**: Replace the banner-dependent `Done` label with `Back to Home` on the Trip Complete
+action for G2 and G4, making the label identical across G1–G4.
+**Rationale**: Clarifies the action consistently without adding hardcoded condition checks or
+changing its existing navigation behavior.
+
+### ADR-043: Remove the Task 2 instruction page
+**Decision**: Supersede the Task 2 portion of ADR-025. After Trip Complete, both the banner CTA and
+the `Back to Home` action now enter the configured Courier or Cinema screen directly for G1–G4.
+Preserve `task.started` instrumentation at the direct transition, and route Service 2 Back actions
+to Trip Complete instead of the removed instruction screen.
+**Rationale**: Removes the redundant second-task instruction step while retaining lifecycle data,
+valid reverse navigation, and identical transition structure across conditions.
+
 ## 2026-08-09
 
 ### ADR-009: Dedicated Package Details step in the Courier flow
@@ -230,3 +322,62 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-06-24
 **Rationale**: Strict required-text validation with no affordance blocked participants (e.g. typing "1386" then being unable to continue). Saved/recent places are a normal feature of any ride/delivery app and mirror the existing Courier recipient saved-address picker, so they are condition-neutral and do not alter the auto-populate manipulation (treatment still pre-fills the exact trip address + nudges via banner). Test ids: `destination-suggestions` / `destination-suggestion-{id}`, `sender-saved-places` / `sender-saved-{id}`, `delivery-saved-places` / `delivery-saved-{id}`.
 
+### ADR-031: Scenario-Specific Secondary Address Underline
+**Decision**: Add `underlineSecondaryAddressInScenario` to the experiment configuration contract, enabled for courier conditions G1/G2 and disabled for cinema conditions G3/G4. The shared address formatter accepts this contextual setting only on the scenario screen.
+**Date**: 2026-10-08
+**Rationale**: The G1/G2 scenario must underline `3008 Rue McGill`, while the same address in the shared Recent Trips UI must remain bold without an underline. Keeping the distinction in condition config avoids hardcoded group checks in UI components.
+
+### ADR-032: Condition-Controlled Trip Complete Reminder and Map
+**Decision**: Add `tripCompleteGuidanceText` and `showTripCompleteMap` to the experiment configuration contract. G2/G3 override the idle reminder on Trip Complete with the Back to Home instruction, while only G3 hides the Trip Complete map image.
+**Date**: 2026-10-08
+**Rationale**: These are condition-specific presentation differences and therefore must remain contract-driven rather than being implemented as group checks inside shared UI components.
+
+### ADR-033: Remove Back-to-Home Instruction From G3
+**Decision**: Set both `tripCompleteHint` and `tripCompleteGuidanceText` to `null` for G3. Keep the G3 Trip Complete map hidden and retain the Back-to-Home reminder override in G2.
+**Date**: 2026-10-08
+**Rationale**: Removes the requested sentence everywhere it could appear on G3 without changing the G2 treatment or the separate G3 map setting. This supersedes ADR-032 only for G3 reminder copy.
+
+### ADR-034: Restore the G3 Trip Complete Map
+**Decision**: Set `showTripCompleteMap` back to `true` for G3 while leaving its Trip Complete helper and guidance override unset.
+**Date**: 2026-10-08
+**Rationale**: Restores the requested map image on the last screen of Service 1 without reintroducing the removed Back-to-Home sentence. This supersedes the G3 map portion of ADR-032 and ADR-033.
+
+### ADR-035: Pair-Specific Trip Complete Task Reminders
+**Decision**: Configure the Service 1 Trip Complete reminder as `Tap 'Back to Home' to return home and explore other services.` for G1/G3, and `Task reminder: Send a package to 3008 Rue McGill.` for G2/G4.
+**Date**: 2026-10-08
+**Rationale**: The requested reminders differ by experimental group, so the copy remains expressed through `tripCompleteGuidanceText` in the condition contract rather than through UI-level group checks. This supersedes the reminder mappings in ADR-032 and ADR-033.
+
+### ADR-036: G1/G3 Return Home Before Service 2
+**Decision**: Add `tripCompleteBackDestination` to the condition contract. Set G1/G3 to `home` and G2/G4 to `service2`. After G1/G3 return home, their configured Courier/Cinema tab becomes actionable and is the entry point to Task 2.
+**Date**: 2026-10-08
+**Rationale**: The no-banner conditions must return to the initial app Home screen instead of opening Service 2 directly, while the other groups retain their existing direct transition. Contract-driven routing preserves the rule against UI-level condition checks.
+
+### ADR-037: G4 Trip Complete Reminder Uses Cinema Copy
+**Decision**: Set G4’s `tripCompleteGuidanceText` to `Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.`
+**Date**: 2026-10-08
+**Rationale**: The final Service 1 reminder should concisely direct G4 participants toward their configured Cinema task rather than package delivery. This supersedes ADR-035 only for G4 reminder copy.
+
+### ADR-038: Returned Home Uses Task 2 Guidance
+**Decision**: When the experiment returns G1/G3 to the Home screen after Trip Complete, treat that Home state as Task 2 for guidance purposes and display the condition’s existing `task2.guidanceText`.
+**Date**: 2026-10-08
+**Rationale**: The ride is already complete at this point, so repeating Task 1 guidance is misleading. Reusing contract-owned Task 2 copy gives G1 the Courier reminder and G3 the Cinema reminder without hardcoded group text.
+
+### ADR-039: G2/G3 Typed Service 2 Address Dropdowns
+**Decision**: Add `service2EntryAddressTypeahead` and `service2EntryGuidanceText` to the condition contract. Enable two-option, typing-triggered address dropdowns for G2’s recipient and G3’s cinema location, with each condition’s task address first. Use page-specific guidance text on those Service 2 entry screens.
+**Date**: 2026-10-08
+**Rationale**: G2/G3 participants must actively type while still receiving a short, ordered Saved & Recent list that makes the required address discoverable. Contract fields keep this interaction and reminder copy condition-controlled, while preserving G1/G4 behavior.
+
+### ADR-040: Gate G3 Nearby Cinemas Behind the Task Address
+**Decision**: Add `service2ResultsRequireAddress` to the condition contract. Set G3 to require `1000 Saint-Catherine Street West`, change its list UI to `distance-filtered`, and render no cinema heading or cards until that exact address is entered or selected.
+**Date**: 2026-10-08
+**Rationale**: G3 should not expose Popular cinemas before the participant provides the task location. After the required address is selected, the interface should reveal the same nearby, distance-based result format while G4 remains immediately populated.
+
+### ADR-041: Reminders Must Describe the Current Screen Action
+**Decision**: Add contract fields for ride selection, ride waiting, Service 2 details, and Service 2 completion reminders; populate Service 2 entry reminders for every group; and use Task 2 tab guidance on returned Home. Select reminder copy by the current screen and key the banner by both task phase and screen.
+**Date**: 2026-10-08
+**Rationale**: A task-level generic reminder can become stale as participants advance through a multi-screen flow. Screen-specific contract copy ensures each banner describes the immediate action—entering an address, choosing a ride, selecting package details or seats, and continuing after completion—while remounting the banner prevents prior-page state from carrying forward.
+
+### ADR-042: Remove Explore More From Service 2 Completion
+**Decision**: Remove the Explore More grid from the Courier and Cinema completion components. G2/G4 no longer display this section; G1/G3 were already unaffected.
+**Date**: 2026-10-08
+**Rationale**: The completion screen should focus on the completed task details and the Done action without introducing additional service choices.

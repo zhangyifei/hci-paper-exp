@@ -35,7 +35,6 @@ type Screen =
   | 'map'
   | 'ride_almost_there'
   | 'trip_complete'
-  | 'task2_instruction'
   | 'service2_entry'
   | 'service2_detail'
   | 'service2_complete'
@@ -55,6 +54,7 @@ const TASK2_SCREENS: Screen[] = [
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
+  const [returnedHomeAfterRide, setReturnedHomeAfterRide] = useState(false)
   // Prices the participant selected, carried to the completion screens (§4).
   const [ridePrice, setRidePrice] = useState<number>(12.59)
   const [service2Fee, setService2Fee] = useState<number>(config.service2Options[0]?.price ?? 0)
@@ -132,7 +132,22 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     setScreen('ride_almost_there')
   }
   const goToTripComplete = () => setScreen('trip_complete')
-  const goToTask2Instruction = () => setScreen('task2_instruction')
+  const goToService2Entry = () => {
+    logger.trackEvent('task.started', 'task', 'task_active', {
+      payload: { taskNumber: 2, totalTasks: 2, service: config.task2.service },
+    })
+    setScreen('service2_entry')
+  }
+
+  const handleTripCompleteBack = () => {
+    if (config.tripCompleteBackDestination === 'home') {
+      setReturnedHomeAfterRide(true)
+      setScreen('home')
+      return
+    }
+
+    goToService2Entry()
+  }
 
   const handleService2EntryNext = (eventId?: string, fee?: number) => {
     if (eventId) setService2EntryEventId(eventId)
@@ -152,13 +167,30 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   // ── Render ────────────────────────────────────────────────────────────
   const isTask2 = TASK2_SCREENS.includes(screen)
   const isSuperApp = TASK1_SCREENS.includes(screen) || isTask2
-  const activeTask = isTask2 ? config.task2 : config.task1
+  const isPostRideHome = screen === 'home' && returnedHomeAfterRide
+  const activeTask = isTask2 || isPostRideHome ? config.task2 : config.task1
+  const guidanceByScreen: Partial<Record<Screen, string | null>> = {
+    map: config.rideSelectionGuidanceText,
+    ride_almost_there: config.rideWaitingGuidanceText,
+    trip_complete: config.tripCompleteGuidanceText,
+    service2_entry: config.service2EntryGuidanceText,
+    service2_detail: config.service2DetailGuidanceText,
+    service2_complete: config.service2CompleteGuidanceText,
+  }
+  const guidanceText = guidanceByScreen[screen] ?? activeTask.guidanceText
 
   if (isSuperApp) {
     let inner: React.ReactNode = null
     switch (screen) {
       case 'home':
-        inner = <HomeScreen onNext={goToMap} service2Kind={config.service2} />
+        inner = (
+          <HomeScreen
+            onNext={goToMap}
+            service2Kind={config.service2}
+            service2Tab={returnedHomeAfterRide ? config.service2 : undefined}
+            onService2TabClick={returnedHomeAfterRide ? goToService2Entry : undefined}
+          />
+        )
         break
       case 'map':
         inner = <MapScreen onNext={goToRideAlmostThere} onBack={() => goBack('map', 'home')} />
@@ -168,7 +200,13 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
         break
       case 'trip_complete':
         inner = (
-          <TripCompleteScreen condition={condition} config={config} ridePrice={ridePrice} onNext={goToTask2Instruction} />
+          <TripCompleteScreen
+            condition={condition}
+            config={config}
+            ridePrice={ridePrice}
+            onNext={goToService2Entry}
+            onBackToHome={handleTripCompleteBack}
+          />
         )
         break
       case 'service2_entry':
@@ -177,13 +215,13 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
             <CourierEntryScreen
               config={config}
               onNext={handleService2EntryNext}
-              onBack={() => goBack('service2_entry', 'task2_instruction')}
+              onBack={() => goBack('service2_entry', 'trip_complete')}
             />
           ) : (
             <MovieEntryScreen
               config={config}
               onNext={handleService2EntryNext}
-              onBack={() => goBack('service2_entry', 'task2_instruction')}
+              onBack={() => goBack('service2_entry', 'trip_complete')}
             />
           )
         break
@@ -207,20 +245,20 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       case 'service2_complete':
         inner =
           config.service2 === 'courier' ? (
-            <CourierCompleteScreen config={config} courierFee={service2Fee} onNext={handleTaskCompletion} />
+            <CourierCompleteScreen courierFee={service2Fee} onNext={handleTaskCompletion} />
           ) : (
-            <MovieCompleteScreen config={config} onNext={handleTaskCompletion} />
+            <MovieCompleteScreen onNext={handleTaskCompletion} />
           )
         break
     }
 
-    const taskPhase = isTask2 ? 2 : 1
+    const taskPhase = isTask2 || isPostRideHome ? 2 : 1
     return (
       <PhoneFrame
         overlay={
           <GuidanceBanner
-            key={taskPhase}
-            text={activeTask.guidanceText}
+            key={`${taskPhase}-${screen}`}
+            text={guidanceText}
             thresholdMs={config.guidanceThresholdMs}
           />
         }
@@ -243,15 +281,6 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
           taskNumber={1}
           totalTasks={2}
           onStart={() => setScreen('home')}
-        />
-      )
-    case 'task2_instruction':
-      return (
-        <TaskInstructionScreen
-          task={config.task2}
-          taskNumber={2}
-          totalTasks={2}
-          onStart={() => setScreen('service2_entry')}
         />
       )
     case 'survey':

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import BackButton from '../shared/BackButton'
+import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
@@ -24,6 +25,7 @@ interface SavedPlace {
 /** Selectable saved/recent locations to find cinemas near (tap instead of typing). */
 const SAVED_LOCATIONS: SavedPlace[] = [
   { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'peel', name: '750 Rue Peel', detail: 'Downtown, Montreal', icon: '📍' },
 ]
 
 interface Cinema {
@@ -63,11 +65,19 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   const [location, setLocation] = useState<string>(
     config.autoPopulate && config.addressLabel ? config.addressLabel : '',
   )
+  const [locationFocused, setLocationFocused] = useState(false)
+  const [locationSuggestionSelected, setLocationSuggestionSelected] = useState(false)
   const [showAddressError, setShowAddressError] = useState(false)
   const [selectedCinema, setSelectedCinema] = useState<string | null>(config.autoPopulate ? 'forum' : null)
   const [selectedShowtime, setSelectedShowtime] = useState<string | null>(null)
 
   const cinemas = config.autoPopulate || config.listUI === 'distance-filtered' ? NEARBY_CINEMAS : CITYWIDE_CINEMAS
+  const normalizedLocation = location.trim().toLocaleLowerCase()
+  const normalizedRequiredAddress = config.service2ResultsRequireAddress
+    ?.trim()
+    .toLocaleLowerCase()
+  const showCinemaResults =
+    normalizedRequiredAddress === undefined || normalizedLocation === normalizedRequiredAddress
 
   useEffect(() => {
     markService2Entry()
@@ -81,6 +91,9 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
 
   const handleLocationChange = (value: string) => {
     setLocation(value)
+    setLocationSuggestionSelected(false)
+    setSelectedCinema(null)
+    setSelectedShowtime(null)
     if (showAddressError && isValidAddress(value)) setShowAddressError(false)
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active', {
       payload: { field: 'location' },
@@ -89,6 +102,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
 
   const handlePickLocationSaved = (place: SavedPlace) => {
     setLocation(place.name)
+    setLocationSuggestionSelected(true)
     setShowAddressError(false)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { field: 'location', source: 'saved', placeId: place.id },
@@ -96,7 +110,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   }
 
   const handleSelectCinema = (id: string) => {
-    if (!addressValid) {
+    if (!addressValid || !showCinemaResults) {
       setShowAddressError(true)
       return
     }
@@ -116,7 +130,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   }
 
   const handleContinue = () => {
-    if (!addressValid) {
+    if (!addressValid || !showCinemaResults) {
       setShowAddressError(true)
       return
     }
@@ -127,7 +141,12 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
     onNext(service2EntryEventId, config.service2Options[0]?.price ?? 0)
   }
 
-  const canContinue = addressValid && !!selectedCinema && !!selectedShowtime
+  const canContinue = addressValid && showCinemaResults && !!selectedCinema && !!selectedShowtime
+  const showLocationTypeahead =
+    config.service2EntryAddressTypeahead &&
+    locationFocused &&
+    !locationSuggestionSelected &&
+    location.trim().length > 0
 
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-movie-entry">
@@ -160,7 +179,9 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
             <div className="bg-white rounded-[16px] p-4 border border-green-500 shadow-[0_4px_12px_rgba(22,163,74,0.08)] relative" data-testid="movie-location-autofilled">
               <div className="flex items-center mb-1">
                 <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold mr-2 border border-green-200">SUGGESTED</span>
-                <div className="font-bold text-[15px] text-black">{config.addressLabel || '1000 Saint-Catherine Street West'}</div>
+                <div className="font-bold text-[15px] text-black">
+                  <AddressText>{config.addressLabel || '1000 Saint-Catherine Street West'}</AddressText>
+                </div>
               </div>
               <div className="text-[13px] text-green-600 font-medium">{config.addressSublabel || 'Downtown, Montreal'}</div>
             </div>
@@ -176,7 +197,11 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
                   autoComplete="off"
                   value={location}
                   onChange={(e) => handleLocationChange(e.target.value)}
-                  onBlur={() => setShowAddressError(!isValidAddress(location) && location.length > 0)}
+                  onFocus={() => setLocationFocused(true)}
+                  onBlur={() => {
+                    setLocationFocused(false)
+                    setShowAddressError(!isValidAddress(location) && location.length > 0)
+                  }}
                   placeholder="Enter a location"
                   aria-label="Cinema search location"
                   aria-invalid={showAddressError}
@@ -184,18 +209,60 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
                   className="flex-1 bg-transparent outline-none text-[15px] font-medium text-black placeholder:text-gray-500"
                 />
               </div>
+              {showLocationTypeahead && (
+                <div
+                  className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden"
+                  data-testid="movie-location-suggestions"
+                >
+                  <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    Saved &amp; recent
+                  </p>
+                  {SAVED_LOCATIONS.map((place) => (
+                    <button
+                      key={place.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handlePickLocationSaved(place)}
+                      data-testid={`movie-location-suggestion-${place.id}`}
+                      className="w-full flex items-center text-left px-4 py-3 active:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">
+                        {place.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[15px] flex items-center text-black">
+                          <AddressText>{place.name}</AddressText>
+                          {place.tag && (
+                            <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                              {place.tag}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[13px] text-gray-500 truncate">
+                          <AddressText>{place.detail}</AddressText>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {showAddressError && (
                 <p data-testid="movie-location-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Enter a location before choosing a cinema.</p>
               )}
-              {location.trim().length === 0 && (
+              {!config.service2EntryAddressTypeahead && location.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="movie-saved-places">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
                   {SAVED_LOCATIONS.map((place) => (
                     <button key={place.id} type="button" onClick={() => handlePickLocationSaved(place)} data-testid={`movie-saved-${place.id}`} className="w-full flex items-center text-left active:opacity-60 transition-opacity py-2">
                       <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{place.icon}</div>
                       <div className="flex-1 border-b border-gray-100 pb-3">
-                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">{place.name}{place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}</div>
-                        <div className="text-[13px] text-gray-500">{place.detail}</div>
+                        <div className="font-bold text-[15px] flex items-center mb-0.5 text-black">
+                          <AddressText>{place.name}</AddressText>
+                          {place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}
+                        </div>
+                        <div className="text-[13px] text-gray-500">
+                          <AddressText>{place.detail}</AddressText>
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -206,48 +273,50 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
         </div>
 
         {/* Cinema list */}
-        <div className="mb-2">
-          <h2 className="text-[13px] font-bold text-black tracking-wide mb-3">
-            {config.autoPopulate || config.listUI === 'distance-filtered' ? 'Cinemas near you' : 'Popular cinemas'}
-          </h2>
-          <div className="space-y-3" data-testid="cinema-list">
-            {cinemas.map((cinema) => {
-              const on = selectedCinema === cinema.id
-              return (
-                <div
-                  key={cinema.id}
-                  data-testid={`cinema-${cinema.id}`}
-                  className={`rounded-[16px] border-2 p-4 transition-all ${on ? 'border-black bg-gray-50 shadow-sm' : 'border-gray-100 bg-white'}`}
-                >
-                  <button type="button" onClick={() => handleSelectCinema(cinema.id)} className="w-full flex items-center justify-between text-left mb-3">
-                    <div>
-                      <div className="font-bold text-[15px] text-black">{cinema.name}</div>
-                      <div className="text-[13px] text-gray-500">{cinema.area}{cinema.distance && ` · ${cinema.distance}`} · ⭐ {cinema.rating}</div>
+        {showCinemaResults && (
+          <div className="mb-2">
+            <h2 className="text-[13px] font-bold text-black tracking-wide mb-3">
+              {config.autoPopulate || config.listUI === 'distance-filtered' ? 'Cinemas near you' : 'Popular cinemas'}
+            </h2>
+            <div className="space-y-3" data-testid="cinema-list">
+              {cinemas.map((cinema) => {
+                const on = selectedCinema === cinema.id
+                return (
+                  <div
+                    key={cinema.id}
+                    data-testid={`cinema-${cinema.id}`}
+                    className={`rounded-[16px] border-2 p-4 transition-all ${on ? 'border-black bg-gray-50 shadow-sm' : 'border-gray-100 bg-white'}`}
+                  >
+                    <button type="button" onClick={() => handleSelectCinema(cinema.id)} className="w-full flex items-center justify-between text-left mb-3">
+                      <div>
+                        <div className="font-bold text-[15px] text-black">{cinema.name}</div>
+                        <div className="text-[13px] text-gray-500">{cinema.area}{cinema.distance && ` · ${cinema.distance}`} · ⭐ {cinema.rating}</div>
+                      </div>
+                      {cinema.distance && <span className="text-[12px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex-shrink-0">{cinema.distance}</span>}
+                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      {cinema.showtimes.map((time) => {
+                        const chosen = on && selectedShowtime === time
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => handleSelectShowtime(cinema.id, time)}
+                            data-testid={`showtime-${cinema.id}-${time.replace(/[^0-9]/g, '')}`}
+                            aria-pressed={chosen}
+                            className={`px-4 py-2 rounded-[10px] text-[13px] font-bold border transition-all active:scale-95 ${chosen ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'}`}
+                          >
+                            {time}
+                          </button>
+                        )
+                      })}
                     </div>
-                    {cinema.distance && <span className="text-[12px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex-shrink-0">{cinema.distance}</span>}
-                  </button>
-                  <div className="flex flex-wrap gap-2">
-                    {cinema.showtimes.map((time) => {
-                      const chosen = on && selectedShowtime === time
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          onClick={() => handleSelectShowtime(cinema.id, time)}
-                          data-testid={`showtime-${cinema.id}-${time.replace(/[^0-9]/g, '')}`}
-                          aria-pressed={chosen}
-                          className={`px-4 py-2 rounded-[10px] text-[13px] font-bold border transition-all active:scale-95 ${chosen ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'}`}
-                        >
-                          {time}
-                        </button>
-                      )
-                    })}
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="mt-auto px-4 pb-3">
