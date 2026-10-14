@@ -24,7 +24,7 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
     await expect(page.getByText(/Back to Home.*return home.*explore other services/i)).toHaveCount(0)
     await expect(page.getByTestId('trip-complete-map')).toBeVisible()
     await expect(page.getByTestId('guidance-banner')).toContainText(
-      "Tap 'Back to Home' to return home and explore other services.",
+      "Task reminder: Tap 'Back to Home' to return home and explore other services.",
       { timeout: 12_000 },
     )
 

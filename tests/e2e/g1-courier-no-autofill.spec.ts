@@ -37,7 +37,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await assertNoBanner(page)
     await expect(page.getByTestId('trip-complete-hint')).not.toBeVisible()
     await expect(page.getByTestId('guidance-banner')).toContainText(
-      "Tap 'Back to Home' to return home and explore other services.",
+      "Task reminder: Tap 'Back to Home' to return home and explore other services.",
       { timeout: 12_000 },
     )
 

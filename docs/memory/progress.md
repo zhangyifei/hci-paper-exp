@@ -700,3 +700,17 @@ Design mockups analyzed. Key findings per condition:
 - `npm run type-check` → ✅ clean.
 - G2/G4 full-flow Playwright checks → ✅ 2 passed.
 - `git diff --check` → ✅ clean.
+
+## 2026-10-09 — Corrected G2/G4 Back to Home transition
+
+- Updated the condition contract so G2 and G4 return to the Rides home screen from Trip Complete.
+- Preserved direct Service 2 navigation through the G2/G4 cross-service banner CTA.
+- Updated E2E expectations for the home screen, relevant Service 2 tab, and Task 2 reminder.
+
+## 2026-10-13 — Improved all local guidance messages
+
+- Standardized the Trip Complete reminder prefix across G1–G4.
+- Made G2/G4 Trip Complete reminders identify the exact banner CTA.
+- Corrected G4 from one ticket to two tickets.
+- Standardized G2/G4 home reminders to “Tap Courier/Cinema.”
+- Updated all affected E2E message assertions.

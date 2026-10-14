@@ -16,7 +16,7 @@
     "bannerText": null,
     "bannerCTA": null,
     "tripCompleteHint": null,
-    "tripCompleteGuidanceText": "Tap 'Back to Home' to return home and explore other services.",
+    "tripCompleteGuidanceText": "Task reminder: Tap 'Back to Home' to return home and explore other services.",
     "tripCompleteBackDestination": "home",
     "showTripCompleteMap": true,
     "underlineSecondaryAddressInScenario": true,
@@ -66,8 +66,8 @@
     "bannerText": "Need to send something? Send a package from 1000 Saint-Catherine Street West",
     "bannerCTA": "Send Package",
     "tripCompleteHint": null,
-    "tripCompleteGuidanceText": "Task reminder: Send a package to 3008 Rue McGill.",
-    "tripCompleteBackDestination": "service2",
+    "tripCompleteGuidanceText": "Task reminder: Tap 'Send Package' to send a package to 3008 Rue McGill.",
+    "tripCompleteBackDestination": "home",
     "showTripCompleteMap": true,
     "underlineSecondaryAddressInScenario": true,
     "service2Emoji": "\uD83D\uDCE6",
@@ -96,7 +96,7 @@
       "goal": "Send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill using the Courier service.",
       "infoToEnter": "The sender and recipient addresses",
       "indicator": "Task 2 of 2: Send a package",
-      "guidanceText": "Task reminder: Use Courier to send your package."
+      "guidanceText": "Task reminder: Tap Courier to send your package."
     }
   },
   "G3": {
@@ -116,7 +116,7 @@
     "bannerText": null,
     "bannerCTA": null,
     "tripCompleteHint": null,
-    "tripCompleteGuidanceText": "Tap 'Back to Home' to return home and explore other services.",
+    "tripCompleteGuidanceText": "Task reminder: Tap 'Back to Home' to return home and explore other services.",
     "tripCompleteBackDestination": "home",
     "showTripCompleteMap": true,
     "underlineSecondaryAddressInScenario": false,
@@ -165,8 +165,8 @@
     "bannerText": "Catch a movie nearby? Cinemas near 1000 Saint-Catherine Street West are available",
     "bannerCTA": "Book Tickets",
     "tripCompleteHint": null,
-    "tripCompleteGuidanceText": "Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.",
-    "tripCompleteBackDestination": "service2",
+    "tripCompleteGuidanceText": "Task reminder: Tap 'Book Tickets' to book two movie tickets near 1000 Saint-Catherine Street West.",
+    "tripCompleteBackDestination": "home",
     "showTripCompleteMap": true,
     "underlineSecondaryAddressInScenario": false,
     "service2Emoji": "\uD83C\uDFAC",
@@ -194,7 +194,7 @@
       "goal": "Book two movie tickets at a cinema near 1000 Saint-Catherine Street West using the Cinema service.",
       "infoToEnter": "The cinema location and showtime",
       "indicator": "Task 2 of 2: Book movie tickets",
-      "guidanceText": "Task reminder: Use Cinema to book your movie tickets."
+      "guidanceText": "Task reminder: Tap Cinema to book your movie tickets."
     }
   }
 }

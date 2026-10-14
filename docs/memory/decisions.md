@@ -381,3 +381,16 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Decision**: Remove the Explore More grid from the Courier and Cinema completion components. G2/G4 no longer display this section; G1/G3 were already unaffected.
 **Date**: 2026-10-08
 **Rationale**: The completion screen should focus on the completed task details and the Done action without introducing additional service choices.
+
+## 2026-10-09 — “Back to Home” returns home in every condition
+
+- G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.
+- Their cross-service banner CTA still opens Service 2 directly.
+- After choosing “Back to Home,” the home screen switches to Task 2 guidance and exposes the relevant Courier or Cinema tab.
+
+## 2026-10-13 — Guidance messages use consistent, action-specific language
+
+- Every Trip Complete guidance message now starts with “Task reminder:”.
+- G2 and G4 explicitly name the banner CTA participants should tap.
+- G4 consistently states that the cinema task requires two tickets.
+- G2 and G4 post-ride home guidance uses “Tap” to match the visible Courier or Cinema tab action.

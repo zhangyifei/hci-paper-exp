@@ -26,13 +26,19 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByTestId('btn-back-to-home')).toHaveText('Back to Home')
     await expect(page.getByTestId('trip-complete-map')).toBeVisible()
     await expect(page.getByTestId('guidance-banner')).toContainText(
-      'Task reminder: Send a package to 3008 Rue McGill.',
+      "Task reminder: Tap 'Send Package' to send a package to 3008 Rue McGill.",
       { timeout: 12_000 },
     )
 
     await page.getByTestId('guidance-banner-dismiss').click()
     await page.getByTestId('btn-back-to-home').click({ force: true })
-    await expect(page.getByTestId('screen-courier-entry')).toBeVisible()
+    await expect(page.getByTestId('input-destination')).toBeVisible()
+    await expect(page.getByTestId('tab-courier')).toBeVisible()
+    await expect(page.getByTestId('screen-courier-entry')).toHaveCount(0)
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Tap Courier to send your package.',
+      { timeout: 12_000 },
+    )
   })
 
   test('G2 banner CTA navigates to Courier Entry', async ({ page }) => {

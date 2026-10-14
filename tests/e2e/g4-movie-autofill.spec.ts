@@ -25,13 +25,19 @@ test.describe('G4 — Ride + Movie, Auto-fill', () => {
     await expect(page.getByText(/Cinemas near 1000 Saint-Catherine Street West/i)).toBeVisible()
     await expect(page.getByTestId('btn-back-to-home')).toHaveText('Back to Home')
     await expect(page.getByTestId('guidance-banner')).toContainText(
-      'Task reminder: Book a ticket at a cinema near 1000 Saint-Catherine Street West.',
+      "Task reminder: Tap 'Book Tickets' to book two movie tickets near 1000 Saint-Catherine Street West.",
       { timeout: 12_000 },
     )
 
     await page.getByTestId('guidance-banner-dismiss').click()
     await page.getByTestId('btn-back-to-home').click({ force: true })
-    await expect(page.getByTestId('screen-movie-entry')).toBeVisible()
+    await expect(page.getByTestId('input-destination')).toBeVisible()
+    await expect(page.getByTestId('tab-cinema')).toBeVisible()
+    await expect(page.getByTestId('screen-movie-entry')).toHaveCount(0)
+    await expect(page.getByTestId('guidance-banner')).toContainText(
+      'Task reminder: Tap Cinema to book your movie tickets.',
+      { timeout: 12_000 },
+    )
   })
 
   test('G4 banner CTA navigates to Movie Entry', async ({ page }) => {

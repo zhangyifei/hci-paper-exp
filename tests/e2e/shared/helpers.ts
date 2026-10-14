@@ -209,8 +209,9 @@ export async function completeMovieEntry(page: Page) {
 }
 
 /**
- * Advance from Trip Complete to Service 2. G1/G3 first return to Home and use
- * the second-service tab; G2/G4 continue directly (or through the banner CTA).
+ * Advance from Trip Complete to Service 2. The Back to Home path returns every
+ * condition to Home and uses the second-service tab; G2/G4 can alternatively
+ * continue directly through the banner CTA.
  */
 export async function advanceToService2(page: Page, viaBanner = false) {
   if (viaBanner) {
