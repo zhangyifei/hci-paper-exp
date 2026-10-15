@@ -20,13 +20,14 @@ test('G1 reminders follow courier entry, details, and completion actions', async
   await advanceToService2(page, false)
 
   await expect(page.getByTestId('guidance-banner')).toContainText(
-    'Task reminder: Enter the sender and recipient addresses, then choose a delivery option.',
+    'Task reminder: Sender: 1000 Saint-Catherine Street West. Recipient: 3008 Rue McGill. Then choose a delivery option.',
     { timeout: 12_000 },
   )
   await page.getByTestId('guidance-banner-dismiss').click()
 
   await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
-  await page.getByTestId('recipient-saved-rue-mcgill').click({ force: true })
+  await page.getByTestId('input-recipient-address').fill('300')
+  await page.getByTestId('recipient-suggestion-rue-mcgill').click({ force: true })
   await page.getByTestId('btn-confirm-courier').click({ force: true })
 
   await expect(page.getByTestId('guidance-banner')).toContainText(

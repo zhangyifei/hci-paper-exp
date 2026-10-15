@@ -55,20 +55,27 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
     await expect(page.getByTestId('cinema-list')).toHaveCount(0)
   })
 
-  test('G3 location typing shows two saved and recent options with the task address first', async ({ page }) => {
+  test('G3 location typing shows three related options after three characters', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
     await expect(page.getByTestId('movie-saved-places')).toHaveCount(0)
-    await page.getByTestId('input-movie-location').fill('1000')
+    const locationInput = page.getByTestId('input-movie-location')
+    await locationInput.fill('10')
+    await expect(page.getByTestId('movie-location-suggestions')).toHaveCount(0)
+
+    await locationInput.fill('100')
 
     const suggestions = page.getByTestId('movie-location-suggestions')
     await expect(suggestions).toBeVisible()
-    await expect(suggestions.getByRole('button')).toHaveCount(2)
+    await expect(suggestions.getByRole('button')).toHaveCount(3)
     await expect(suggestions.getByRole('button').first()).toContainText(
       '1000 Saint-Catherine Street West',
     )
-    await expect(suggestions).toContainText('Saved & recent')
+    await expect(suggestions.getByRole('button').first()).toContainText('RECENT')
+    await expect(suggestions).toContainText('1001 Rue Sainte-Catherine Est')
+    await expect(suggestions).toContainText('100 Rue McGill')
+    await expect(suggestions).not.toContainText('Saved & recent')
 
     await page.getByTestId('movie-location-suggestion-saint-catherine').click()
     await expect(page.getByTestId('input-movie-location')).toHaveValue('1000 Saint-Catherine Street West')

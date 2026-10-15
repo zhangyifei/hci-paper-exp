@@ -714,3 +714,71 @@ Design mockups analyzed. Key findings per condition:
 - Corrected G4 from one ticket to two tickets.
 - Standardized G2/G4 home reminders to “Tap Courier/Cinema.”
 - Updated all affected E2E message assertions.
+
+## 2026-10-14 — Moved all task reminders to the top
+
+- Changed the shared guidance banner from `bottom: 0.8cm` to `top: 0.8cm` for G1–G4.
+- Preserved the existing idle timer, outside-click dismissal, close button, and reminder text.
+
+## 2026-10-14 — Removed the Task 1 instruction page
+
+- Removed `task1_instruction` from the shared experiment state flow for G1–G4.
+- Scenario Continue now opens the Rides home screen directly and records Task 1 start.
+- Updated shared and focused E2E setup paths to remove the extra Start Task 1 action.
+
+## 2026-10-14 — Redesigned the scenario page
+
+- Replaced repeated-address introductory paragraphs with natural Courier- and Cinema-specific narratives across G1–G4.
+- Kept task addresses in the numbered instruction cards.
+- Increased task-label text from 12px gray to 16px black.
+- Updated onboarding E2E assertions for the new narrative structure.
+
+## 2026-10-14 — Removed scenario address underlines
+
+- Added a shared `AddressText` option that preserves bold emphasis while disabling underlines.
+- Applied the no-underline treatment to the scenario narrative and both numbered task cards.
+- Removed `underlineSecondaryAddressInScenario` from the G1–G4 contract and config type.
+- Updated onboarding E2E styling assertions.
+
+## 2026-10-14 — Added G1 Courier address typeaheads
+
+- Enabled sender and recipient typeahead behavior for G1 through the condition contract.
+- Hidden G1’s initial Sender and Recipient saved/recent lists.
+- Added three related results for each field with the task address first and marked RECENT.
+- Kept G2 at two recipient suggestions and left G3/G4 behavior unchanged.
+- Added focused G1 E2E coverage for the three-option dropdowns.
+
+## 2026-10-14 — Expanded the G3 Cinema location typeahead
+
+- Added Cinema-specific typeahead settings to the condition contract and TypeScript config.
+- G3 now waits for three typed characters and shows three related location results.
+- Kept 1000 Saint-Catherine Street West first with a RECENT badge, followed by 1001 Rue Sainte-Catherine Est and 100 Rue McGill.
+- Removed the extra dropdown heading for G3 while leaving G4’s auto-populated Cinema flow unchanged.
+- Updated focused G3 E2E coverage for the trigger threshold, result count, order, and copy.
+
+## 2026-10-14 — Refined scenario task-card emphasis
+
+- Changed the instruction sentences in both scenario cards to regular weight across G1–G4.
+- Preserved bold Ride, Courier, and Cinema task labels.
+- Preserved bold study addresses without restoring underlines.
+- Added E2E assertions for label, sentence, and address font weights.
+
+## 2026-10-14 — Clarified the G1 Courier entry reminder
+
+- Named 1000 Saint-Catherine Street West as the sender address.
+- Named 3008 Rue McGill as the recipient address.
+- Preserved the final prompt to choose a delivery option.
+- Updated the guidance alignment regression expectation.
+
+## 2026-10-14 — Restored the 3008 Rue McGill underline
+
+- Made 3008 Rue McGill bold and underlined by default across G1–G4.
+- Updated the four-condition Recent Trips regression assertion.
+- Preserved the scenario page's explicit no-underline styling.
+
+## 2026-10-14 — Standardized Courier recipient dropdowns
+
+- Increased G2's recipient typeahead from two suggestions to three.
+- Both G1 and G2 now show three options when the participant types `300`.
+- Kept 3008 Rue McGill first and marked RECENT.
+- Updated the G2 E2E regression and shared flow documentation.

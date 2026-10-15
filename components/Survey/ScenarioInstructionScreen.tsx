@@ -65,9 +65,7 @@ export default function ScenarioInstructionScreen({
           className="mb-6 text-[15px] text-black leading-relaxed"
           data-testid="scenario-description"
         >
-          <AddressText
-            underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
-          >
+          <AddressText underlineAddresses={false}>
             {config.scenarioDescription}
           </AddressText>
         </p>
@@ -87,17 +85,15 @@ export default function ScenarioInstructionScreen({
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-black text-white text-[12px] font-bold flex items-center justify-center">
                 1
               </span>
-              <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">
+              <span className="text-[16px] font-bold text-black uppercase tracking-wide">
                 Ride task
               </span>
             </div>
             <p
-              className="text-[15px] font-semibold text-black leading-snug"
+              className="text-[15px] font-normal text-black leading-snug"
               data-testid="scenario-ride-instruction"
             >
-              <AddressText
-                underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
-              >
+              <AddressText underlineAddresses={false}>
                 {config.rideTaskInstruction}
               </AddressText>
             </p>
@@ -108,17 +104,15 @@ export default function ScenarioInstructionScreen({
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-black text-white text-[12px] font-bold flex items-center justify-center">
                 2
               </span>
-              <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">
+              <span className="text-[16px] font-bold text-black uppercase tracking-wide">
                 {config.service2TaskLabel}
               </span>
             </div>
             <p
-              className="text-[15px] font-semibold text-black leading-snug"
+              className="text-[15px] font-normal text-black leading-snug"
               data-testid="scenario-service2-instruction"
             >
-              <AddressText
-                underlineSecondaryAddress={config.underlineSecondaryAddressInScenario}
-              >
+              <AddressText underlineAddresses={false}>
                 {config.service2TaskInstruction}
               </AddressText>
             </p>

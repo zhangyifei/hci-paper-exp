@@ -44,37 +44,55 @@ test.describe('Onboarding — scenario instruction', () => {
 
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
     await expect(page.getByTestId('scenario-description')).toContainText(
-      'You are visiting a friend at 1000 Saint-Catherine Street West'
+      'You’re visiting a friend and need to send a package afterward.'
     )
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveText(RIDE_INSTRUCTION)
     await expect(page.getByTestId('scenario-service2-instruction')).toContainText(
       'send a package from 1000 Saint-Catherine Street West to 3008 Rue McGill'
     )
+    await expect(page.getByTestId('scenario-description')).not.toContainText(
+      '1000 Saint-Catherine Street West'
+    )
+    await expect(page.getByTestId('scenario-description')).not.toContainText('3008 Rue McGill')
+    await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByText('COURIER TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByTestId('scenario-ride-instruction')).toHaveCSS('font-weight', '400')
+    await expect(page.getByTestId('scenario-service2-instruction')).toHaveCSS('font-weight', '400')
     await expect(
-      page.getByTestId('scenario-description').getByText('3008 Rue McGill', { exact: true })
-    ).toHaveCSS('text-decoration-line', 'underline')
+      page.getByTestId('scenario-ride-instruction').getByText('1000 Saint-Catherine Street West', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'none')
+    await expect(
+      page.getByTestId('scenario-ride-instruction').getByText('1000 Saint-Catherine Street West', { exact: true })
+    ).toHaveCSS('font-weight', '700')
     await expect(
       page.getByTestId('scenario-service2-instruction').getByText('3008 Rue McGill', { exact: true })
-    ).toHaveCSS('text-decoration-line', 'underline')
+    ).toHaveCSS('text-decoration-line', 'none')
+    await expect(
+      page.getByTestId('scenario-service2-instruction').getByText('3008 Rue McGill', { exact: true })
+    ).toHaveCSS('font-weight', '700')
 
-    // Start advances into the Task 1 instruction page, then the ride task
+    // Continue advances directly into the ride task; there is no separate
+    // Task 1 instruction page.
     await page.getByTestId('btn-scenario-start').click({ force: true })
-    await expect(page.getByTestId('btn-start-task')).toBeVisible()
-    await page.getByTestId('btn-start-task').click({ force: true })
+    await expect(page.getByTestId('btn-start-task')).toHaveCount(0)
     await expect(page.getByTestId('btn-start-ride')).toBeVisible()
   })
 
-  test('G2 scenario underlines 3008 Rue McGill', async ({ page }) => {
+  test('G2 scenario does not underline task addresses', async ({ page }) => {
     await landRaw(page, 'G2')
     await page.getByTestId('consent-acknowledge').click({ force: true })
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
+    await expect(page.getByTestId('scenario-description')).not.toContainText(
+      '1000 Saint-Catherine Street West'
+    )
+    await expect(page.getByTestId('scenario-description')).not.toContainText('3008 Rue McGill')
     await expect(
-      page.getByTestId('scenario-description').getByText('3008 Rue McGill', { exact: true })
-    ).toHaveCSS('text-decoration-line', 'underline')
+      page.getByTestId('scenario-ride-instruction').getByText('1000 Saint-Catherine Street West', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'none')
     await expect(
       page.getByTestId('scenario-service2-instruction').getByText('3008 Rue McGill', { exact: true })
-    ).toHaveCSS('text-decoration-line', 'underline')
+    ).toHaveCSS('text-decoration-line', 'none')
   })
 
   test('G4 scenario shows ride + movie instructions from config', async ({ page }) => {
@@ -86,8 +104,21 @@ test.describe('Onboarding — scenario instruction', () => {
       'book two movie tickets at a cinema near 1000 Saint-Catherine Street West'
     )
     await expect(page.getByTestId('scenario-description')).toContainText(
-      'use the Cinema service to book two movie tickets'
+      'use the Cinema service to find a nearby cinema and book two movie tickets'
     )
+    await expect(page.getByTestId('scenario-description')).not.toContainText(
+      '1000 Saint-Catherine Street West'
+    )
+    await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByText('CINEMA TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByTestId('scenario-ride-instruction')).toHaveCSS('font-weight', '400')
+    await expect(page.getByTestId('scenario-service2-instruction')).toHaveCSS('font-weight', '400')
+    await expect(
+      page.getByTestId('scenario-service2-instruction').getByText('1000 Saint-Catherine Street West', { exact: true })
+    ).toHaveCSS('text-decoration-line', 'none')
+    await expect(
+      page.getByTestId('scenario-service2-instruction').getByText('1000 Saint-Catherine Street West', { exact: true })
+    ).toHaveCSS('font-weight', '700')
   })
 })
 

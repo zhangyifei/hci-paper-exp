@@ -14,7 +14,6 @@ for (const condition of CONDITIONS) {
     await page.getByTestId('consent-acknowledge').click()
     await page.getByTestId('btn-consent-continue').click()
     await page.getByTestId('btn-scenario-start').click()
-    await page.getByTestId('btn-start-task').click()
 
     const banner = page.getByTestId('guidance-banner')
     await expect(banner).toBeVisible({ timeout: 12_000 })

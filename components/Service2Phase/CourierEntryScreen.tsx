@@ -22,16 +22,17 @@ interface SavedAddress {
   icon: string
 }
 
-/** Selectable saved/recent recipient places (tap instead of typing). */
+/** Recipient options shown after typing or, in legacy list mode, as saved places. */
 const SAVED_RECIPIENTS: SavedAddress[] = [
   { id: 'rue-mcgill', name: '3008 Rue McGill', detail: '3008 Rue McGill, Montreal', tag: 'RECENT', icon: '🕒' },
   { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: '1502 Rue Saint-Louis, Montreal', icon: '🏠' },
+  { id: 'mcgill-300', name: '300 Rue McGill', detail: 'Old Montreal', icon: '📍' },
 ]
 
-const SENDER_SUGGESTIONS = [
-  '1000 Saint-Catherine Street West, Montreal',
-  '750 Rue Peel, Montreal',
-  '680 Rue Sherbrooke Ouest, Montreal',
+const SENDER_SUGGESTIONS: SavedAddress[] = [
+  { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
+  { id: 'saint-catherine-east', name: '1001 Rue Sainte-Catherine Est', detail: 'Quartier des spectacles, Montreal', icon: '📍' },
+  { id: 'mcgill-100', name: '100 Rue McGill', detail: 'Old Montreal', icon: '📍' },
 ]
 
 /** Selectable saved/recent sender places. */
@@ -87,8 +88,13 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
   const recipientValid = isValidAddress(recipientAddress)
 
   const suggestionMatches =
-    config.addressSuggestions && senderFocused && senderAddress.trim().length > 0
-      ? SENDER_SUGGESTIONS.filter((s) => s.toLowerCase().includes(senderAddress.trim().toLowerCase()) && s !== senderAddress)
+    config.addressSuggestions &&
+    senderFocused &&
+    senderAddress.trim().length >= config.courierAddressTypeaheadMinChars
+      ? SENDER_SUGGESTIONS.filter((place) => {
+          const query = senderAddress.trim().toLowerCase()
+          return place.name.toLowerCase().includes(query) || place.detail.toLowerCase().includes(query)
+        })
       : []
 
   const handleSenderChange = (value: string) => {
@@ -98,11 +104,11 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
     })
   }
 
-  const handlePickSuggestion = (value: string) => {
-    setSenderAddress(value)
+  const handlePickSuggestion = (place: SavedAddress) => {
+    setSenderAddress(place.name)
     setSenderFocused(false)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
-      payload: { field: 'sender', source: 'suggestion' },
+      payload: { field: 'sender', source: 'suggestion', placeId: place.id },
     })
   }
 
@@ -156,7 +162,8 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
   const showRecipientTypeahead =
     config.service2EntryAddressTypeahead &&
     recipientFocused &&
-    recipientAddress.trim().length > 0
+    recipientAddress.trim().length >= config.courierAddressTypeaheadMinChars
+  const recipientSuggestions = SAVED_RECIPIENTS.slice(0, config.courierRecipientSuggestionCount)
 
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-courier-entry">
@@ -212,10 +219,24 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                 />
               </div>
               {suggestionMatches.length > 0 && (
-                <div className="mt-2 rounded-[12px] border border-gray-100 overflow-hidden" data-testid="sender-suggestions">
-                  {suggestionMatches.map((s) => (
-                    <button key={s} type="button" onClick={() => handlePickSuggestion(s)} className="w-full text-left px-4 py-2.5 text-[14px] text-black active:bg-gray-50 border-b border-gray-50 last:border-0">
-                      <AddressText>{s}</AddressText>
+                <div className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden" data-testid="sender-suggestions">
+                  {suggestionMatches.map((place) => (
+                    <button
+                      key={place.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handlePickSuggestion(place)}
+                      data-testid={`sender-suggestion-${place.id}`}
+                      className="w-full flex items-center text-left px-4 py-3 active:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 text-[14px] flex-shrink-0">{place.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[15px] flex items-center text-black">
+                          <AddressText>{place.name}</AddressText>
+                          {place.tag && <span className="ml-2 bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{place.tag}</span>}
+                        </div>
+                        <div className="text-[13px] text-gray-500 truncate">{place.detail}</div>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -223,7 +244,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
               {senderError && (
                 <p data-testid="sender-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Enter a valid sender address.</p>
               )}
-              {senderAddress.trim().length === 0 && (
+              {!config.addressSuggestions && senderAddress.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="sender-saved-places">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
                   {SAVED_SENDERS.map((place) => (
@@ -286,10 +307,12 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden"
                   data-testid="recipient-suggestions"
                 >
-                  <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    Saved &amp; recent
-                  </p>
-                  {SAVED_RECIPIENTS.map((addr) => (
+                  {config.courierRecipientTypeaheadLabel && (
+                    <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      {config.courierRecipientTypeaheadLabel}
+                    </p>
+                  )}
+                  {recipientSuggestions.map((addr) => (
                     <button
                       key={addr.id}
                       type="button"

@@ -12,14 +12,13 @@ for (const condition of CONDITIONS) {
     await page.getByTestId('consent-acknowledge').click()
     await page.getByTestId('btn-consent-continue').click()
     await page.getByTestId('btn-scenario-start').click()
-    await page.getByTestId('btn-start-task').click()
 
     const destination = page.getByTestId('input-destination')
     const suggestions = page.getByTestId('destination-suggestions')
     const mcgillRecentTrip = page.getByText('3008 Rue McGill', { exact: true })
 
     await expect(mcgillRecentTrip).toHaveCSS('font-weight', '700')
-    await expect(mcgillRecentTrip).toHaveCSS('text-decoration-line', 'none')
+    await expect(mcgillRecentTrip).toHaveCSS('text-decoration-line', 'underline')
 
     await destination.click()
     await expect(suggestions).not.toBeVisible()

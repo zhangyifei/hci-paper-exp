@@ -22,10 +22,11 @@ interface SavedPlace {
   icon: string
 }
 
-/** Selectable saved/recent locations to find cinemas near (tap instead of typing). */
+/** Related location suggestions for the Cinema search field. */
 const SAVED_LOCATIONS: SavedPlace[] = [
   { id: 'saint-catherine', name: '1000 Saint-Catherine Street West', detail: 'Downtown, Montreal', tag: 'RECENT', icon: '🕒' },
-  { id: 'peel', name: '750 Rue Peel', detail: 'Downtown, Montreal', icon: '📍' },
+  { id: 'saint-catherine-east', name: '1001 Rue Sainte-Catherine Est', detail: 'Quartier des spectacles, Montreal', icon: '📍' },
+  { id: 'mcgill', name: '100 Rue McGill', detail: 'Old Montreal', icon: '📍' },
 ]
 
 interface Cinema {
@@ -142,11 +143,16 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   }
 
   const canContinue = addressValid && showCinemaResults && !!selectedCinema && !!selectedShowtime
+  const normalizedLocationQuery = location.trim().toLocaleLowerCase()
+  const locationSuggestions = SAVED_LOCATIONS.filter((place) =>
+    `${place.name} ${place.detail}`.toLocaleLowerCase().includes(normalizedLocationQuery),
+  ).slice(0, config.movieLocationSuggestionCount)
   const showLocationTypeahead =
     config.service2EntryAddressTypeahead &&
     locationFocused &&
     !locationSuggestionSelected &&
-    location.trim().length > 0
+    location.trim().length >= config.movieAddressTypeaheadMinChars &&
+    locationSuggestions.length > 0
 
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-movie-entry">
@@ -214,10 +220,12 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
                   className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden"
                   data-testid="movie-location-suggestions"
                 >
-                  <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    Saved &amp; recent
-                  </p>
-                  {SAVED_LOCATIONS.map((place) => (
+                  {config.movieLocationTypeaheadLabel && (
+                    <p className="px-4 pt-3 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      {config.movieLocationTypeaheadLabel}
+                    </p>
+                  )}
+                  {locationSuggestions.map((place) => (
                     <button
                       key={place.id}
                       type="button"

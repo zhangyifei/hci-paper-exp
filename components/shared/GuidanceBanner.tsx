@@ -89,7 +89,7 @@ export default function GuidanceBanner({ text, thresholdMs }: GuidanceBannerProp
   if (!visible) return null
 
   return (
-    <div className="absolute left-3 right-3 bottom-[0.8cm] z-[200] flex justify-center pointer-events-none">
+    <div className="absolute left-3 right-3 top-[0.8cm] z-[200] flex justify-center pointer-events-none">
       <div
         ref={bannerRef}
         role="status"

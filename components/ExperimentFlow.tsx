@@ -17,7 +17,6 @@ import MovieCompleteScreen from './Service2Phase/MovieCompleteScreen'
 import BackgroundQuestionnaire from './Survey/BackgroundQuestionnaire'
 import ConsentScreen from './Survey/ConsentScreen'
 import ScenarioInstructionScreen from './Survey/ScenarioInstructionScreen'
-import TaskInstructionScreen from './Survey/TaskInstructionScreen'
 import PostTaskSurvey from './Survey/PostTaskSurvey'
 import CompletionScreen from './Survey/CompletionScreen'
 
@@ -30,7 +29,6 @@ type Screen =
   | 'consent'
   | 'questionnaire'
   | 'scenario_instruction'
-  | 'task1_instruction'
   | 'home'
   | 'map'
   | 'ride_almost_there'
@@ -74,7 +72,10 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
 
   const handleScenarioComplete = () => {
     resetNavigationPath()
-    setScreen('task1_instruction')
+    logger.trackEvent('task.started', 'task', 'task_active', {
+      payload: { taskNumber: 1, totalTasks: 2, service: config.task1.service },
+    })
+    setScreen('home')
   }
 
   const handleSurveyComplete = () => {
@@ -274,15 +275,6 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       return <ConsentScreen onConsent={handleConsentComplete} />
     case 'scenario_instruction':
       return <ScenarioInstructionScreen config={config} onStart={handleScenarioComplete} />
-    case 'task1_instruction':
-      return (
-        <TaskInstructionScreen
-          task={config.task1}
-          taskNumber={1}
-          totalTasks={2}
-          onStart={() => setScreen('home')}
-        />
-      )
     case 'survey':
       return (
         <PostTaskSurvey

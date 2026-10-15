@@ -68,17 +68,19 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByTestId('courier-option-large')).toBeVisible()
   })
 
-  test('G2 recipient typing shows two saved and recent options with the task address first', async ({ page }) => {
+  test('G2 recipient typing shows three options with the task address first', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
 
     await expect(page.getByTestId('recipient-saved-places')).toHaveCount(0)
-    await page.getByTestId('input-recipient-address').fill('3008')
+    await page.getByTestId('input-recipient-address').fill('300')
 
     const suggestions = page.getByTestId('recipient-suggestions')
     await expect(suggestions).toBeVisible()
-    await expect(suggestions.getByRole('button')).toHaveCount(2)
+    await expect(suggestions.getByRole('button')).toHaveCount(3)
     await expect(suggestions.getByRole('button').first()).toContainText('3008 Rue McGill')
+    await expect(suggestions.getByRole('button').first()).toContainText('RECENT')
+    await expect(suggestions).toContainText('300 Rue McGill')
     await expect(suggestions).toContainText('Saved & recent')
 
     await page.getByTestId('recipient-suggestion-rue-mcgill').click()

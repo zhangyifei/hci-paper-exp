@@ -62,6 +62,34 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(page.getByText('SUGGESTED')).not.toBeVisible()
   })
 
+  test('G1 sender and recipient require typing and show three task-ranked options', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, false)
+
+    await expect(page.getByTestId('sender-saved-places')).toHaveCount(0)
+    await expect(page.getByTestId('recipient-saved-places')).toHaveCount(0)
+
+    await page.getByTestId('input-sender-address').fill('10')
+    await expect(page.getByTestId('sender-suggestions')).toHaveCount(0)
+    await page.getByTestId('input-sender-address').fill('100')
+    const senderSuggestions = page.getByTestId('sender-suggestions')
+    await expect(senderSuggestions.getByRole('button')).toHaveCount(3)
+    await expect(senderSuggestions.getByRole('button').first()).toContainText(
+      '1000 Saint-Catherine Street West',
+    )
+    await expect(senderSuggestions.getByRole('button').first()).toContainText('RECENT')
+    await page.getByTestId('sender-suggestion-saint-catherine').click()
+
+    await page.getByTestId('input-recipient-address').fill('30')
+    await expect(page.getByTestId('recipient-suggestions')).toHaveCount(0)
+    await page.getByTestId('input-recipient-address').fill('300')
+    const recipientSuggestions = page.getByTestId('recipient-suggestions')
+    await expect(recipientSuggestions.getByRole('button')).toHaveCount(3)
+    await expect(recipientSuggestions).not.toContainText('Saved & recent')
+    await expect(recipientSuggestions.getByRole('button').first()).toContainText('3008 Rue McGill')
+    await expect(recipientSuggestions.getByRole('button').first()).toContainText('RECENT')
+  })
+
   test('G1 Courier Entry: shows delivery options (Small/Medium/Large)', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
@@ -93,7 +121,8 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await advanceToService2(page, false)
 
     await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
-    await page.getByTestId('recipient-saved-rue-mcgill').click({ force: true })
+    await page.getByTestId('input-recipient-address').fill('300')
+    await page.getByTestId('recipient-suggestion-rue-mcgill').click({ force: true })
     await page.getByTestId('btn-confirm-courier').click({ force: true })
 
     await expect(page.getByTestId('screen-package-details')).toBeVisible()

@@ -30,12 +30,6 @@ async function continueScenarioInstruction(page: Page) {
   const startButton = page.getByTestId('btn-scenario-start')
   await expect(startButton).toBeVisible({ timeout: 10000 })
   await startButton.click({ force: true })
-
-  // Task 1 instruction page → Start Task 1
-  const startTask = page.getByTestId('btn-start-task')
-  await expect(startTask).toBeVisible({ timeout: 10000 })
-  await startTask.click({ force: true })
-
   await expect(page.getByTestId('btn-start-ride')).toBeVisible({ timeout: 10000 })
 }
 
@@ -153,8 +147,8 @@ export async function completePostTaskSurvey(
 }
 
 /**
- * Complete the Courier entry (G1/G2): ensure the sender is valid, pick a saved
- * recipient, keep the default delivery option, continue, then fill package
+ * Complete the Courier entry (G1/G2): ensure the sender is valid, pick the task
+ * recipient from the configured typeahead, keep the default delivery option, then fill package
  * details and confirm pickup. Works for both auto-fill (G2) and empty (G1)
  * conditions.
  */
@@ -165,8 +159,8 @@ export async function completeCourierEntry(page: Page) {
     await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
   }
 
-  // Recipient: G1 exposes saved places immediately; G2 reveals the same task
-  // address first in its two-option dropdown after the participant types.
+  // Recipient: both Courier conditions reveal three options after typing,
+  // with the task address ranked first.
   const savedRecipient = page.getByTestId('recipient-saved-rue-mcgill')
   if (await savedRecipient.isVisible().catch(() => false)) {
     await tap(page, 'recipient-saved-rue-mcgill')

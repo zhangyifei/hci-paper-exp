@@ -382,6 +382,31 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-10-08
 **Rationale**: The completion screen should focus on the completed task details and the Done action without introducing additional service choices.
 
+### ADR-043: G3 Cinema Location Uses a Three-Result Typeahead
+**Decision**: Add Cinema-specific typeahead thresholds, result counts, and optional labels to the condition contract. Configure G3 to reveal three related locations after three characters, place 1000 Saint-Catherine Street West first with a RECENT badge, and omit the dropdown heading.
+**Date**: 2026-10-14
+**Rationale**: G3 participants should actively enter the task location while receiving the same compact three-result assistance pattern as the other typed address flow. Contract-owned controls preserve the condition boundary and keep G4's auto-populated Cinema experience unchanged.
+
+### ADR-044: Scenario Task Sentences Use Selective Emphasis
+**Decision**: Use regular weight for the instruction sentences in both scenario task cards across G1–G4. Keep the Ride/Courier/Cinema task labels and embedded study addresses bold.
+**Date**: 2026-10-14
+**Rationale**: Selective emphasis creates a clearer hierarchy by highlighting the task type and actionable addresses without making every word compete for attention.
+
+### ADR-045: G1 Courier Entry Reminder Names Both Addresses
+**Decision**: Change G1's Courier entry reminder to explicitly identify 1000 Saint-Catherine Street West as the sender and 3008 Rue McGill as the recipient before prompting the participant to choose a delivery option.
+**Date**: 2026-10-14
+**Rationale**: G1 requires manual address entry, so naming each address and its role removes ambiguity at the point of action.
+
+### ADR-046: Restore the 3008 Rue McGill Underline Across Conditions
+**Decision**: Make 3008 Rue McGill bold and underlined by default wherever the shared address formatter appears across G1–G4. Preserve the scenario screen's explicit no-underline override for both study addresses.
+**Date**: 2026-10-14
+**Rationale**: This supersedes ADR-041's default non-underlined treatment and restores consistent emphasis for the secondary task address without reversing the separately requested scenario-page styling.
+
+### ADR-047: Courier Recipient Typeaheads Show Three Options
+**Decision**: Configure both Courier conditions, G1 and G2, to show three recipient suggestions after typing. Keep 3008 Rue McGill first and marked RECENT.
+**Date**: 2026-10-14
+**Rationale**: A consistent three-option recipient dropdown gives participants the requested choice set without changing the Cinema-only G3/G4 flows.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.
@@ -394,3 +419,33 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 - G2 and G4 explicitly name the banner CTA participants should tap.
 - G4 consistently states that the cinema task requires two tickets.
 - G2 and G4 post-ride home guidance uses “Tap” to match the visible Courier or Cinema tab action.
+
+## 2026-10-14 — Guidance reminders appear at the top
+
+- The shared G1–G4 guidance banner is positioned `0.8cm` from the top edge instead of the bottom edge.
+- Reminder timing, dismissal behavior, and condition-specific text remain unchanged.
+
+## 2026-10-14 — Remove the separate Task 1 instruction page
+
+- G1–G4 now transition directly from the scenario page to the Rides home screen.
+- The Task 1 `task.started` event is emitted during that transition so instrumentation remains intact.
+- The scenario page remains the single participant-facing source for both task instructions.
+
+## 2026-10-14 — Simplify and strengthen the scenario-page hierarchy
+
+- G1/G2 use a natural Courier scenario narrative without addresses; G3/G4 use a natural Cinema narrative without addresses.
+- Exact addresses remain in the numbered task cards, where participants need them to complete the tasks.
+- The shared Ride, Courier, and Cinema task labels are larger and black to improve visual hierarchy.
+
+## 2026-10-14 — Remove scenario-page address underlining
+
+- Study addresses remain bold on the scenario task cards but are no longer underlined in G1–G4.
+- The obsolete condition-level scenario underline flag was removed from the experiment contract and TypeScript config.
+- Address emphasis elsewhere in the prototype keeps its existing underline behavior.
+
+## 2026-10-14 — G1 Courier addresses use typed typeahead fields
+
+- G1 no longer exposes Sender or Recipient saved/recent lists before the participant types.
+- Both fields reveal suggestions after three characters; the task address is first and marked RECENT.
+- G1 Recipient shows three results, while G2 retains its existing two-result dropdown.
+- The result count is contract-controlled to avoid condition checks in the shared Courier UI.

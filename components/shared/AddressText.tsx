@@ -2,6 +2,7 @@ import React from 'react'
 
 interface AddressTextProps {
   children: string
+  underlineAddresses?: boolean
   underlineSecondaryAddress?: boolean
 }
 
@@ -15,15 +16,17 @@ const ADDRESS_PATTERN = /(1000 Saint-Catherine Street West|3008 Rue McGill)/g
 /** Emphasizes the study's task addresses without changing contract-owned copy. */
 export default function AddressText({
   children,
-  underlineSecondaryAddress = false,
+  underlineAddresses = true,
+  underlineSecondaryAddress = true,
 }: AddressTextProps) {
   return (
     <>
       {children.split(ADDRESS_PATTERN).map((part, index) => {
         const isStudyAddress = STUDY_ADDRESSES.some((address) => address === part)
         const shouldUnderline =
-          part === '1000 Saint-Catherine Street West' ||
-          (part === '3008 Rue McGill' && underlineSecondaryAddress)
+          underlineAddresses &&
+          (part === '1000 Saint-Catherine Street West' ||
+            (part === '3008 Rue McGill' && underlineSecondaryAddress))
 
         return isStudyAddress ? (
           <strong

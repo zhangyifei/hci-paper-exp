@@ -35,8 +35,20 @@ export interface ConditionConfig {
   autoPopulate: boolean
   /** Whether the sender address field offers autocomplete suggestions. */
   addressSuggestions: boolean
-  /** Whether Service 2's destination field reveals two options after typing. */
+  /** Whether Service 2's destination field reveals options after typing. */
   service2EntryAddressTypeahead: boolean
+  /** Characters required before Courier address suggestions appear. */
+  courierAddressTypeaheadMinChars: number
+  /** Number of recipient options shown in the Courier typeahead. */
+  courierRecipientSuggestionCount: number
+  /** Optional heading displayed above Courier recipient typeahead options. */
+  courierRecipientTypeaheadLabel: string | null
+  /** Characters required before Cinema location suggestions appear. */
+  movieAddressTypeaheadMinChars: number
+  /** Maximum number of Cinema location suggestions shown. */
+  movieLocationSuggestionCount: number
+  /** Optional heading displayed above Cinema location suggestions. */
+  movieLocationTypeaheadLabel: string | null
   /** Optional page-specific reminder for the Service 2 entry screen. */
   service2EntryGuidanceText: string | null
   /** Reminder for package details or cinema seat selection. */
@@ -62,8 +74,6 @@ export interface ConditionConfig {
   tripCompleteBackDestination: TripCompleteBackDestination
   /** Whether the Trip Complete screen shows its map image. */
   showTripCompleteMap: boolean
-  /** Whether the secondary study address is underlined on the scenario screen. */
-  underlineSecondaryAddressInScenario: boolean
   /** Emoji shown for the second service on the cross-sell banner. */
   service2Emoji: string
   /** Short label for the second service (e.g. "Return ride task", "Cinema task"). */
