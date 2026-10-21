@@ -43,6 +43,9 @@ test.describe('Onboarding — scenario instruction', () => {
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
+    await expect(page.getByTestId('super-app-definition')).toHaveText(
+      'A super app combines multiple services in one application—for example, ride booking, food delivery, shopping, and payments.'
+    )
     await expect(page.getByTestId('scenario-description')).toContainText(
       'You’re visiting a friend and need to send a package afterward.'
     )
@@ -56,6 +59,8 @@ test.describe('Onboarding — scenario instruction', () => {
     await expect(page.getByTestId('scenario-description')).not.toContainText('3008 Rue McGill')
     await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('font-weight', '700')
     await expect(page.getByText('COURIER TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('text-decoration-line', 'underline')
+    await expect(page.getByText('COURIER TASK', { exact: true })).toHaveCSS('text-decoration-line', 'underline')
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveCSS('font-weight', '400')
     await expect(page.getByTestId('scenario-service2-instruction')).toHaveCSS('font-weight', '400')
     await expect(
@@ -111,6 +116,8 @@ test.describe('Onboarding — scenario instruction', () => {
     )
     await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('font-weight', '700')
     await expect(page.getByText('CINEMA TASK', { exact: true })).toHaveCSS('font-weight', '700')
+    await expect(page.getByText('RIDE TASK', { exact: true })).toHaveCSS('text-decoration-line', 'underline')
+    await expect(page.getByText('CINEMA TASK', { exact: true })).toHaveCSS('text-decoration-line', 'underline')
     await expect(page.getByTestId('scenario-ride-instruction')).toHaveCSS('font-weight', '400')
     await expect(page.getByTestId('scenario-service2-instruction')).toHaveCSS('font-weight', '400')
     await expect(

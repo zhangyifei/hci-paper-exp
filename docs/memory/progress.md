@@ -782,3 +782,11 @@ Design mockups analyzed. Key findings per condition:
 - Both G1 and G2 now show three options when the participant types `300`.
 - Kept 3008 Rue McGill first and marked RECENT.
 - Updated the G2 E2E regression and shared flow documentation.
+
+## 2026-10-21 — Added the super-app definition and underlined task titles
+
+- Added a short shared definition of a super app after the Voya X introduction on every scenario page.
+- Included ride booking, food delivery, shopping, and payments as concrete examples.
+- Underlined the bold Ride, Courier, and Cinema task titles across G1–G4.
+- Preserved the regular-weight task instructions and existing address styling.
+- Added onboarding E2E assertions for the definition and title underlines.

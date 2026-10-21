@@ -407,6 +407,11 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-10-14
 **Rationale**: A consistent three-option recipient dropdown gives participants the requested choice set without changing the Cinema-only G3/G4 flows.
 
+### ADR-048: Define Super Apps and Underline Scenario Task Titles
+**Decision**: Add one shared sentence defining a super app with concrete service examples immediately after the Voya X introduction. Underline the Ride, Courier, and Cinema task titles while preserving their existing bold styling across G1–G4.
+**Date**: 2026-10-21
+**Rationale**: Participants should understand the study's central product concept before beginning, and underlined task titles make the two required tasks easier to scan without changing condition-specific instructions.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

@@ -58,6 +58,13 @@ export default function ScenarioInstructionScreen({
             You will now complete two short tasks in a fictional web-based super app prototype
             called &ldquo;Voya X.&rdquo;
           </p>
+          <p
+            className="mt-2 text-[14px] text-gray-500 leading-relaxed"
+            data-testid="super-app-definition"
+          >
+            A super app combines multiple services in one application—for example, ride booking,
+            food delivery, shopping, and payments.
+          </p>
         </div>
 
         {/* Scenario narrative */}
@@ -85,7 +92,7 @@ export default function ScenarioInstructionScreen({
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-black text-white text-[12px] font-bold flex items-center justify-center">
                 1
               </span>
-              <span className="text-[16px] font-bold text-black uppercase tracking-wide">
+              <span className="text-[16px] font-bold text-black uppercase tracking-wide underline decoration-2 underline-offset-2">
                 Ride task
               </span>
             </div>
@@ -104,7 +111,7 @@ export default function ScenarioInstructionScreen({
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-black text-white text-[12px] font-bold flex items-center justify-center">
                 2
               </span>
-              <span className="text-[16px] font-bold text-black uppercase tracking-wide">
+              <span className="text-[16px] font-bold text-black uppercase tracking-wide underline decoration-2 underline-offset-2">
                 {config.service2TaskLabel}
               </span>
             </div>
