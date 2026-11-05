@@ -865,8 +865,75 @@ Design mockups analyzed. Key findings per condition:
 ## 2026-11-04 — Rebuilt the final survey page as questions 25–34
 
 - Applied the ten supplied final-page questions across G1–G4 and numbered them Q25–Q34.
-- Used the revised Q27 wording exactly: “How familiar are you with super apps such as Uber,Grab, WeChat, or similar?”
+- Used the revised Q27 wording exactly: “How familiar are you with super apps such as Uber, Grab, WeChat, or similar?”
 - Kept the existing age and gender options and added response options appropriate to the approved familiarity, knowledge, usage, and switching questions.
 - Required all ten responses before the final Continue action and retained forward-only navigation.
 - Updated active exports, simulation data, shared E2E helpers, and exact-text regression coverage.
 - Passed the production build and a full local browser flow verifying Q25–Q34, missing-answer warnings at Q25 and Q34, and successful completion after all ten responses.
+
+## 2026-11-05 — Filtered Courier recipient suggestions by address prefix
+
+- Updated the shared G1/G2 recipient typeahead to show only addresses beginning with the participant's typed prefix.
+- Typing `30` now shows `3008 Rue McGill` and `300 Rue McGill` and excludes `1502 Rue Saint-Louis`.
+- Preserved the configured per-condition minimum character thresholds and suggestion-count caps.
+- Updated G1 and G2 E2E regression expectations for the filtered result set.
+- Passed the production build and a local G2 browser flow confirming the exact two results for the `30` prefix.
+
+## 2026-11-05 — Corrected Q27 punctuation spacing
+
+- Added the missing space after `Uber,` in Q27 across the shared G1–G4 survey.
+- Updated active export wording and exact-text E2E coverage without changing the response options or survey behavior.
+
+## 2026-11-05 — Removed duplicate Q32 from the final survey page
+
+- Removed only “How often do you use multi-service super apps?” from the shared G1–G4 survey.
+- Renumbered the former Q33 and Q34 as Q32 and Q33 without changing their wording or response options.
+- Reduced the final page from ten required questions to nine and the complete instrument from 34 questions to 33.
+- Removed the retired item from active exports, simulations, shared test helpers, and exact-text E2E coverage.
+- Passed the production build and a full local browser flow verifying Q25–Q33, missing-answer warnings at Q25 and Q33, and successful completion after all nine responses.
+
+## 2026-11-05 — Added a third prefix-matching Courier recipient
+
+- Added `3000 Rue Saint-Antoine Ouest` as the third matching address when participants type `30` or `300`.
+- Kept `3008 Rue McGill` first and `300 Rue McGill` second.
+- Continued excluding `1502 Rue Saint-Louis` because it does not match the typed prefix.
+- Updated G1 and G2 E2E expectations for the three-address result set.
+- Passed the production build and a local G2 browser flow confirming all three matching addresses in the requested order.
+
+## 2026-11-05 — Standardized “super app” terminology
+
+- Replaced `superapp`/`superapps` with `super app`/`super apps` in Q28, Q30, and Q31 across G1–G4.
+- Preserved every other word, all response options, question numbering, and required-answer behavior.
+- Updated active export wording and exact-text E2E coverage to match the participant-facing survey.
+- Passed the production build and a full local browser flow confirming the standardized wording on Q28, Q30, and Q31.
+
+## 2026-11-05 — Converted Q27–Q31 to labeled seven-point scales
+
+- Replaced the vertical option lists for Q27–Q31 with the same horizontal seven-point control used for the main survey constructs.
+- Added the approved full point labels for familiarity, clarity, relative knowledge, agreement, and usage frequency.
+- Kept Q25–Q26 and Q32–Q33 unchanged and retained required-answer validation across the final page.
+- Updated active codebooks, simulation values, shared E2E helpers, and exact scale-label coverage.
+- Passed the production build and a full local browser flow verifying seven response points and all approved labels for Q27–Q31.
+
+## 2026-11-05 — Placed Q27–Q31 labels under each response option
+
+- Aligned every full response label directly beneath its numbered option in a seven-column layout.
+- Allowed long labels to wrap without abbreviation or truncation.
+- Removed the separate endpoint anchors and numeric legend from Q27–Q31 while leaving every other survey scale unchanged.
+- Updated E2E coverage to verify each inline label by question and response number.
+- Passed the production build, full browser flow, and visual inspection of the seven-column Q27 layout.
+
+## 2026-11-05 — Applied inline response labels to Q15
+
+- Placed all seven agreement labels directly beneath their numbered options for the Q15 attention check.
+- Preserved the exact question wording and correct response of `5 — Somewhat agree`.
+- Left every other construct question and its endpoint-anchor presentation unchanged.
+- Updated E2E coverage to verify all seven inline Q15 labels.
+- Passed the production build, full browser flow, and visual inspection of the Q15 seven-column layout.
+
+## 2026-11-05 — Increased inline label size and contrast
+
+- Increased the inline response labels on Q15 and Q27–Q31 from 10px to 12px.
+- Changed the label color from light gray to a darker gray.
+- Preserved every label, response value, layout column, and required-answer rule.
+- Passed the production build, complete browser flow, and visual inspection of the larger, darker Q15 and Q27 labels.

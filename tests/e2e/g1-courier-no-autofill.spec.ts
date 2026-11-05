@@ -62,7 +62,7 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(page.getByText('SUGGESTED')).not.toBeVisible()
   })
 
-  test('G1 sender and recipient require typing and show three task-ranked options', async ({ page }) => {
+  test('G1 sender and recipient require typing and show task-ranked prefix matches', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
 
@@ -88,6 +88,9 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(recipientSuggestions).not.toContainText('Saved & recent')
     await expect(recipientSuggestions.getByRole('button').first()).toContainText('3008 Rue McGill')
     await expect(recipientSuggestions.getByRole('button').first()).toContainText('RECENT')
+    await expect(recipientSuggestions).toContainText('300 Rue McGill')
+    await expect(recipientSuggestions).toContainText('3000 Rue Saint-Antoine Ouest')
+    await expect(recipientSuggestions).not.toContainText('1502 Rue Saint-Louis')
   })
 
   test('G1 Courier Entry: shows delivery options (Small/Medium/Large)', async ({ page }) => {

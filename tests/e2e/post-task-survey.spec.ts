@@ -215,7 +215,17 @@ test.describe('Post-task survey — items + attention check', () => {
       await expect(page.getByTestId(`survey-item-${code}`).getByRole('radio')).toHaveCount(7)
     }
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
-    await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
+    for (const [index, label] of [
+      'Strongly disagree',
+      'Disagree',
+      'Somewhat disagree',
+      'Neither agree nor disagree',
+      'Somewhat agree',
+      'Agree',
+      'Strongly agree',
+    ].entries()) {
+      await expect(page.getByTestId(`likert-inline-label-AC1-${index + 1}`)).toHaveText(label)
+    }
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await expect(page.getByTestId('btn-submit-survey')).toHaveText('Continue')
     await expect(page.getByTestId('btn-survey-back')).toHaveCount(0)
@@ -277,12 +287,11 @@ test.describe('Post-task survey — items + attention check', () => {
     const questions = [
       'What is your age range?',
       'What is your gender?',
-      'How familiar are you with super apps such as Uber,Grab, WeChat, or similar?',
-      'How clear an idea do you have about which characteristics of a superapp are important for you to have a satisfying experience using it?',
+      'How familiar are you with super apps such as Uber, Grab, WeChat, or similar?',
+      'How clear an idea do you have about which characteristics of a super app are important for you to have a satisfying experience using it?',
       'How would you rate your knowledge about super apps relative to the general population?',
-      'I know a lot about superapps.',
-      'How frequently do you use superapps?',
-      'How often do you use multi-service super apps?',
+      'I know a lot about super apps.',
+      'How frequently do you use super apps?',
       'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
       'How often do you switch between services mid-session (e.g. finish a ride, then order food without closing the app)?',
     ]
@@ -290,7 +299,25 @@ test.describe('Post-task survey — items + attention check', () => {
       await expect(page.getByText(question, { exact: true })).toBeVisible()
     }
 
-    // Page 3 is the final survey page, uses Q25–Q34, and requires every answer.
+    const sevenPointItems: Record<string, string[]> = {
+      FAM1: ['Not at all familiar', 'Very slightly familiar', 'Slightly familiar', 'Moderately familiar', 'Quite familiar', 'Very familiar', 'Extremely familiar'],
+      FAM2: ['Not at all clear', 'Very slightly clear', 'Slightly clear', 'Moderately clear', 'Quite clear', 'Very clear', 'Extremely clear'],
+      KNW1: ['Far below average', 'Below average', 'Slightly below average', 'About average', 'Slightly above average', 'Above average', 'Far above average'],
+      KNW2: ['Strongly disagree', 'Disagree', 'Somewhat disagree', 'Neither agree nor disagree', 'Somewhat agree', 'Agree', 'Strongly agree'],
+      USE1: ['Never', 'Very rarely', 'Rarely', 'Sometimes', 'Often', 'Very often', 'All the time'],
+    }
+    for (const [code, labels] of Object.entries(sevenPointItems)) {
+      const item = page.getByTestId(`survey-item-${code}`)
+      await expect(item.getByRole('radio')).toHaveCount(7)
+      for (const [index, label] of labels.entries()) {
+        await expect(page.getByTestId(`likert-inline-label-${code}-${index + 1}`)).toHaveText(label)
+      }
+    }
+
+    await expect(page.locator('[id^="q-"]')).toHaveCount(9)
+    await expect(page.getByText('How often do you use multi-service super apps?', { exact: true })).toHaveCount(0)
+
+    // Page 3 is the final survey page, uses Q25–Q33, and requires every answer.
     await page.getByTestId('btn-submit-questionnaire').click({ force: true })
     await expect(page.getByTestId('questionnaire-warning')).toContainText(
       'Question 25 still needs an answer'

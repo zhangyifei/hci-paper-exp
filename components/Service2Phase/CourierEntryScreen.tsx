@@ -27,6 +27,7 @@ const SAVED_RECIPIENTS: SavedAddress[] = [
   { id: 'rue-mcgill', name: '3008 Rue McGill', detail: '3008 Rue McGill, Montreal', tag: 'RECENT', icon: '🕒' },
   { id: 'saint-louis', name: '1502 Rue Saint-Louis', detail: '1502 Rue Saint-Louis, Montreal', icon: '🏠' },
   { id: 'mcgill-300', name: '300 Rue McGill', detail: 'Old Montreal', icon: '📍' },
+  { id: 'saint-antoine-3000', name: '3000 Rue Saint-Antoine Ouest', detail: 'Saint-Henri, Montreal', icon: '📍' },
 ]
 
 const SENDER_SUGGESTIONS: SavedAddress[] = [
@@ -163,7 +164,12 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
     config.service2EntryAddressTypeahead &&
     recipientFocused &&
     recipientAddress.trim().length >= config.courierAddressTypeaheadMinChars
-  const recipientSuggestions = SAVED_RECIPIENTS.slice(0, config.courierRecipientSuggestionCount)
+  const recipientQuery = recipientAddress.trim().toLowerCase()
+  const recipientSuggestions = showRecipientTypeahead
+    ? SAVED_RECIPIENTS
+        .filter((place) => place.name.toLowerCase().startsWith(recipientQuery))
+        .slice(0, config.courierRecipientSuggestionCount)
+    : []
 
   return (
     <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-courier-entry">
@@ -302,7 +308,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   className="flex-1 bg-transparent outline-none text-[15px] font-medium text-black placeholder:text-gray-500"
                 />
               </div>
-              {showRecipientTypeahead && (
+              {showRecipientTypeahead && recipientSuggestions.length > 0 && (
                 <div
                   className="mt-2 rounded-[12px] border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden"
                   data-testid="recipient-suggestions"

@@ -46,12 +46,11 @@ export async function completeBackgroundQuestionnaire(page: Page) {
   const answers = [
     'questionnaire-option-DEM1-25-34',
     'questionnaire-option-DEM2-male',
-    'questionnaire-option-FAM1-4',
-    'questionnaire-option-FAM2-4',
-    'questionnaire-option-KNW1-4',
-    'questionnaire-option-KNW2-5',
-    'questionnaire-option-USE1-weekly',
-    'questionnaire-option-USE2-weekly',
+    'likert-FAM1-4',
+    'likert-FAM2-4',
+    'likert-KNW1-4',
+    'likert-KNW2-5',
+    'likert-USE1-4',
     'questionnaire-option-SWI1-4',
     'questionnaire-option-SWI2-sometimes',
   ]

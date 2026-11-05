@@ -42,6 +42,8 @@ interface SurveyItem {
   anchors: [string, string]
   /** Optional full per-point labels (rendered as a legend under the scale). */
   pointLabels?: string[]
+  /** Place each full point label directly under its numbered response button. */
+  labelsUnderOptions?: boolean
 }
 
 const SURVEY_ITEMS: SurveyItem[] = [
@@ -139,6 +141,7 @@ const SURVEY_ITEMS: SurveyItem[] = [
     construct: 'attention_check',
     question: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
+    labelsUnderOptions: true,
     pointLabels: [
       'Strongly disagree',
       'Disagree',
@@ -430,6 +433,7 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
               points={SURVEY_SCALE_POINTS}
               anchors={item.anchors}
               pointLabels={item.pointLabels}
+              labelsUnderOptions={item.labelsUnderOptions}
               value={responses[code]}
               invalid={showErrors && responses[code] === undefined}
               onAnswer={(v) => handleAnswer(code, item.construct, v)}

@@ -112,7 +112,7 @@ const SURVEY_ORDER = [
   ...SURVEY_ITEMS.mcHet,
 ]
 const QUEST_ORDER = [
-  'DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'USE2', 'SWI1', 'SWI2',
+  'DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'SWI1', 'SWI2',
 ]
 
 // Participant-level structural model. The mediation must be genuine at the
@@ -134,8 +134,7 @@ const DEM = {
   FAM2: ['2', '2', '3', '4'],
   KNW1: ['2', '2', '3', '4'],
   KNW2: ['2', '3', '4', '5'],
-  USE1: ['rarely', 'rarely', 'monthly', 'weekly'],
-  USE2: ['rarely', 'rarely', 'monthly', 'weekly'],
+  USE1: ['2', '2', '3', '4', '5', '6'],
   SWI1: ['2', '2', '3', '4'],
   SWI2: ['rarely', 'rarely', 'sometimes'],
 }

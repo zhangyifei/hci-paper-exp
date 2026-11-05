@@ -68,12 +68,12 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByTestId('courier-option-large')).toBeVisible()
   })
 
-  test('G2 recipient typing shows three options with the task address first', async ({ page }) => {
+  test('G2 recipient typing shows only prefix-matching options with the task address first', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
 
     await expect(page.getByTestId('recipient-saved-places')).toHaveCount(0)
-    await page.getByTestId('input-recipient-address').fill('300')
+    await page.getByTestId('input-recipient-address').fill('30')
 
     const suggestions = page.getByTestId('recipient-suggestions')
     await expect(suggestions).toBeVisible()
@@ -81,6 +81,8 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(suggestions.getByRole('button').first()).toContainText('3008 Rue McGill')
     await expect(suggestions.getByRole('button').first()).toContainText('RECENT')
     await expect(suggestions).toContainText('300 Rue McGill')
+    await expect(suggestions).toContainText('3000 Rue Saint-Antoine Ouest')
+    await expect(suggestions).not.toContainText('1502 Rue Saint-Louis')
     await expect(suggestions).toContainText('Saved & recent')
 
     await page.getByTestId('recipient-suggestion-rue-mcgill').click()

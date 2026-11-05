@@ -14,7 +14,7 @@ export const CONSTRUCT_KEYS = Object.keys(ITEMS) as ConstructKey[]
 export const CONSTRUCT_ITEMS: string[] = CONSTRUCT_KEYS.flatMap((k) => [...ITEMS[k]])
 export const REVERSE = new Set(['PU5'])
 export const SURVEY_CODES = [...CONSTRUCT_ITEMS, 'AC1']
-export const QUEST_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'USE2', 'SWI1', 'SWI2']
+export const QUEST_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'SWI1', 'SWI2']
 
 export const CONSTRUCT_NAMES: Record<ConstructKey, string> = {
   CL: 'Cognitive load',
@@ -59,12 +59,11 @@ export const ITEM_WORDING: Record<string, string> = {
   AC1: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
   DEM1: 'What is your age range?',
   DEM2: 'What is your gender?',
-  FAM1: 'How familiar are you with super apps such as Uber,Grab, WeChat, or similar?',
-  FAM2: 'How clear an idea do you have about which characteristics of a superapp are important for you to have a satisfying experience using it?',
+  FAM1: 'How familiar are you with super apps such as Uber, Grab, WeChat, or similar?',
+  FAM2: 'How clear an idea do you have about which characteristics of a super app are important for you to have a satisfying experience using it?',
   KNW1: 'How would you rate your knowledge about super apps relative to the general population?',
-  KNW2: 'I know a lot about superapps.',
-  USE1: 'How frequently do you use superapps?',
-  USE2: 'How often do you use multi-service super apps?',
+  KNW2: 'I know a lot about super apps.',
+  USE1: 'How frequently do you use super apps?',
   SWI1: 'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
   SWI2: 'How often do you switch between services mid-session (e.g. finish a ride, then order food without closing the app)?',
 }

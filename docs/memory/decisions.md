@@ -468,9 +468,54 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Rationale**: The approved instrument groups Q11–Q24 on survey page 2 and requires all fourteen responses before participants continue to the background questionnaire.
 
 ### ADR-060: Make Questions 25–34 the Final Survey Page
-**Decision**: Replace the six-item background questionnaire with the ten approved questions numbered Q25–Q34 across G1–G4. Preserve the supplied wording exactly, including Q27 as “How familiar are you with super apps such as Uber,Grab, WeChat, or similar?”, and require all ten answers before the final Continue action.
+**Decision**: Replace the six-item background questionnaire with the ten approved questions numbered Q25–Q34 across G1–G4. Preserve the supplied wording exactly, including Q27 as “How familiar are you with super apps such as Uber, Grab, WeChat, or similar?”, and require all ten answers before the final Continue action.
 **Date**: 2026-11-04
 **Rationale**: The final survey page must follow the approved 34-question instrument while retaining shared, forward-only, required-response navigation for every condition.
+
+### ADR-061: Filter Courier Recipient Suggestions by Typed Prefix
+**Decision**: Filter the shared G1/G2 Courier recipient typeahead so every visible suggestion starts with the participant's typed address prefix. Keep the configured suggestion count as a maximum rather than filling the list with non-matching saved addresses.
+**Date**: 2026-11-05
+**Rationale**: Entering `30` should offer `3008 Rue McGill` and `300 Rue McGill`; showing `1502 Rue Saint-Louis` in that result set makes the typeahead appear incorrect and can distract participants from the task address.
+
+### ADR-062: Correct Q27 Punctuation Spacing
+**Decision**: Render Q27 as “How familiar are you with super apps such as Uber, Grab, WeChat, or similar?” across G1–G4, with a space after the comma following “Uber”.
+**Date**: 2026-11-05
+**Rationale**: Standard punctuation spacing corrects the participant-facing wording without changing the question's meaning, response options, order, or required-answer behavior.
+
+### ADR-063: Remove Duplicate Q32 and Renumber the Final Page
+**Decision**: Remove “How often do you use multi-service super apps?” from the shared final survey page. Keep every other question and response option unchanged, renumber the former Q33–Q34 as Q32–Q33, and require all nine final-page responses across G1–G4.
+**Date**: 2026-11-05
+**Rationale**: The removed item duplicates the existing Q31 usage-frequency question. Removing it shortens the instrument without altering the content of any retained item.
+
+### ADR-064: Provide Three Matching Courier Recipient Suggestions
+**Decision**: Add `3000 Rue Saint-Antoine Ouest` as a third saved Courier recipient matching the `300` prefix. Keep `3008 Rue McGill` first, `300 Rue McGill` second, and continue excluding `1502 Rue Saint-Louis` from `30`/`300` results in G1 and G2.
+**Date**: 2026-11-05
+**Rationale**: The recipient typeahead should provide the requested three-option choice set while ensuring every visible result matches the participant's typed prefix.
+
+### ADR-065: Standardize “Super App” as Two Words
+**Decision**: Replace participant-facing `superapp` and `superapps` with `super app` and `super apps` in Q28, Q30, and Q31 across G1–G4. Keep all other wording, response options, numbering, and behavior unchanged.
+**Date**: 2026-11-05
+**Rationale**: Consistent terminology prevents avoidable wording variation within the same survey instrument.
+
+### ADR-066: Use Seven-Point Labeled Scales for Q27–Q31
+**Decision**: Present Q27–Q31 with the shared horizontal seven-point Likert control used by the main survey constructs. Show the approved full label for every response point and store the selected values as `1`–`7` across G1–G4.
+**Date**: 2026-11-05
+**Rationale**: Consistent seven-point measurement and presentation make the five background measures comparable and remove ambiguity about the meaning of intermediate values.
+
+### ADR-067: Align Every Q27–Q31 Label with Its Response Option
+**Decision**: Place the complete response label directly beneath each numbered option in Q27–Q31. Allow labels to wrap without truncation and remove the redundant endpoint anchors and separate label legend for these five items only.
+**Date**: 2026-11-05
+**Rationale**: Direct spatial alignment reduces the mental step of mapping numbers to a separate legend and makes every response meaning visible at the point of selection.
+
+### ADR-068: Apply Inline Response Labels to Q15
+**Decision**: Use the same seven-column inline-label presentation for the Q15 attention check. Keep the exact wording, approved agreement labels, and correct response of `5 — Somewhat agree` unchanged across G1–G4.
+**Date**: 2026-11-05
+**Rationale**: Directly aligning each agreement label with its response number improves consistency and makes the required attention-check response easier to identify without altering validation logic.
+
+### ADR-069: Increase Inline Response-Label Legibility
+**Decision**: Render the inline labels beneath Q15 and Q27–Q31 at 12px in a darker gray while retaining their complete wording, seven-column alignment, and wrapping behavior.
+**Date**: 2026-11-05
+**Rationale**: Larger, higher-contrast labels improve readability without changing question content, selectable values, or validation behavior.
 
 ## 2026-10-09 — “Back to Home” returns home in every condition
 

@@ -17,6 +17,8 @@ interface LikertScaleProps {
    * participant knows exactly what each number means (e.g. 5 = Somewhat agree).
    */
   pointLabels?: string[]
+  /** Place each full point label directly under its numbered response button. */
+  labelsUnderOptions?: boolean
   /** Called with the selected value (1-based) */
   onAnswer: (value: number) => void
   /** Currently selected value (controlled) */
@@ -37,6 +39,7 @@ export default function LikertScale({
   points = 7,
   anchors = ['Very Low', 'Very High'],
   pointLabels,
+  labelsUnderOptions = false,
   onAnswer,
   value,
   displayNumber,
@@ -45,6 +48,33 @@ export default function LikertScale({
   fieldId,
 }: LikertScaleProps) {
   const [hovered, setHovered] = useState<number | null>(null)
+  const showLabelsUnderOptions = labelsUnderOptions && pointLabels?.length === points
+
+  const renderResponseButton = (n: number) => (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={value === n}
+      aria-label={pointLabels?.[n - 1] ? `${n}: ${pointLabels[n - 1]}` : String(n)}
+      data-testid={`likert-${code}-${n}`}
+      onClick={() => onAnswer(n)}
+      onMouseEnter={() => setHovered(n)}
+      onMouseLeave={() => setHovered(null)}
+      className={`
+        w-10 h-10 rounded-full text-[14px] font-bold transition-all duration-150
+        flex items-center justify-center flex-shrink-0
+        ${value === n
+          ? 'bg-black text-white shadow-md scale-110'
+          : hovered === n
+            ? 'bg-gray-200 text-black'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }
+        active:scale-95
+      `}
+    >
+      {n}
+    </button>
+  )
 
   return (
     <div
@@ -83,45 +113,41 @@ export default function LikertScale({
 
       {/* Scale */}
       <div
-        className="flex items-center justify-between gap-2"
+        className={showLabelsUnderOptions
+          ? 'grid grid-cols-7 gap-1.5 items-start'
+          : 'flex items-center justify-between gap-2'
+        }
         role="radiogroup"
         aria-label={hideCode ? `Question ${displayNumber}` : code}
+        data-testid={showLabelsUnderOptions ? `likert-labeled-scale-${code}` : undefined}
       >
         {Array.from({ length: points }, (_, i) => i + 1).map((n) => (
-          <button
-            key={n}
-            type="button"
-            role="radio"
-            aria-checked={value === n}
-            data-testid={`likert-${code}-${n}`}
-            onClick={() => onAnswer(n)}
-            onMouseEnter={() => setHovered(n)}
-            onMouseLeave={() => setHovered(null)}
-            className={`
-              w-10 h-10 rounded-full text-[14px] font-bold transition-all duration-150
-              flex items-center justify-center flex-shrink-0
-              ${value === n
-                ? 'bg-black text-white shadow-md scale-110'
-                : hovered === n
-                  ? 'bg-gray-200 text-black'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }
-              active:scale-95
-            `}
-          >
-            {n}
-          </button>
+          showLabelsUnderOptions ? (
+            <div key={n} className="min-w-0 flex flex-col items-center">
+              {renderResponseButton(n)}
+              <span
+                data-testid={`likert-inline-label-${code}-${n}`}
+                className="mt-2 w-full text-center text-[12px] leading-[1.25] font-medium text-gray-700 break-words"
+              >
+                {pointLabels?.[n - 1]}
+              </span>
+            </div>
+          ) : (
+            <React.Fragment key={n}>{renderResponseButton(n)}</React.Fragment>
+          )
         ))}
       </div>
 
       {/* Anchors */}
-      <div className="flex justify-between mt-2 px-1">
-        <span className="text-[11px] text-gray-400 font-medium">{anchors[0]}</span>
-        <span className="text-[11px] text-gray-400 font-medium">{anchors[1]}</span>
-      </div>
+      {!showLabelsUnderOptions && (
+        <div className="flex justify-between mt-2 px-1">
+          <span className="text-[11px] text-gray-400 font-medium">{anchors[0]}</span>
+          <span className="text-[11px] text-gray-400 font-medium">{anchors[1]}</span>
+        </div>
+      )}
 
       {/* Optional full numeric legend (e.g. for attention checks) */}
-      {pointLabels && pointLabels.length === points && (
+      {!showLabelsUnderOptions && pointLabels && pointLabels.length === points && (
         <div className="mt-3 rounded-[10px] bg-gray-50 border border-gray-100 px-3 py-2.5">
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {pointLabels.map((label, i) => (

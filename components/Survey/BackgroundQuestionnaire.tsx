@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import ResearchPage from '../shared/ResearchPage'
+import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
 
 /**
@@ -27,6 +28,7 @@ interface SelectItem {
   code: string
   question: string
   options: { label: string; value: string }[]
+  presentation?: 'likert'
 }
 
 const ITEMS: SelectItem[] = [
@@ -53,40 +55,50 @@ const ITEMS: SelectItem[] = [
   },
   {
     code: 'FAM1',
-    question: 'How familiar are you with super apps such as Uber,Grab, WeChat, or similar?',
+    question: 'How familiar are you with super apps such as Uber, Grab, WeChat, or similar?',
+    presentation: 'likert',
     options: [
       { label: 'Not at all familiar', value: '1' },
-      { label: 'Slightly familiar', value: '2' },
-      { label: 'Moderately familiar', value: '3' },
-      { label: 'Very familiar', value: '4' },
-      { label: 'Extremely familiar', value: '5' },
+      { label: 'Very slightly familiar', value: '2' },
+      { label: 'Slightly familiar', value: '3' },
+      { label: 'Moderately familiar', value: '4' },
+      { label: 'Quite familiar', value: '5' },
+      { label: 'Very familiar', value: '6' },
+      { label: 'Extremely familiar', value: '7' },
     ],
   },
   {
     code: 'FAM2',
-    question: 'How clear an idea do you have about which characteristics of a superapp are important for you to have a satisfying experience using it?',
+    question: 'How clear an idea do you have about which characteristics of a super app are important for you to have a satisfying experience using it?',
+    presentation: 'likert',
     options: [
       { label: 'Not at all clear', value: '1' },
-      { label: 'Slightly clear', value: '2' },
-      { label: 'Moderately clear', value: '3' },
-      { label: 'Very clear', value: '4' },
-      { label: 'Extremely clear', value: '5' },
+      { label: 'Very slightly clear', value: '2' },
+      { label: 'Slightly clear', value: '3' },
+      { label: 'Moderately clear', value: '4' },
+      { label: 'Quite clear', value: '5' },
+      { label: 'Very clear', value: '6' },
+      { label: 'Extremely clear', value: '7' },
     ],
   },
   {
     code: 'KNW1',
     question: 'How would you rate your knowledge about super apps relative to the general population?',
+    presentation: 'likert',
     options: [
-      { label: 'Much less knowledgeable', value: '1' },
-      { label: 'Somewhat less knowledgeable', value: '2' },
-      { label: 'About the same', value: '3' },
-      { label: 'Somewhat more knowledgeable', value: '4' },
-      { label: 'Much more knowledgeable', value: '5' },
+      { label: 'Far below average', value: '1' },
+      { label: 'Below average', value: '2' },
+      { label: 'Slightly below average', value: '3' },
+      { label: 'About average', value: '4' },
+      { label: 'Slightly above average', value: '5' },
+      { label: 'Above average', value: '6' },
+      { label: 'Far above average', value: '7' },
     ],
   },
   {
     code: 'KNW2',
-    question: 'I know a lot about superapps.',
+    question: 'I know a lot about super apps.',
+    presentation: 'likert',
     options: [
       { label: 'Strongly disagree', value: '1' },
       { label: 'Disagree', value: '2' },
@@ -99,24 +111,16 @@ const ITEMS: SelectItem[] = [
   },
   {
     code: 'USE1',
-    question: 'How frequently do you use superapps?',
+    question: 'How frequently do you use super apps?',
+    presentation: 'likert',
     options: [
-      { label: 'Never', value: 'never' },
-      { label: 'Rarely', value: 'rarely' },
-      { label: 'Monthly', value: 'monthly' },
-      { label: 'Weekly', value: 'weekly' },
-      { label: 'Daily', value: 'daily' },
-    ],
-  },
-  {
-    code: 'USE2',
-    question: 'How often do you use multi-service super apps?',
-    options: [
-      { label: 'Never', value: 'never' },
-      { label: 'Rarely', value: 'rarely' },
-      { label: 'Monthly', value: 'monthly' },
-      { label: 'Weekly', value: 'weekly' },
-      { label: 'Daily', value: 'daily' },
+      { label: 'Never', value: '1' },
+      { label: 'Very rarely', value: '2' },
+      { label: 'Rarely', value: '3' },
+      { label: 'Sometimes', value: '4' },
+      { label: 'Often', value: '5' },
+      { label: 'Very often', value: '6' },
+      { label: 'All the time', value: '7' },
     ],
   },
   {
@@ -147,7 +151,7 @@ const ITEMS: SelectItem[] = [
  * Participant-facing order. Internal codes (DEM1, …) are never shown —
  * only sequential numbers.
  */
-const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'USE2', 'SWI1', 'SWI2']
+const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'SWI1', 'SWI2']
 const ITEM_BY_CODE: Record<string, SelectItem> = Object.fromEntries(ITEMS.map((i) => [i.code, i]))
 
 export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuestionnaireProps) {
@@ -276,6 +280,25 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
           const item = ITEM_BY_CODE[code]
           const number = ORDERED_CODES.indexOf(code) + 25
           const invalid = showErrors && responses[code] === undefined
+          if (item.presentation === 'likert') {
+            return (
+              <LikertScale
+                key={code}
+                code={code}
+                fieldId={`q-${code}`}
+                displayNumber={number}
+                hideCode
+                question={item.question}
+                points={7}
+                anchors={[item.options[0].label, item.options[item.options.length - 1].label]}
+                pointLabels={item.options.map((option) => option.label)}
+                labelsUnderOptions
+                value={responses[code] === undefined ? undefined : Number(responses[code])}
+                invalid={invalid}
+                onAnswer={(value) => handleAnswer(code, String(value))}
+              />
+            )
+          }
           return (
             <div
               key={code}
