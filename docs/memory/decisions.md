@@ -412,6 +412,66 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-10-21
 **Rationale**: Participants should understand the study's central product concept before beginning, and underlined task titles make the two required tasks easier to scan without changing condition-specific instructions.
 
+### ADR-049: Emphasize the Super App Term on the Scenario Screen
+**Decision**: Render “super app” in bold within the shared introductory sentence on the scenario screen for G1–G4.
+**Date**: 2026-11-04
+**Rationale**: Emphasizing the product category makes the key study concept easier to identify while keeping identical presentation across all conditions.
+
+### ADR-050: Require Complete Survey Pages Before Navigation
+**Decision**: Block the shared post-task survey's Continue action until every question on the current page has an answer. Show an accessible warning and focus the first unanswered item when validation fails.
+**Date**: 2026-11-04
+**Rationale**: Page-level validation prevents incomplete responses from being skipped while giving participants a clear path to correct the omission consistently across G1–G4.
+
+### ADR-051: Use Forward-Only Survey Navigation
+**Decision**: Remove the Back control from the shared post-task survey and label every forward action across the three survey pages “Continue” for G1–G4.
+**Date**: 2026-11-04
+**Rationale**: A single forward-only navigation pattern keeps the participant flow consistent and makes the action on each survey page unambiguous.
+
+### ADR-052: Bold Every Super App Mention on the Scenario Screen
+**Decision**: Render all three visible “super app” mentions in bold on the shared scenario screen for G1–G4: the introduction, definition, and simulated-task notice.
+**Date**: 2026-11-04
+**Rationale**: Consistent emphasis makes the study's central product category visually clear throughout the scenario instructions without creating condition-specific differences.
+
+### ADR-053: Emphasize Only the Super App Definition
+**Decision**: Supersede ADR-052 by bolding only “super app” in the definition sentence (“A super app combines…”). Keep the introductory sentence and simulated-task notice at regular weight across G1–G4.
+**Date**: 2026-11-04
+**Rationale**: The definition is the intended point of emphasis; limiting bold styling to that term avoids unnecessary repetition elsewhere on the scenario screen.
+
+### ADR-054: Preserve Supplied Survey Wording Verbatim
+**Decision**: Replace participant-facing survey questions 1–5 with the exact user-supplied wording across G1–G4. Preserve the current order, response scales, pagination, and internal item IDs while the remaining survey wording is revised.
+**Date**: 2026-11-04
+**Rationale**: Incremental verbatim updates prevent unintended editorial changes and keep the current survey mechanics stable until the complete revised instrument is supplied.
+
+### ADR-055: Make the Seven-Point Survey Scale Explicit
+**Decision**: Explicitly render seven response points for the shared post-task survey and add regression coverage confirming seven choices for questions 1–5 across the shared G1–G4 implementation.
+**Date**: 2026-11-04
+**Rationale**: An explicit scale size prevents an incidental default change from altering the approved seven-point instrument.
+
+### ADR-056: Put Survey Questions 1–10 on Page One
+**Decision**: Replace questions 6–10 with the exact approved wording across G1–G4 and move the first survey page break from after question 9 to after question 10. Continue remains blocked until all ten page-one questions are answered.
+**Date**: 2026-11-04
+**Rationale**: The approved instrument groups the first ten questions on one page while preserving the existing seven-point scale and required-response navigation behavior.
+
+### ADR-057: Use a Five-Question Second Survey Page
+**Decision**: Replace survey questions 11–15 with the exact approved continuance and attention-check wording across G1–G4. Page 2 contains CI1–CI4 plus AC1 only; the former questions 16–20 are removed from the live instrument.
+**Date**: 2026-11-04
+**Rationale**: The approved survey has 15 total items: five cognitive-load questions, five usability questions, four continuance questions, and one attention check. Historical manipulation-check diagnostics retain their legacy instrument definitions so old data is not reinterpreted.
+
+### ADR-058: Add the Revised Questions 16–20 to Survey Page Two
+**Decision**: Add the five approved questions verbatim after AC1 on survey page 2 for G1–G4. Q16–Q19 measure cross-service interrelatedness and Q20 measures service-purpose heterogeneity; all use the seven-point scale.
+**Date**: 2026-11-04
+**Rationale**: The revised 20-item instrument keeps Q11–Q20 together on page 2 and preserves required-response validation before participants continue to the background questionnaire.
+
+### ADR-059: Extend Survey Page Two Through Question 24
+**Decision**: Keep Q20 unchanged, add the four approved heterogeneity questions as Q21–Q24, and place the end-of-page-2 break after Q24 for G1–G4.
+**Date**: 2026-11-04
+**Rationale**: The approved instrument groups Q11–Q24 on survey page 2 and requires all fourteen responses before participants continue to the background questionnaire.
+
+### ADR-060: Make Questions 25–34 the Final Survey Page
+**Decision**: Replace the six-item background questionnaire with the ten approved questions numbered Q25–Q34 across G1–G4. Preserve the supplied wording exactly, including Q27 as “How familiar are you with super apps such as Uber,Grab, WeChat, or similar?”, and require all ten answers before the final Continue action.
+**Date**: 2026-11-04
+**Rationale**: The final survey page must follow the approved 34-question instrument while retaining shared, forward-only, required-response navigation for every condition.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

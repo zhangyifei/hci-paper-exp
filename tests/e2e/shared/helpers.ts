@@ -46,9 +46,13 @@ export async function completeBackgroundQuestionnaire(page: Page) {
   const answers = [
     'questionnaire-option-DEM1-25-34',
     'questionnaire-option-DEM2-male',
-    'questionnaire-option-FAM1-weekly',
+    'questionnaire-option-FAM1-4',
     'questionnaire-option-FAM2-4',
-    'questionnaire-option-SWI1-2',
+    'questionnaire-option-KNW1-4',
+    'questionnaire-option-KNW2-5',
+    'questionnaire-option-USE1-weekly',
+    'questionnaire-option-USE2-weekly',
+    'questionnaire-option-SWI1-4',
     'questionnaire-option-SWI2-sometimes',
   ]
 
@@ -120,7 +124,7 @@ export async function assertNoBanner(page: Page) {
 }
 
 /**
- * Complete the 15-item post-task survey (14 constructs + AC1 attention check).
+ * Complete the 24-item post-task survey (23 constructs + AC1 attention check).
  * AC1 must be answered "Somewhat agree" (value 5) to avoid termination; all
  * other items default to value 4 unless overridden.
  */
@@ -129,8 +133,11 @@ export async function completePostTaskSurvey(
   opts: { ac1Value?: number } = {},
 ) {
   const ac1Value = opts.ac1Value ?? 5
-  const page1 = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']
-  const page2 = ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
+  const page1 = ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']
+  const page2 = [
+    'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
+    'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+  ]
 
   const answer = async (code: string) => {
     const value = code === 'AC1' ? ac1Value : 4

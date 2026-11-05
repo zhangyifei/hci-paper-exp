@@ -7,7 +7,32 @@
 import { writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { mean, sd, welch, pearson, cronbachAlpha, anova2x2 } from './lib/stats.mjs'
-import { OUT, DEFAULT_BATCH_ID, db, query, PROLIFIC_PID, DESIGN, ITEMS, REVERSE, SURVEY_CODES, ITEM_WORDING, scored, construct } from './lib/batch-common.mjs'
+import { OUT, DEFAULT_BATCH_ID, db, query, PROLIFIC_PID, DESIGN } from './lib/batch-common.mjs'
+
+// Historical study-v2 instrument used by the completed batch this diagnostic reads.
+// Keep it local so revisions to the live participant survey do not reinterpret old data.
+const ITEMS = {
+  CL: ['CL1', 'CL2', 'CL3'],
+  PU: ['PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6'],
+  CI: ['CI1', 'CI2', 'CI3', 'CI4'],
+  MCi: ['MC1', 'MC2', 'MC5'],
+  MCh: ['MC3', 'MC4', 'MC6'],
+}
+const REVERSE = new Set(['PU3', 'PU5', 'PU6', 'CI4', 'MC5', 'MC6'])
+const SURVEY_CODES = [...Object.values(ITEMS).flat(), 'AC1']
+const ITEM_WORDING = {
+  CL1: 'How much mental activity was required to complete these tasks?',
+  CL2: 'How hard did you have to work mentally to reach your performance?',
+  CL3: 'How stressed or annoyed did you feel during the tasks?',
+  MC1: 'The super app prompted me with the next service at the right moment.',
+  MC2: 'My details (e.g., my address) were already filled in for the second service.',
+  MC5: 'I had to enter my address again from scratch for the second service.',
+  MC3: 'The second service was a clearly different type of task from booking a ride.',
+  MC4: 'The steps for the second service were unlike those for booking the ride.',
+  MC6: 'The two services felt like basically the same kind of activity.',
+}
+const scored = (code, value) => (REVERSE.has(code) ? 8 - value : value)
+const construct = (survey, key) => mean(ITEMS[key].map((code) => scored(code, survey[code])).filter(Number.isFinite))
 
 const BATCH_ID = process.argv[2] || DEFAULT_BATCH_ID
 const OUT_BASE = process.argv[3] || 'mc-diagnostic-batch2'

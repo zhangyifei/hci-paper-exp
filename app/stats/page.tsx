@@ -43,7 +43,7 @@ interface SurveyStat {
   cognitiveLoad: { mean: number; sd: number; values: number[] }
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
-  manipCheck: { mean: number; sd: number; values: number[] }
+  manipCheck: { mean: number; sd: number; values: number[] } | null
   mcInterrel?: { mean: number; sd: number; values: number[] } | null
   mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }
@@ -536,7 +536,7 @@ export default function StatsPage() {
                 msd(s.cognitiveLoad.mean, s.cognitiveLoad.sd),
                 msd(s.usability.mean, s.usability.sd),
                 msd(s.continuance.mean, s.continuance.sd),
-                msd(s.manipCheck.mean, s.manipCheck.sd),
+                s.manipCheck ? msd(s.manipCheck.mean, s.manipCheck.sd) : '—',
                 s.mcInterrel ? msd(s.mcInterrel.mean, s.mcInterrel.sd) : '—',
                 s.mcHeterog ? msd(s.mcHeterog.mean, s.mcHeterog.sd) : '—',
               ]
@@ -566,7 +566,7 @@ export default function StatsPage() {
                       { label: 'CL', vals: s.cognitiveLoad.values },
                       { label: 'PU', vals: s.usability.values },
                       { label: 'CI', vals: s.continuance.values },
-                      { label: 'MC', vals: s.manipCheck.values },
+                      ...(s.manipCheck ? [{ label: 'MC', vals: s.manipCheck.values }] : []),
                       ...(s.mcInterrel ? [{ label: 'MC-I', vals: s.mcInterrel.values }] : []),
                       ...(s.mcHeterog ? [{ label: 'MC-H', vals: s.mcHeterog.values }] : []),
                     ].map(({ label, vals }) => (

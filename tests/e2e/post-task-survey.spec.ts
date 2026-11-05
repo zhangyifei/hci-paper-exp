@@ -3,7 +3,7 @@ import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSu
 
 /**
  * Coverage for the new onboarding (consent + scenario) screens and the
- * updated 14-item post-task survey.
+ * updated 24-item post-task survey.
  */
 
 const RIDE_INSTRUCTION = 'Book a ride to 1000 Saint-Catherine Street West.'
@@ -43,6 +43,12 @@ test.describe('Onboarding — scenario instruction', () => {
     await page.getByTestId('btn-consent-continue').click({ force: true })
 
     await expect(page.getByTestId('btn-scenario-start')).toBeVisible()
+    await expect(page.getByTestId('scenario-super-app-term-definition')).toHaveCSS(
+      'font-weight',
+      '700'
+    )
+    await expect(page.getByTestId('scenario-super-app-term')).toHaveCount(0)
+    await expect(page.getByTestId('scenario-super-app-term-note')).toHaveCount(0)
     await expect(page.getByTestId('super-app-definition')).toHaveText(
       'A super app combines multiple services in one application—for example, ride booking, food delivery, shopping, and payments.'
     )
@@ -130,7 +136,7 @@ test.describe('Onboarding — scenario instruction', () => {
 })
 
 test.describe('Post-task survey — items + attention check', () => {
-  test('G1: survey is paginated, hides codes, AC1 on page 2, MC items on page 2', async ({ page }) => {
+  test('G1: survey is paginated, hides codes, and places AC1 on page 2', async ({ page }) => {
     await goToCondition(page, 'G1')
     await completeRidePhase(page)
     await advanceToService2(page, false)
@@ -141,25 +147,78 @@ test.describe('Post-task survey — items + attention check', () => {
     // Page 1 of 3, Continue present, Submit not yet
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 3')
     await expect(page.getByTestId('btn-survey-continue')).toBeVisible()
+    await expect(page.getByTestId('btn-survey-continue')).toHaveText('Continue')
     await expect(page.getByTestId('btn-submit-survey')).toHaveCount(0)
 
     // Internal codes are hidden from participants
     await expect(page.getByText('CL1', { exact: true })).toHaveCount(0)
 
-    // Page 1 holds the usability item; the attention check is NOT here anymore
-    await expect(page.getByText('I found this super app easy to use for these consecutive tasks.')).toBeVisible()
+    // Page 1 uses the exact supplied wording for questions 1–10; the attention check is not here.
+    for (const question of [
+      'How much mental activity was required to complete the two tasks?',
+      'How hard did you have to work mentally to complete these two tasks?',
+      'Using this app required a lot of thinking.',
+      'While using this app, I had to think carefully about what to do next.',
+      'Overall, using this app was mentally demanding.',
+      'I found this app easy to use for these consecutive tasks.',
+      'I felt I could efficiently complete my goal using this app.',
+      'The transition between the two services felt smooth.',
+      'The app made it easy to continue from the first service to the second service.',
+      'Using this app was a frustrating experience.',
+    ]) {
+      await expect(page.getByText(question, { exact: true })).toBeVisible()
+    }
+    for (const code of ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
+      await expect(page.getByTestId(`survey-item-${code}`).getByRole('radio')).toHaveCount(7)
+    }
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
-    // Page 2 holds the attention check (with its numeric legend) and MC items
+    // Continue is blocked until every page-1 item has an answer.
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await page.getByTestId('btn-survey-continue').click({ force: true })
+    await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 1 of 3')
+    await expect(page.getByTestId('survey-warning')).toContainText(
+      'Please answer all required questions before continuing.'
+    )
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
+
+    for (const code of ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
+      await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
+    }
+
+    // Page 2 holds questions 11–24, with the attention check at question 15.
+    await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 3')
+    await expect(page.getByTestId('survey-warning')).toHaveCount(0)
+    for (const question of [
+      'I intend to continue using this app rather than discontinue its use.',
+      'My intentions are to continue using this app rather than use any alternative app.',
+      'I would choose this super app again for similar tasks.',
+      'I would like to continue my use of this app.',
+      'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
+      'The app provided a direct link from the first service to the second service.',
+      'The app allowed me to go straight from the first service to the second service.',
+      'Information from the first service was automatically carried over to the second service.',
+      'The destination address from my ride booking was automatically filled in for the second service.',
+      'The two services served different purposes.',
+      'The main functions performed by the two services are different.',
+      'The two services belong to different broad service categories.',
+      'The two services follow different steps to complete their main tasks.',
+      'The two services involve different types of activities.',
+    ]) {
+      await expect(page.getByText(question, { exact: true })).toBeVisible()
+    }
+    for (const code of [
+      'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
+      'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+    ]) {
+      await expect(page.getByTestId(`survey-item-${code}`).getByRole('radio')).toHaveCount(7)
+    }
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
     await expect(page.getByText('5 = Somewhat agree')).toBeVisible()
-    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toBeVisible()
-    await expect(page.getByText('The steps for the second service were unlike those for booking the ride.')).toBeVisible()
-    await expect(page.getByTestId('btn-submit-survey')).toBeVisible()
-    await expect(page.getByTestId('btn-survey-back')).toBeVisible()
+    await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
+    await expect(page.getByTestId('btn-submit-survey')).toHaveText('Continue')
+    await expect(page.getByTestId('btn-survey-back')).toHaveCount(0)
   })
 
   test('G1: submitting with a missing answer warns and blocks', async ({ page }) => {
@@ -171,13 +230,16 @@ test.describe('Post-task survey — items + attention check', () => {
     await page.getByTestId('btn-service2-done').click({ force: true })
 
     // Answer page 1 fully
-    for (const code of ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']) {
+    for (const code of ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
       await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-survey-continue').click({ force: true })
 
-    // Leave one page-2 item unanswered, then submit (AC1 = 5)
-    for (const code of ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4']) {
+    // Leave MC9 (question 24) unanswered, then submit (AC1 = 5).
+    for (const code of [
+      'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
+      'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8',
+    ]) {
       const value = code === 'AC1' ? 5 : 4
       await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
     }
@@ -187,8 +249,8 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByTestId('survey-warning')).toBeVisible()
     await expect(page.getByTestId('btn-submit-questionnaire')).toHaveCount(0)
 
-    // Completing the last item allows submission
-    await page.getByTestId('likert-MC6-4').evaluate((n) => (n as HTMLButtonElement).click())
+    // Completing the last item allows submission.
+    await page.getByTestId('likert-MC9-4').evaluate((n) => (n as HTMLButtonElement).click())
     await page.getByTestId('btn-submit-survey').click({ force: true })
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
   })
@@ -203,13 +265,37 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
-    // Answer all 15 items with AC1 correct (5), then submit
+    // Answer all 24 items with AC1 correct (5), then submit
     await expect(page.getByTestId('screen-survey')).toBeVisible()
     await completePostTaskSurvey(page, { ac1Value: 5 })
 
     // Background questionnaire now appears after the survey (docx order)
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('questionnaire-option-SWI1-single-app')).toBeVisible()
+    await expect(page.getByTestId('btn-submit-questionnaire')).toHaveText('Continue')
+    await expect(page.getByTestId('questionnaire-page-indicator')).toHaveText('Page 3 of 3')
+
+    const questions = [
+      'What is your age range?',
+      'What is your gender?',
+      'How familiar are you with super apps such as Uber,Grab, WeChat, or similar?',
+      'How clear an idea do you have about which characteristics of a superapp are important for you to have a satisfying experience using it?',
+      'How would you rate your knowledge about super apps relative to the general population?',
+      'I know a lot about superapps.',
+      'How frequently do you use superapps?',
+      'How often do you use multi-service super apps?',
+      'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
+      'How often do you switch between services mid-session (e.g. finish a ride, then order food without closing the app)?',
+    ]
+    for (const question of questions) {
+      await expect(page.getByText(question, { exact: true })).toBeVisible()
+    }
+
+    // Page 3 is the final survey page, uses Q25–Q34, and requires every answer.
+    await page.getByTestId('btn-submit-questionnaire').click({ force: true })
+    await expect(page.getByTestId('questionnaire-warning')).toContainText(
+      'Question 25 still needs an answer'
+    )
+    await expect(page.getByTestId('screen-questionnaire')).toBeVisible()
   })
 
   test('G1: failing AC1 ends the test and never reaches the questionnaire', async ({ page }) => {

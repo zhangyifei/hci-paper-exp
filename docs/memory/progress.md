@@ -790,3 +790,83 @@ Design mockups analyzed. Key findings per condition:
 - Underlined the bold Ride, Courier, and Cinema task titles across G1–G4.
 - Preserved the regular-weight task instructions and existing address styling.
 - Added onboarding E2E assertions for the definition and title underlines.
+
+## 2026-11-04 — Bolded “super app” on the scenario screen
+
+- Bolded “super app” in the shared introductory sentence for G1–G4.
+- Added a focused E2E assertion for the rendered font weight.
+
+## 2026-11-04 — Required complete survey pages before continuing
+
+- Added page-level validation to the shared G1–G4 post-task survey.
+- Continue now keeps participants on page 1 when any page-1 question is unanswered.
+- Added an accessible warning plus focus and scroll behavior for the first missing response.
+- Updated E2E coverage for the blocked and successful navigation paths.
+
+## 2026-11-04 — Standardized survey navigation
+
+- Removed the Back button from the shared G1–G4 survey.
+- Renamed the page-2 “Submit Feedback” and page-3 “Finish” actions to “Continue.”
+- Aligned validation warnings with the forward-action wording.
+- Added E2E assertions for the labels and absence of backward navigation.
+
+## 2026-11-04 — Bolded every scenario-screen “super app” mention
+
+- Bolded “super app” in the introduction, definition, and simulated-task notice for G1–G4.
+- Expanded E2E styling coverage to all three occurrences.
+
+## 2026-11-04 — Limited “super app” emphasis to the definition
+
+- Kept “super app” bold only in the “A super app combines…” definition for G1–G4.
+- Restored regular weight in the first introductory sentence and simulated-task notice.
+- Updated E2E coverage to enforce the single intended emphasis.
+
+## 2026-11-04 — Replaced survey questions 1–5 verbatim
+
+- Applied the supplied wording to questions 1–5 in the shared G1–G4 survey.
+- Updated active batch-export wording maps to match the participant-facing text exactly.
+- Preserved the existing question order, response scales, pagination, and internal IDs.
+- Added exact-text E2E assertions for all five questions.
+
+## 2026-11-04 — Locked the survey to seven response points
+
+- Made the seven-point scale explicit in the shared G1–G4 post-task survey.
+- Added E2E assertions confirming seven choices for questions 1–5.
+
+## 2026-11-04 — Replaced survey questions 6–10 and moved the page break
+
+- Applied the supplied wording verbatim to questions 6–10 for G1–G4.
+- Expanded survey page 1 from nine to ten questions and moved the page break after question 10.
+- Preserved the seven-point scale and required-response validation before Continue.
+- Updated active export wording, construct scoring, shared helpers, and E2E assertions.
+
+## 2026-11-04 — Rebuilt survey page 2 as questions 11–15
+
+- Applied the supplied wording verbatim to continuance questions 11–14 and retained the approved attention check as question 15.
+- Removed former participant-facing questions 16–20 from the live G1–G4 survey.
+- Standardized active item codes to CL1–CL5, PU1–PU5, CI1–CI4, and AC1.
+- Preserved seven-point scales, required-answer validation, Continue-only navigation, and the attention-check answer of 5.
+- Updated active exports, simulations, paper statistics compatibility, shared helpers, and E2E coverage for the 15-item instrument.
+
+## 2026-11-04 — Added revised survey questions 16–20
+
+- Applied the supplied wording verbatim to Q16–Q20 for G1–G4.
+- Kept Q11–Q20 together on survey page 2 with seven response points per question.
+- Extended required-answer validation so all ten page-two questions must be complete before Continue.
+- Added the revised MC1–MC5 wording to active exports, simulations, scoring, and E2E coverage.
+
+## 2026-11-04 — Extended survey page 2 through question 24
+
+- Kept Q20 unchanged and applied the supplied wording verbatim to Q21–Q24 for G1–G4.
+- Moved the end-of-page-2 break after Q24.
+- Extended required-answer validation so all fourteen page-two questions must be complete before Continue.
+- Updated active exports, simulation scoring, shared helpers, and E2E coverage for MC5–MC9.
+
+## 2026-11-04 — Rebuilt the final survey page as questions 25–34
+
+- Applied the ten supplied final-page questions across G1–G4 and numbered them Q25–Q34.
+- Used the revised Q27 wording exactly: “How familiar are you with super apps such as Uber,Grab, WeChat, or similar?”
+- Kept the existing age and gender options and added response options appropriate to the approved familiarity, knowledge, usage, and switching questions.
+- Required all ten responses before the final Continue action and retained forward-only navigation.
+- Updated active exports, simulation data, shared E2E helpers, and exact-text regression coverage.
+- Passed the production build and a full local browser flow verifying Q25–Q34, missing-answer warnings at Q25 and Q34, and successful completion after all ten responses.

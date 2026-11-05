@@ -24,7 +24,7 @@ export interface SurveyAggregates {
   cognitive_load_mean: number
   usability_mean: number
   continuance_mean: number
-  manipulation_check_mean: number
+  manipulation_check_mean?: number | null
   // v2 splits the manipulation check into two constructs (null for pre-v2 data).
   mc_interrelatedness_mean?: number | null
   mc_heterogeneity_mean?: number | null
@@ -65,7 +65,7 @@ export interface SurveyConditionStats {
   cognitiveLoad: { mean: number; sd: number; values: number[] }
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
-  manipCheck: { mean: number; sd: number; values: number[] }
+  manipCheck: { mean: number; sd: number; values: number[] } | null
   mcInterrel?: { mean: number; sd: number; values: number[] } | null
   mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }
@@ -174,8 +174,7 @@ export function getSurveyAggregates(
   if (
     typeof cognitiveLoad !== 'number' ||
     typeof usability !== 'number' ||
-    typeof continuance !== 'number' ||
-    manipulationCheck == null
+    typeof continuance !== 'number'
   ) {
     return null
   }
@@ -184,7 +183,7 @@ export function getSurveyAggregates(
     cognitive_load_mean: cognitiveLoad,
     usability_mean: usability,
     continuance_mean: continuance,
-    manipulation_check_mean: manipulationCheck,
+    manipulation_check_mean: manipulationCheck ?? null,
     mc_interrelatedness_mean: mciNum,
     mc_heterogeneity_mean: mchNum,
   }
@@ -374,7 +373,9 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       const cl = aggregates.map((aggregate) => aggregate.cognitive_load_mean)
       const us = aggregates.map((aggregate) => aggregate.usability_mean)
       const ci = aggregates.map((aggregate) => aggregate.continuance_mean)
-      const mc = aggregates.map((aggregate) => aggregate.manipulation_check_mean)
+      const mc = aggregates
+        .map((aggregate) => aggregate.manipulation_check_mean)
+        .filter((value): value is number => typeof value === 'number')
       const mci = aggregates
         .map((a) => a.mc_interrelatedness_mean)
         .filter((v): v is number => typeof v === 'number')
@@ -389,7 +390,7 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
           cognitiveLoad: { mean: mean(cl), sd: sd(cl), values: cl },
           usability: { mean: mean(us), sd: sd(us), values: us },
           continuance: { mean: mean(ci), sd: sd(ci), values: ci },
-          manipCheck: { mean: mean(mc), sd: sd(mc), values: mc },
+          manipCheck: mc.length ? { mean: mean(mc), sd: sd(mc), values: mc } : null,
           mcInterrel: mci.length ? { mean: mean(mci), sd: sd(mci), values: mci } : null,
           mcHeterog: mch.length ? { mean: mean(mch), sd: sd(mch), values: mch } : null,
         } satisfies SurveyConditionStats,
@@ -443,7 +444,11 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       cl: buildMeanSd(noBridge.map((survey) => survey.cognitive_load_mean)),
       pu: buildMeanSd(noBridge.map((survey) => survey.usability_mean)),
       ci: buildMeanSd(noBridge.map((survey) => survey.continuance_mean)),
-      mc: buildMeanSd(noBridge.map((survey) => survey.manipulation_check_mean)),
+      mc: buildMeanSd(
+        noBridge
+          .map((survey) => survey.manipulation_check_mean)
+          .filter((value): value is number => typeof value === 'number'),
+      ),
     },
     bridge: {
       label: 'High (G2+G4 bridge)',
@@ -451,7 +456,11 @@ export function computePaperStats(rows: PaperStatsEventRow[]): PaperStatsSummary
       cl: buildMeanSd(bridge.map((survey) => survey.cognitive_load_mean)),
       pu: buildMeanSd(bridge.map((survey) => survey.usability_mean)),
       ci: buildMeanSd(bridge.map((survey) => survey.continuance_mean)),
-      mc: buildMeanSd(bridge.map((survey) => survey.manipulation_check_mean)),
+      mc: buildMeanSd(
+        bridge
+          .map((survey) => survey.manipulation_check_mean)
+          .filter((value): value is number => typeof value === 'number'),
+      ),
     },
   }
 

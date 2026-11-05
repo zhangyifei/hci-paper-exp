@@ -12,12 +12,12 @@ import { logger } from '@/lib/logger'
  * revised for study v2 to reduce ceiling/acquiescence (reverse-coded items) and
  * to split the manipulation checks into two constructs.
  *
- *   Cognitive Load  (CL1-CL3)      — Raw TLX adapted, 1 (Very low) – 7 (Very high)
- *   Usability       (PU1-PU6)      — SUS adapted; PU3/PU5/PU6 reverse-coded
- *   Continuance     (CI1-CI4)      — future-use intent; CI4 reverse-coded
- *   MC interrelated (MC1,MC2,MC5)  — prompting / data carry-over; MC5 reverse-coded
- *   MC heterogeneity(MC3,MC4,MC6)  — service dissimilarity; MC6 reverse-coded
- *   Attention       (AC1)          — must select "Somewhat agree" (5); scored separately.
+ *   Cognitive Load  (CL1-CL5)      — questions 1–5
+ *   Usability       (PU1-PU5)      — questions 6–10; PU5 reverse-coded
+ *   Continuance     (CI1-CI4)      — questions 11–14
+ *   Attention       (AC1)          — question 15; must select "Somewhat agree" (5).
+ *   MC interrelated (MC1-MC4)      — questions 16–19
+ *   MC heterogeneity(MC5-MC9)      — questions 20–24
  *
  * Reverse-coded items are flipped (8 - response) before construct averaging.
  * All items use a 1–7 response scale (LikertScale default points = 7).
@@ -26,6 +26,7 @@ import { logger } from '@/lib/logger'
 /** AC1 correct answer: "Somewhat agree" on the 1–7 scale. */
 export const AC1_CODE = 'AC1'
 export const AC1_CORRECT_VALUE = 5
+const SURVEY_SCALE_POINTS = 7
 
 interface PostTaskSurveyProps {
   onComplete: () => void
@@ -48,72 +49,76 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'CL1',
     construct: 'cognitive_load',
-    question: 'How much mental activity was required to complete these tasks?',
+    question: 'How much mental activity was required to complete the two tasks?',
     anchors: ['Very Low', 'Very High'],
   },
   {
     code: 'CL2',
     construct: 'cognitive_load',
-    question: 'How hard did you have to work mentally to reach your performance?',
+    question: 'How hard did you have to work mentally to complete these two tasks?',
     anchors: ['Very Low', 'Very High'],
   },
   {
     code: 'CL3',
     construct: 'cognitive_load',
-    question: 'How stressed or annoyed did you feel during the tasks?',
+    question: 'Using this app required a lot of thinking.',
     anchors: ['Very Low', 'Very High'],
   },
   // ── Perceived Usability (SUS adapted) ─────────────────────────────
   {
+    code: 'CL4',
+    construct: 'cognitive_load',
+    question: 'While using this app, I had to think carefully about what to do next.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'CL5',
+    construct: 'cognitive_load',
+    question: 'Overall, using this app was mentally demanding.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
     code: 'PU1',
     construct: 'usability',
-    question: 'I found this super app easy to use for these consecutive tasks.',
+    question: 'I found this app easy to use for these consecutive tasks.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU2',
     construct: 'usability',
-    question: 'I felt I could efficiently complete my goal using this super app.',
+    question: 'I felt I could efficiently complete my goal using this app.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU3',
     construct: 'usability',
-    reverse: true,
-    question: 'Moving from the first service to the second took more steps than I expected.',
+    question: 'The transition between the two services felt smooth.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU4',
     construct: 'usability',
-    question: 'The super app made it easy to continue from the first service to the second service.',
+    question: 'The app made it easy to continue from the first service to the second service.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'PU5',
     construct: 'usability',
     reverse: true,
-    question: 'At some point I felt unsure how to get to or start the second service.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  {
-    code: 'PU6',
-    construct: 'usability',
-    reverse: true,
-    question: 'Parts of completing the two tasks were more effortful than they needed to be.',
+    question: 'Using this app was a frustrating experience.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Continuance Intention ─────────────────────────────────────────
   {
     code: 'CI1',
     construct: 'continuance',
-    question: 'I would use this super app again for similar service tasks.',
+    question: 'I intend to continue using this app rather than discontinue its use.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
     code: 'CI2',
     construct: 'continuance',
-    question: 'I intend to use this super app again if I need to complete similar tasks.',
+    question: 'My intentions are to continue using this app rather than use any alternative app.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   {
@@ -125,48 +130,7 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: 'CI4',
     construct: 'continuance',
-    reverse: true,
-    question: 'If another app could do these tasks, I would probably use it instead of this one.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  // ── Manipulation check: interrelatedness ─────────────────────────
-  {
-    code: 'MC1',
-    construct: 'mc_interrelatedness',
-    question: 'The super app prompted me with the next service at the right moment.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  {
-    code: 'MC2',
-    construct: 'mc_interrelatedness',
-    question: 'My details (e.g., my address) were already filled in for the second service.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  {
-    code: 'MC5',
-    construct: 'mc_interrelatedness',
-    reverse: true,
-    question: 'I had to enter my address again from scratch for the second service.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  // ── Manipulation check: heterogeneity ────────────────────────────
-  {
-    code: 'MC3',
-    construct: 'mc_heterogeneity',
-    question: 'The second service was a clearly different type of task from booking a ride.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  {
-    code: 'MC4',
-    construct: 'mc_heterogeneity',
-    question: 'The steps for the second service were unlike those for booking the ride.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-  },
-  {
-    code: 'MC6',
-    construct: 'mc_heterogeneity',
-    reverse: true,
-    question: 'The two services felt like basically the same kind of activity.',
+    question: 'I would like to continue my use of this app.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Attention Check (scored separately, excluded from constructs) ──
@@ -185,6 +149,61 @@ const SURVEY_ITEMS: SurveyItem[] = [
       'Strongly agree',
     ],
   },
+  // ── Manipulation checks ──────────────────────────────────────────
+  {
+    code: 'MC1',
+    construct: 'mc_interrelatedness',
+    question: 'The app provided a direct link from the first service to the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC2',
+    construct: 'mc_interrelatedness',
+    question: 'The app allowed me to go straight from the first service to the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC3',
+    construct: 'mc_interrelatedness',
+    question: 'Information from the first service was automatically carried over to the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC4',
+    construct: 'mc_interrelatedness',
+    question: 'The destination address from my ride booking was automatically filled in for the second service.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC5',
+    construct: 'mc_heterogeneity',
+    question: 'The two services served different purposes.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC6',
+    construct: 'mc_heterogeneity',
+    question: 'The main functions performed by the two services are different.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC7',
+    construct: 'mc_heterogeneity',
+    question: 'The two services belong to different broad service categories.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC8',
+    construct: 'mc_heterogeneity',
+    question: 'The two services follow different steps to complete their main tasks.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
+  {
+    code: 'MC9',
+    construct: 'mc_heterogeneity',
+    question: 'The two services involve different types of activities.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+  },
 ]
 
 /**
@@ -192,8 +211,11 @@ const SURVEY_ITEMS: SurveyItem[] = [
  * attention check (AC1) placed in the middle of page 2. Internal codes
  * (CL1, AC1, …) are never shown — only sequential numbers 1…N.
  */
-const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6']
-const PAGE_2_CODES = ['CI1', 'CI2', 'CI3', 'CI4', 'AC1', 'MC1', 'MC2', 'MC5', 'MC3', 'MC4', 'MC6']
+const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']
+const PAGE_2_CODES = [
+  'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
+  'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+]
 const ORDERED_CODES = [...PAGE_1_CODES, ...PAGE_2_CODES]
 const ITEM_BY_CODE: Record<string, SurveyItem> = Object.fromEntries(
   SURVEY_ITEMS.map((i) => [i.code, i]),
@@ -228,7 +250,10 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
   const pageCodes = page === 0 ? PAGE_1_CODES : PAGE_2_CODES
 
   const firstMissingCode = ORDERED_CODES.find((c) => responses[c] === undefined)
-  const firstMissingNumber = firstMissingCode ? ORDERED_CODES.indexOf(firstMissingCode) + 1 : 0
+  const firstMissingOnPage = pageCodes.find((c) => responses[c] === undefined)
+  const firstMissingNumber = firstMissingOnPage
+    ? ORDERED_CODES.indexOf(firstMissingOnPage) + 1
+    : 0
 
   // After a failed submit (or page switch toward a missing item), scroll to and
   // focus the first unanswered question.
@@ -253,14 +278,25 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
   }
 
   const handleContinue = () => {
+    const firstMissing = PAGE_1_CODES.find((code) => responses[code] === undefined)
+    if (firstMissing) {
+      focusCodeRef.current = firstMissing
+      setShowErrors(true)
+      logger.trackEvent('survey.validation_failed', 'survey', 'survey_active', {
+        payload: {
+          page: 1,
+          firstMissing,
+          answered: PAGE_1_CODES.filter((code) => responses[code] !== undefined).length,
+          total: PAGE_1_CODES.length,
+        },
+      })
+      setFocusNonce((n) => n + 1)
+      return
+    }
+
+    setShowErrors(false)
     logger.trackEvent('survey.page_changed', 'survey', 'survey_active', { payload: { from: 1, to: 2 } })
     setPage(1)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handleBack = () => {
-    logger.trackEvent('survey.page_changed', 'survey', 'survey_active', { payload: { from: 2, to: 1 } })
-    setPage(0)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -319,20 +355,13 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              onClick={handleBack}
-              data-testid="btn-survey-back"
-              className="px-6 h-[52px] rounded-[14px] border border-gray-200 bg-white text-black font-bold text-[16px] hover:bg-gray-50 active:scale-[0.98] transition-all"
-            >
-              Back
-            </button>
+          <div className="flex justify-end">
             <button
               onClick={handleSubmit}
               data-testid="btn-submit-survey"
-              className="flex-1 h-[52px] rounded-[14px] bg-black text-white font-bold text-[16px] hover:bg-gray-900 active:scale-[0.98] transition-all"
+              className="px-8 h-[52px] rounded-[14px] bg-black text-white font-bold text-[16px] hover:bg-gray-900 active:scale-[0.98] transition-all"
             >
-              Submit Feedback
+              Continue
             </button>
           </div>
         )
@@ -349,7 +378,7 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
         </div>
 
         {/* Warning banner (accessible: icon + text, not colour alone) */}
-        {showErrors && firstMissingCode && (
+        {showErrors && firstMissingOnPage && (
           <div
             role="alert"
             data-testid="survey-warning"
@@ -361,7 +390,8 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p className="text-[13.5px] font-semibold text-red-700 leading-snug">
-              Please answer all required questions before submitting. Question {firstMissingNumber} still needs an answer.
+              Please answer all required questions before continuing. Question {firstMissingNumber}
+              {' '}still needs an answer.
             </p>
           </div>
         )}
@@ -397,6 +427,7 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
               displayNumber={number}
               hideCode
               question={item.question}
+              points={SURVEY_SCALE_POINTS}
               anchors={item.anchors}
               pointLabels={item.pointLabels}
               value={responses[code]}

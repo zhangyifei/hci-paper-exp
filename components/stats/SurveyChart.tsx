@@ -9,7 +9,7 @@ interface SurveyStat {
   cognitiveLoad: { mean: number; sd: number; values: number[] }
   usability: { mean: number; sd: number; values: number[] }
   continuance: { mean: number; sd: number; values: number[] }
-  manipCheck: { mean: number; sd: number; values: number[] }
+  manipCheck: { mean: number; sd: number; values: number[] } | null
   mcInterrel?: { mean: number; sd: number; values: number[] } | null
   mcHeterog?: { mean: number; sd: number; values: number[] } | null
 }

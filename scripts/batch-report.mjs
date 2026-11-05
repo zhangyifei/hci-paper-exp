@@ -10,8 +10,37 @@ import { mean, sd, median, rd, welch, pearson, cronbachAlpha, anova2x2, nPerGrou
 import { dotPlot, interactionPlot, CELL_COLORS } from './lib/report-charts.mjs'
 import {
   OUT, DEFAULT_BATCH_ID, DEFAULT_STUDY_ID, db, prolific, query,
-  ITEMS, REVERSE, SURVEY_CODES, QUEST_CODES, PROLIFIC_PID, CELLS, DESIGN, CONSTRUCT_NAMES, ITEM_TEXT, scored, construct,
+  QUEST_CODES, PROLIFIC_PID, CELLS, DESIGN,
 } from './lib/batch-common.mjs'
+
+// Historical study-v2 instrument used by the completed batch this report reads.
+// Keep it local so revisions to the live survey do not reinterpret old data.
+const ITEMS = {
+  CL: ['CL1', 'CL2', 'CL3'],
+  PU: ['PU1', 'PU2', 'PU3', 'PU4', 'PU5', 'PU6'],
+  CI: ['CI1', 'CI2', 'CI3', 'CI4'],
+  MCi: ['MC1', 'MC2', 'MC5'],
+  MCh: ['MC3', 'MC4', 'MC6'],
+}
+const REVERSE = new Set(['PU3', 'PU5', 'PU6', 'CI4', 'MC5', 'MC6'])
+const SURVEY_CODES = [...Object.values(ITEMS).flat(), 'AC1']
+const CONSTRUCT_NAMES = {
+  CL: 'Cognitive load',
+  PU: 'Perceived usability',
+  CI: 'Continuance intention',
+  MCi: 'MC · interrelatedness',
+  MCh: 'MC · heterogeneity',
+}
+const ITEM_TEXT = {
+  CL1: 'Mental activity required', CL2: 'How hard you worked mentally', CL3: 'Stressed or annoyed',
+  PU1: 'Easy to use for consecutive tasks', PU2: 'Could efficiently complete my goal', PU3: 'Moving to 2nd service took more steps than expected',
+  PU4: 'Easy to continue from 1st to 2nd service', PU5: 'Felt unsure how to start the 2nd service', PU6: 'More effortful than needed',
+  CI1: 'Would use again', CI2: 'Intend to use again', CI3: 'Would choose again', CI4: 'Would use another app instead',
+  MC1: 'Prompted with the next service at the right moment', MC2: 'Details already filled in', MC5: 'Had to enter address again',
+  MC3: '2nd service clearly a different type of task', MC4: 'Steps unlike booking the ride', MC6: 'Services felt like the same kind of activity',
+}
+const scored = (code, value) => (REVERSE.has(code) ? 8 - value : value)
+const construct = (survey, key) => mean(ITEMS[key].map((code) => scored(code, survey[code])).filter(Number.isFinite))
 
 const BATCH_ID = process.argv[2] || DEFAULT_BATCH_ID
 const STUDY_ID = process.argv[3] || DEFAULT_STUDY_ID

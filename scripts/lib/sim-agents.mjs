@@ -95,14 +95,25 @@ export const CONDITION_AGENTS = {
 }
 
 // Item groupings (must match components/Survey/PostTaskSurvey.tsx aggregation)
+const REVERSE = new Set(['PU5'])
 const SURVEY_ITEMS = {
-  cl: ['CL1', 'CL2', 'CL3'],
-  pu: ['PU1', 'PU2', 'PU3', 'PU4'],
-  ci: ['CI1', 'CI2', 'CI3'],
-  mc: ['MC1', 'MC2', 'MC3', 'MC4'],
+  cl: ['CL1', 'CL2', 'CL3', 'CL4', 'CL5'],
+  pu: ['PU1', 'PU2', 'PU3', 'PU4', 'PU5'],
+  ci: ['CI1', 'CI2', 'CI3', 'CI4'],
+  mcInter: ['MC1', 'MC2', 'MC3', 'MC4'],
+  mcHet: ['MC5', 'MC6', 'MC7', 'MC8', 'MC9'],
 }
-const SURVEY_ORDER = ['CL1', 'CL2', 'CL3', 'PU1', 'PU2', 'PU3', 'PU4', 'CI1', 'CI2', 'CI3', 'AC1', 'MC1', 'MC2', 'MC3', 'MC4']
-const QUEST_ORDER = ['DEM1', 'DEM2', 'FAM1', 'AC2', 'FAM2', 'SWI1', 'SWI2']
+const SURVEY_ORDER = [
+  ...SURVEY_ITEMS.cl,
+  ...SURVEY_ITEMS.pu,
+  ...SURVEY_ITEMS.ci,
+  'AC1',
+  ...SURVEY_ITEMS.mcInter,
+  ...SURVEY_ITEMS.mcHet,
+]
+const QUEST_ORDER = [
+  'DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'USE2', 'SWI1', 'SWI2',
+]
 
 // Participant-level structural model. The mediation must be genuine at the
 // individual level (not only between conditions), otherwise controlling for the
@@ -119,9 +130,13 @@ const CHAIN = {
 const DEM = {
   DEM1: ['25-34', '25-34', '35-44', '35-44', '45-54'],
   DEM2: ['male', 'male', 'female'],
-  FAM1: ['rarely', 'rarely', 'monthly'],
-  FAM2: ['2', '2', '3'],
-  SWI1: ['2', '2', '3'],
+  FAM1: ['2', '2', '3', '4'],
+  FAM2: ['2', '2', '3', '4'],
+  KNW1: ['2', '2', '3', '4'],
+  KNW2: ['2', '3', '4', '5'],
+  USE1: ['rarely', 'rarely', 'monthly', 'weekly'],
+  USE2: ['rarely', 'rarely', 'monthly', 'weekly'],
+  SWI1: ['2', '2', '3', '4'],
   SWI2: ['rarely', 'rarely', 'sometimes'],
 }
 
@@ -137,24 +152,23 @@ function sampleSurvey(rng, agent) {
     7,
   )
   const ci = clamp(CHAIN.ci.base + CHAIN.ci.pu * pu + CHAIN.ci.inter * inter + gauss(rng, 0, CHAIN.ci.sd), 1, 7)
-  for (const code of SURVEY_ITEMS.cl) responses[code] = likert(rng, cl, 0.4)
-  for (const code of SURVEY_ITEMS.pu) responses[code] = likert(rng, pu, 0.4)
-  for (const code of SURVEY_ITEMS.ci) responses[code] = likert(rng, ci, 0.4)
-  // Manipulation checks are two INDEPENDENT latents so each check reflects its
-  // own manipulation: MC1/MC2 = perceived interrelatedness, MC3/MC4 = perceived heterogeneity.
-  const interLatent = clamp(gauss(rng, agent.construct.mcInter[0], agent.construct.mcInter[1]), 1, 7)
-  const hetLatent = clamp(gauss(rng, agent.construct.mcHet[0], agent.construct.mcHet[1]), 1, 7)
-  responses.MC1 = likert(rng, interLatent, 0.5)
-  responses.MC2 = likert(rng, interLatent, 0.5)
-  responses.MC3 = likert(rng, hetLatent, 0.5)
-  responses.MC4 = likert(rng, hetLatent, 0.5)
+  const responseFor = (code, latent, noise) => likert(rng, REVERSE.has(code) ? 8 - latent : latent, noise)
+  const scored = (code) => (REVERSE.has(code) ? 8 - responses[code] : responses[code])
+  for (const code of SURVEY_ITEMS.cl) responses[code] = responseFor(code, cl, 0.4)
+  for (const code of SURVEY_ITEMS.pu) responses[code] = responseFor(code, pu, 0.4)
+  for (const code of SURVEY_ITEMS.ci) responses[code] = responseFor(code, ci, 0.4)
+  const mcInter = clamp(gauss(rng, agent.construct.mcInter[0], agent.construct.mcInter[1]), 1, 7)
+  const mcHet = clamp(gauss(rng, agent.construct.mcHet[0], agent.construct.mcHet[1]), 1, 7)
+  for (const code of SURVEY_ITEMS.mcInter) responses[code] = responseFor(code, mcInter, 0.5)
+  for (const code of SURVEY_ITEMS.mcHet) responses[code] = responseFor(code, mcHet, 0.5)
   responses.AC1 = 5 // correct attention-check answer (passes)
   const round2 = (a) => Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 100) / 100
   const aggregates = {
-    cognitive_load_mean: round2(SURVEY_ITEMS.cl.map((c) => responses[c])),
-    usability_mean: round2(SURVEY_ITEMS.pu.map((c) => responses[c])),
-    continuance_mean: round2(SURVEY_ITEMS.ci.map((c) => responses[c])),
-    manipulation_check_mean: round2(SURVEY_ITEMS.mc.map((c) => responses[c])),
+    cognitive_load_mean: round2(SURVEY_ITEMS.cl.map(scored)),
+    usability_mean: round2(SURVEY_ITEMS.pu.map(scored)),
+    continuance_mean: round2(SURVEY_ITEMS.ci.map(scored)),
+    mc_interrelatedness_mean: round2(SURVEY_ITEMS.mcInter.map(scored)),
+    mc_heterogeneity_mean: round2(SURVEY_ITEMS.mcHet.map(scored)),
   }
   return { responses, aggregates }
 }
@@ -337,14 +351,14 @@ export function buildSessionEvents(agent, rng, opts) {
   })
 
   // ── Post-task survey ──
-  push('survey.started', 'survey', 'survey_active', { payload: { itemCount: 15 } })
+  push('survey.started', 'survey', 'survey_active', { payload: { itemCount: SURVEY_ORDER.length } })
   for (let i = 0; i < SURVEY_ORDER.length; i++) {
     const code = SURVEY_ORDER[i]
     adv(1500 + rng() * 3000)
     push('survey.item_answered', 'survey', 'survey_active', {
       payload: { code, value: code === 'AC1' ? 5 : surveyResp[code], responseSoFar: i + 1 },
     })
-    if (code === 'PU4') push('survey.page_changed', 'survey', 'survey_active', { payload: { from: 1, to: 2 } })
+    if (code === 'PU5') push('survey.page_changed', 'survey', 'survey_active', { payload: { from: 1, to: 2 } })
   }
   push('survey.completed', 'survey', 'survey_complete', {
     durationMs: surveyDurMs,

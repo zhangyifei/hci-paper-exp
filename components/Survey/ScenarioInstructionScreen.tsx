@@ -62,8 +62,12 @@ export default function ScenarioInstructionScreen({
             className="mt-2 text-[14px] text-gray-500 leading-relaxed"
             data-testid="super-app-definition"
           >
-            A super app combines multiple services in one application—for example, ride booking,
-            food delivery, shopping, and payments.
+            A{' '}
+            <strong className="font-bold" data-testid="scenario-super-app-term-definition">
+              super app
+            </strong>{' '}
+            combines multiple services in one application—for example, ride booking, food delivery,
+            shopping, and payments.
           </p>
         </div>
 

@@ -59,7 +59,7 @@ async function main() {
     cognitiveLoad: number
     usability: number
     continuance: number
-    manipCheck: number
+    manipCheck: number | null
   }
 
   const surveys: ParticipantSurvey[] = []
@@ -75,7 +75,7 @@ async function main() {
       cognitiveLoad: agg.cognitive_load_mean,
       usability: agg.usability_mean,
       continuance: agg.continuance_mean,
-      manipCheck: agg.manipulation_check_mean,
+      manipCheck: agg.manipulation_check_mean ?? null,
     })
   }
 
@@ -84,10 +84,9 @@ async function main() {
 
   // Per-condition survey stats
   console.log('=== SURVEY STATISTICS BY CONDITION ===')
-  console.log('Construct: Cognitive Load (CL1-CL3, 7-pt scale, higher = more load)')
-  console.log('Construct: Usability (PU1-PU2, 7-pt scale, higher = better)')
-  console.log('Construct: Continuance Intention (CI1-CI3, 7-pt scale, higher = more intent)')
-  console.log('Construct: Manipulation Check (MC1-MC2, 7-pt scale, higher = more recognized)')
+  console.log('Construct: Cognitive Load (CL1-CL5, 7-pt scale, higher = more load)')
+  console.log('Construct: Usability (PU1-PU5, PU5 reversed, 7-pt scale, higher = better)')
+  console.log('Construct: Continuance Intention (CI1-CI4, 7-pt scale, higher = more intent)')
   console.log('')
 
   for (const condition of CONDITIONS) {
@@ -116,13 +115,15 @@ async function main() {
           .map((value) => value.toFixed(2))
           .join(', ')})`,
       )
-      console.log(
-        `  Manip. Check:    M=${conditionStats.manipCheck.mean.toFixed(
-          2,
-        )}, SD=${conditionStats.manipCheck.sd.toFixed(2)} (values: ${conditionStats.manipCheck.values
-          .map((value) => value.toFixed(2))
-          .join(', ')})`,
-      )
+      if (conditionStats.manipCheck) {
+        console.log(
+          `  Manip. Check:    M=${conditionStats.manipCheck.mean.toFixed(
+            2,
+          )}, SD=${conditionStats.manipCheck.sd.toFixed(2)} (values: ${conditionStats.manipCheck.values
+            .map((value) => value.toFixed(2))
+            .join(', ')})`,
+        )
+      }
     }
     console.log('')
   }

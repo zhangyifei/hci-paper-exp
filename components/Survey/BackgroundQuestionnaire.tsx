@@ -53,18 +53,7 @@ const ITEMS: SelectItem[] = [
   },
   {
     code: 'FAM1',
-    question: 'How often do you use multi-service (super) apps such as Grab, Gojek, WeChat, or similar?',
-    options: [
-      { label: 'Never', value: 'never' },
-      { label: 'A few times a year', value: 'rarely' },
-      { label: 'A few times a month', value: 'monthly' },
-      { label: 'A few times a week', value: 'weekly' },
-      { label: 'Daily', value: 'daily' },
-    ],
-  },
-  {
-    code: 'FAM2',
-    question: 'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
+    question: 'How familiar are you with super apps such as Uber,Grab, WeChat, or similar?',
     options: [
       { label: 'Not at all familiar', value: '1' },
       { label: 'Slightly familiar', value: '2' },
@@ -74,14 +63,71 @@ const ITEMS: SelectItem[] = [
     ],
   },
   {
-    code: 'SWI1',
-    question: 'When using a multi-service app in a single session, how many different services do you typically use?',
+    code: 'FAM2',
+    question: 'How clear an idea do you have about which characteristics of a superapp are important for you to have a satisfying experience using it?',
     options: [
-      { label: 'Just one', value: '1' },
-      { label: '2 services', value: '2' },
-      { label: '3 services', value: '3' },
-      { label: '4 or more', value: '4+' },
-      { label: 'I only use single-service apps', value: 'single-app' },
+      { label: 'Not at all clear', value: '1' },
+      { label: 'Slightly clear', value: '2' },
+      { label: 'Moderately clear', value: '3' },
+      { label: 'Very clear', value: '4' },
+      { label: 'Extremely clear', value: '5' },
+    ],
+  },
+  {
+    code: 'KNW1',
+    question: 'How would you rate your knowledge about super apps relative to the general population?',
+    options: [
+      { label: 'Much less knowledgeable', value: '1' },
+      { label: 'Somewhat less knowledgeable', value: '2' },
+      { label: 'About the same', value: '3' },
+      { label: 'Somewhat more knowledgeable', value: '4' },
+      { label: 'Much more knowledgeable', value: '5' },
+    ],
+  },
+  {
+    code: 'KNW2',
+    question: 'I know a lot about superapps.',
+    options: [
+      { label: 'Strongly disagree', value: '1' },
+      { label: 'Disagree', value: '2' },
+      { label: 'Somewhat disagree', value: '3' },
+      { label: 'Neither agree nor disagree', value: '4' },
+      { label: 'Somewhat agree', value: '5' },
+      { label: 'Agree', value: '6' },
+      { label: 'Strongly agree', value: '7' },
+    ],
+  },
+  {
+    code: 'USE1',
+    question: 'How frequently do you use superapps?',
+    options: [
+      { label: 'Never', value: 'never' },
+      { label: 'Rarely', value: 'rarely' },
+      { label: 'Monthly', value: 'monthly' },
+      { label: 'Weekly', value: 'weekly' },
+      { label: 'Daily', value: 'daily' },
+    ],
+  },
+  {
+    code: 'USE2',
+    question: 'How often do you use multi-service super apps?',
+    options: [
+      { label: 'Never', value: 'never' },
+      { label: 'Rarely', value: 'rarely' },
+      { label: 'Monthly', value: 'monthly' },
+      { label: 'Weekly', value: 'weekly' },
+      { label: 'Daily', value: 'daily' },
+    ],
+  },
+  {
+    code: 'SWI1',
+    question: 'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
+    options: [
+      { label: 'Not at all familiar', value: '1' },
+      { label: 'Slightly familiar', value: '2' },
+      { label: 'Moderately familiar', value: '3' },
+      { label: 'Very familiar', value: '4' },
+      { label: 'Extremely familiar', value: '5' },
     ],
   },
   {
@@ -101,7 +147,7 @@ const ITEMS: SelectItem[] = [
  * Participant-facing order. Internal codes (DEM1, …) are never shown —
  * only sequential numbers.
  */
-const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'SWI1', 'SWI2']
+const ORDERED_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'USE2', 'SWI1', 'SWI2']
 const ITEM_BY_CODE: Record<string, SelectItem> = Object.fromEntries(ITEMS.map((i) => [i.code, i]))
 
 export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuestionnaireProps) {
@@ -130,7 +176,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
   const answeredCount = Object.keys(responses).length
   const total = ORDERED_CODES.length
   const firstMissingCode = ORDERED_CODES.find((c) => responses[c] === undefined)
-  const firstMissingNumber = firstMissingCode ? ORDERED_CODES.indexOf(firstMissingCode) + 1 : 0
+  const firstMissingNumber = firstMissingCode ? ORDERED_CODES.indexOf(firstMissingCode) + 25 : 0
 
   // After a failed submit, scroll to and focus the first unanswered question.
   useEffect(() => {
@@ -173,7 +219,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
           data-testid="btn-submit-questionnaire"
           className="w-full h-[54px] rounded-[14px] bg-black text-white font-bold text-[16px] hover:bg-gray-900 active:scale-[0.98] transition-all"
         >
-          Finish
+          Continue
         </button>
       }
     >
@@ -200,7 +246,8 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p className="text-[13.5px] font-semibold text-red-700 leading-snug">
-              Please answer all required questions before submitting. Question {firstMissingNumber} still needs an answer.
+              Please answer all required questions before continuing. Question {firstMissingNumber}
+              {' '}still needs an answer.
             </p>
           </div>
         )}
@@ -227,7 +274,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
         {/* Questions */}
         {ORDERED_CODES.map((code) => {
           const item = ITEM_BY_CODE[code]
-          const number = ORDERED_CODES.indexOf(code) + 1
+          const number = ORDERED_CODES.indexOf(code) + 25
           const invalid = showErrors && responses[code] === undefined
           return (
             <div
