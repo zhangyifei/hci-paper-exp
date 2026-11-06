@@ -517,6 +517,11 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-05
 **Rationale**: Larger, higher-contrast labels improve readability without changing question content, selectable values, or validation behavior.
 
+### ADR-070: Label the Final Survey Action Submit
+**Decision**: Label the shared Page 3 survey action “Submit” across G1–G4 while retaining “Continue” on Pages 1 and 2.
+**Date**: 2026-11-05
+**Rationale**: “Submit” accurately communicates that Page 3 completes the questionnaire rather than advancing to another survey page.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

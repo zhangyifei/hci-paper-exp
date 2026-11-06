@@ -937,3 +937,10 @@ Design mockups analyzed. Key findings per condition:
 - Changed the label color from light gray to a darker gray.
 - Preserved every label, response value, layout column, and required-answer rule.
 - Passed the production build, complete browser flow, and visual inspection of the larger, darker Q15 and Q27 labels.
+
+## 2026-11-05 — Renamed the final survey action
+
+- Changed the shared Page 3 button from `Continue` to `Submit` across G1–G4.
+- Kept the Page 1 and Page 2 buttons labeled `Continue`.
+- Preserved required-answer validation and submission behavior.
+- Passed the production build and standalone TypeScript check; confirmed the production bundle renders `Submit` for `btn-submit-questionnaire`.

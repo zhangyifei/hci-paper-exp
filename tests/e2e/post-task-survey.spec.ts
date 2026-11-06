@@ -281,7 +281,7 @@ test.describe('Post-task survey — items + attention check', () => {
 
     // Background questionnaire now appears after the survey (docx order)
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('btn-submit-questionnaire')).toHaveText('Continue')
+    await expect(page.getByTestId('btn-submit-questionnaire')).toHaveText('Submit')
     await expect(page.getByTestId('questionnaire-page-indicator')).toHaveText('Page 3 of 3')
 
     const questions = [

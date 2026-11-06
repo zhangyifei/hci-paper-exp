@@ -223,7 +223,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
           data-testid="btn-submit-questionnaire"
           className="w-full h-[54px] rounded-[14px] bg-black text-white font-bold text-[16px] hover:bg-gray-900 active:scale-[0.98] transition-all"
         >
-          Continue
+          Submit
         </button>
       }
     >
