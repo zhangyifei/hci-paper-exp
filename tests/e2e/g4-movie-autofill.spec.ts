@@ -5,6 +5,7 @@ import {
   assertBannerVisible,
   advanceToService2,
   completeMovieEntry,
+  expectPhoneCTAVisibleWithoutScroll,
 } from './shared/helpers'
 
 test.describe('G4 — Ride + Movie, Auto-fill', () => {
@@ -24,6 +25,16 @@ test.describe('G4 — Ride + Movie, Auto-fill', () => {
     await expect(page.getByText(/Catch a movie nearby/i)).toBeVisible()
     await expect(page.getByText(/Cinemas near 1000 Saint-Catherine Street West/i)).toBeVisible()
     await expect(page.getByTestId('btn-back-to-home')).toHaveText('Back to Home')
+    await expect(page.getByTestId('trip-complete-map')).toHaveCSS('height', '96px')
+    const ctaIsFullyVisibleWithoutScroll = await page.evaluate(() => {
+      const screen = document.querySelector('.device-screen')
+      const cta = document.querySelector('[data-testid="btn-banner-cta"]')
+      if (!(screen instanceof HTMLElement) || !(cta instanceof HTMLElement)) return false
+      const screenBox = screen.getBoundingClientRect()
+      const ctaBox = cta.getBoundingClientRect()
+      return screen.scrollTop === 0 && ctaBox.bottom <= screenBox.bottom
+    })
+    expect(ctaIsFullyVisibleWithoutScroll).toBe(true)
     await expect(page.getByTestId('guidance-banner')).toContainText(
       "Task reminder: Tap 'Book Tickets' to book two movie tickets near 1000 Saint-Catherine Street West.",
       { timeout: 12_000 },
@@ -66,6 +77,23 @@ test.describe('G4 — Ride + Movie, Auto-fill', () => {
     await expect(page.getByText('Cineplex Forum')).toBeVisible()
     // Distance pills present for the nearby list.
     await expect(page.getByText('0.4 km').first()).toBeVisible()
+  })
+
+  test('G4 Cinema CTAs are fully visible without scrolling', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, true)
+
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-select-cinema')
+    await page.getByTestId('showtime-forum-710').click()
+    await page.getByTestId('btn-select-cinema').click()
+
+    await expect(page.getByTestId('screen-movie-seats')).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-tickets')
+    await page.getByTestId('seat-A1').click()
+    await page.getByTestId('seat-A2').click()
+    await page.getByTestId('btn-confirm-tickets').click()
+    await expect(page.getByText('Tickets Booked!', { exact: true })).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-service2-done')
   })
 
   test('G4 full flow: showtime → seats → Tickets Booked without Explore More', async ({ page }) => {

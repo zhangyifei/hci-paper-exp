@@ -83,7 +83,7 @@ export default function TripCompleteScreen({
       {config.showTripCompleteMap && (
         <div
           data-testid="trip-complete-map"
-          className="w-full h-40 bg-gray-100 rounded-[20px] mb-8 relative overflow-hidden"
+          className="w-full h-24 bg-gray-100 rounded-[20px] mb-5 relative overflow-hidden"
         >
           <div
             className="absolute inset-0 bg-cover bg-center opacity-75"

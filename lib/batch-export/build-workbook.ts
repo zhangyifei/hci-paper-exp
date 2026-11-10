@@ -200,6 +200,8 @@ function addDisposition(wb: ExcelJS.Workbook, data: BatchExportData, records: Pa
 
 function addCodebook(wb: ExcelJS.Workbook): void {
   const constructOf = (code: string) => CONSTRUCT_KEYS.find((k) => (ITEMS[k] as readonly string[]).includes(code))
+  const mentalLoadValues = '1 Very low · 2 Low · 3 Somewhat low · 4 Moderate · 5 Somewhat high · 6 High · 7 Very high'
+  const agreementValues = '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree'
   const defs: [string, string, string, string][] = [
     ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific)', 'string', ''],
     ['included', 'Included in analysis (completed, full event trail, attention check passed, not a test session)', 'TRUE/FALSE', ''],
@@ -211,8 +213,9 @@ function addCodebook(wb: ExcelJS.Workbook): void {
       const k = constructOf(c)
       const description = k
         ? `${CONSTRUCT_NAMES[k]}${REVERSE.has(c) ? ' (reverse-coded: scored 8 − x)' : ''}`
-        : 'Attention check (correct = 5 "Somewhat agree")'
-      return [c, description, '1–7', ITEM_WORDING[c]]
+        : 'Attention check (correct = 1 "Strongly disagree")'
+      const values = ['CL1', 'CL2', 'CL3'].includes(c) ? mentalLoadValues : agreementValues
+      return [c, description, values, ITEM_WORDING[c]]
     }),
     ['DEM1', 'Age range', '18-24 · 25-34 · 35-44 · 45-54 · 55+', ITEM_WORDING.DEM1],
     ['DEM2', 'Gender', 'male · female · non-binary · prefer-not-to-say', ITEM_WORDING.DEM2],
@@ -222,7 +225,7 @@ function addCodebook(wb: ExcelJS.Workbook): void {
     ['KNW2', 'Self-reported super-app knowledge', '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree', ITEM_WORDING.KNW2],
     ['USE1', 'Super-app use frequency', '1 Never · 2 Very rarely · 3 Rarely · 4 Sometimes · 5 Often · 6 Very often · 7 All the time', ITEM_WORDING.USE1],
     ['SWI1', 'Familiarity with switching services', '1 Not at all familiar · 2 Slightly · 3 Moderately · 4 Very · 5 Extremely', ITEM_WORDING.SWI1],
-    ['SWI2', 'Mid-session switching frequency', 'never · rarely · sometimes · often · always', ITEM_WORDING.SWI2],
+    ['SWI2', 'Mid-session switching frequency', '1 Never · 2 Rarely · 3 Sometimes · 4 Often · 5 Always', ITEM_WORDING.SWI2],
     ['CL / PU / CI / MCi / MCh', 'Construct score = mean of items after reverse scoring (Scored sheet)', '1–7',
       'CL: CL1–CL5 · PU: PU1–PU5 (PU5 reversed) · CI: CI1–CI4 · MCi: MC1–MC4 · MCh: MC5–MC9'],
     ['*_r', 'Reverse-scored item (8 − raw)', '1–7', ''],

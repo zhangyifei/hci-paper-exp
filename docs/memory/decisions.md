@@ -522,6 +522,56 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-05
 **Rationale**: “Submit” accurately communicates that Page 3 completes the questionnaire rather than advancing to another survey page.
 
+### ADR-071: Require and Instrument the Designated Task Addresses
+**Decision**: Define the required Ride, Courier sender, Courier recipient, and Cinema addresses in `experiment-config.json`. Block progress when a participant selects or enters another valid address, show an inline correction message, and record a `task.error` event with the task number, field, expected address, provided address, and interaction source. Allow the participant to correct the address and continue without marking the task successful until the normal completion step.
+**Date**: 2026-11-09
+**Rationale**: Address selection is part of the task outcome, so a syntactically valid but incorrect location must be measured as a recoverable task error rather than accepted as successful completion. Contract-driven requirements keep this behavior consistent across G1–G4 without hardcoded condition branches.
+
+### ADR-072: Remove the Q15 Reading-Carefully Preamble
+**Decision**: Remove only “To show that you are reading carefully,” from Q15 across G1–G4. Retain the remaining text as `please select "Somewhat agree" for this statement.`, the seven-point response scale, correct value `5`, numbering, pagination, and attention-check behavior.
+**Date**: 2026-11-10
+**Rationale**: The requested wording change removes the explicit reading-carefully preamble without changing how the approved instructed-response item is presented, answered, or scored.
+
+### ADR-073: Exclude 1502 Rue Saint-Louis from G2 Recipient Suggestions
+**Decision**: Add a contract-controlled recipient-suggestion exclusion list and exclude `saint-louis` from G2. Continue requiring the exact Courier recipient `3008 Rue McGill`; any other entered or selected address remains a recoverable `task.error` and cannot advance to package details.
+**Date**: 2026-11-10
+**Rationale**: `1502 Rue Saint-Louis` is not the designated G2 recipient and should not be presented as a saved/recent choice. Keeping exact-address validation separate from suggestion visibility ensures manual wrong addresses are still measured and corrected rather than accepted.
+
+### ADR-074: Apply the Recipient-Suggestion Rule to Both Courier Groups
+**Decision**: Extend the `saint-louis` recipient-suggestion exclusion from G2 to G1. Both Courier conditions now omit `1502 Rue Saint-Louis`, require `3008 Rue McGill` to advance, and treat any other entered address as a recoverable `task.error`.
+**Date**: 2026-11-10
+**Rationale**: G1 and G2 use the same Courier task and designated recipient, so the accepted address and misleading-option removal must be consistent across both comparable conditions.
+
+### ADR-075: Keep the Trip Complete Primary CTA Above the Fold
+**Decision**: Reduce the shared Trip Complete map from 160px to 96px high and reduce its bottom spacing from 32px to 20px. Keep the image width, content, wording, and all CTA behavior unchanged.
+**Date**: 2026-11-10
+**Rationale**: The cross-service CTA must be completely visible at the default 390×844 phone-frame size without requiring participants to scroll. The shorter decorative map recovers the needed vertical space without changing the study task or interaction.
+
+### ADR-076: Align the Shared Survey with the Exact-Wording PDF
+**Decision**: Use `Survey_Questions_Exact_Wording.pdf` as the approved wording and response-label source for Q1–Q33 across G1–G4 while retaining the current app UI. Supersede ADR-072 by restoring the PDF’s full Q15 wording. Show every numbered response label directly beneath its number in gray: Q1–Q24 and Q27–Q31 use their specified seven-point scales; Q32–Q33 use their specified five-point scales. Keep Q25–Q26 as categorical lists.
+**Date**: 2026-11-10
+**Rationale**: A single exact instrument prevents condition-level or export-level wording drift, while direct gray labels preserve the approved response meanings without importing the PDF’s colored table styling into the application.
+
+### ADR-077: Change Q15 to a Strongly-Disagree Instructed Response
+**Decision**: Replace Q15 with the exact text `Please select strongly disagree for this statement.` and change its correct response from `5 — Somewhat agree` to `1 — Strongly disagree` across G1–G4. Preserve the seven-point agreement scale and the existing attention-check failure behavior.
+**Date**: 2026-11-10
+**Rationale**: The revised instructed-response item removes the reading-carefully preamble and quotation marks while retaining consistent scoring and session invalidation behavior.
+
+### ADR-078: Space Labeled Scales by Their Actual Point Count
+**Decision**: Size the shared labeled-response grid from each question's actual number of scale points instead of always reserving seven columns. Five-point questions Q32–Q33 therefore span five equal columns across the available width, while seven-point questions remain seven equal columns.
+**Date**: 2026-11-10
+**Rationale**: Matching the grid to the scale prevents empty columns and keeps every response number centered above its corresponding wording.
+
+### ADR-079: Reserve Above-the-Fold Space for Every Task CTA
+**Decision**: Give Courier Entry, Package Details, Cinema Entry, and Seat Selection fixed-height screen layouts with independently scrollable content regions and non-scrolling primary-action footers. Keep bottom navigation in its own non-shrinking region. Apply the shared layouts to G1–G4.
+**Date**: 2026-11-10
+**Rationale**: The task CTA must remain completely visible at the default 390×844 phone viewport without requiring participants to scroll through optional fields or long option lists.
+
+### ADR-080: Align Every Survey Number with Its Question Text
+**Decision**: Render the participant-facing number badge and question wording in one top-aligned row for Q1–Q33 across G1–G4. Place required-answer feedback beneath the wording inside that same header column.
+**Date**: 2026-11-10
+**Rationale**: Keeping the number and the first line of its question together creates a consistent scan line and removes unnecessary vertical separation.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

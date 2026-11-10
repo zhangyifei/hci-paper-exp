@@ -85,19 +85,28 @@ export default function LikertScale({
       }`}
     >
       {/* Number / code + Question */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          {hideCode ? (
-            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center">
-              {displayNumber}
-            </span>
-          ) : (
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{code}</span>
-          )}
+      <div className="mb-4 flex items-start gap-2">
+        {hideCode ? (
+          <span
+            data-testid={`question-number-${code}`}
+            className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center"
+          >
+            {displayNumber}
+          </span>
+        ) : (
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{code}</span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p
+            data-testid={`question-text-${code}`}
+            className="text-[15px] font-semibold text-black leading-snug"
+          >
+            {question}
+          </p>
           {invalid && (
             <span
               data-testid="required-flag"
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600"
+              className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-red-600"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                 <circle cx="12" cy="12" r="10" />
@@ -108,14 +117,17 @@ export default function LikertScale({
             </span>
           )}
         </div>
-        <p className="text-[15px] font-semibold text-black mt-1.5 leading-snug">{question}</p>
       </div>
 
       {/* Scale */}
       <div
         className={showLabelsUnderOptions
-          ? 'grid grid-cols-7 gap-1.5 items-start'
+          ? 'grid gap-1.5 items-start'
           : 'flex items-center justify-between gap-2'
+        }
+        style={showLabelsUnderOptions
+          ? { gridTemplateColumns: `repeat(${points}, minmax(0, 1fr))` }
+          : undefined
         }
         role="radiogroup"
         aria-label={hideCode ? `Question ${displayNumber}` : code}

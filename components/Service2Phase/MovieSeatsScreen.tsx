@@ -69,11 +69,11 @@ export default function MovieSeatsScreen({ config, onNext, onBack, parentEventId
   }
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-movie-seats">
+    <div className="relative w-full h-full min-h-0 overflow-hidden bg-white flex flex-col animate-fade-in" data-testid="screen-movie-seats">
       <StatusBar />
       <BackButton onClick={onBack} />
 
-      <div className="px-5 overflow-y-auto pb-4 no-scrollbar mt-[104px]">
+      <div className="flex-1 min-h-0 px-5 overflow-y-auto pb-4 no-scrollbar mt-[104px]">
         <h1 className="text-[26px] font-bold tracking-tight text-black mb-1.5 leading-tight">Choose your seats</h1>
         <p className="text-[15px] text-gray-500 mb-6 leading-snug">Select {REQUIRED_SEATS} seats for the 7:10 PM showing.</p>
 
@@ -147,7 +147,7 @@ export default function MovieSeatsScreen({ config, onNext, onBack, parentEventId
         )}
       </div>
 
-      <div className="mt-auto px-5 pb-4 border-t border-gray-100 pt-3">
+      <div className="flex-shrink-0 z-40 bg-white px-5 pb-4 border-t border-gray-100 pt-3">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[13px] text-gray-500">{seats.length}/{REQUIRED_SEATS} seats · {seats.join(', ') || '—'}</span>
           <span className="font-bold text-[17px] text-black">${total.toFixed(2)}</span>

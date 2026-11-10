@@ -5,6 +5,7 @@ import AddressText from '../shared/AddressText'
 import { logger } from '@/lib/logger'
 import { enterScreen } from '@/lib/screen-tracker'
 import type { Service2Type } from '@/lib/experiment-config'
+import { matchesRequiredAddress, recordTaskAddressError } from '@/lib/address-validation'
 
 interface HomeScreenProps {
   onNext: () => void
@@ -13,6 +14,7 @@ interface HomeScreenProps {
   /** Which second service the study uses — only sets the second tab's label; does
    *  NOT hide the Start-a-Ride button (that is driven by service2Tab). */
   service2Kind?: Service2Type
+  requiredDestinationAddress: string
 }
 
 /** A valid address has at least one number and some letters. */
@@ -38,7 +40,13 @@ const ADDRESS_SUGGESTIONS: SavedPlace[] = [
 
 const MIN_SUGGESTION_QUERY_LENGTH = 3
 
-export default function HomeScreen({ onNext, service2Tab, onService2TabClick, service2Kind }: HomeScreenProps) {
+export default function HomeScreen({
+  onNext,
+  service2Tab,
+  onService2TabClick,
+  service2Kind,
+  requiredDestinationAddress,
+}: HomeScreenProps) {
   const [destination, setDestination] = useState('')
   const [focused, setFocused] = useState(false)
   const [showError, setShowError] = useState(false)
@@ -53,6 +61,8 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
   }, [service2Tab])
 
   const destinationValid = isValidAddress(destination)
+  const destinationCorrect =
+    destinationValid && matchesRequiredAddress(destination, requiredDestinationAddress)
 
   const query = destination.trim().toLowerCase()
   const suggestions = focused && query.length >= MIN_SUGGESTION_QUERY_LENGTH
@@ -65,21 +75,59 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
 
   const handleDestinationChange = (value: string) => {
     setDestination(value)
-    if (showError && isValidAddress(value)) setShowError(false)
+    setFocused(true)
+    if (showError) setShowError(false)
   }
 
   const handlePickDestination = (place: SavedPlace) => {
+    const correct = matchesRequiredAddress(place.name, requiredDestinationAddress)
     setDestination(place.name)
     setFocused(false)
-    setShowError(false)
+    setShowError(!correct)
     logger.trackEvent('ride.destination_selected', 'ride', 'ride_in_progress', {
       payload: { destinationId: place.id, destination: place.name },
     })
+    if (!correct) {
+      recordTaskAddressError({
+        taskNumber: 1,
+        field: 'ride_destination',
+        expectedAddress: requiredDestinationAddress,
+        providedAddress: place.name,
+        source: 'suggestion',
+      })
+    }
+  }
+
+  const handleDestinationBlur = () => {
+    setFocused(false)
+    if (destination.trim().length === 0) return
+
+    const valid = isValidAddress(destination)
+    const correct = valid && matchesRequiredAddress(destination, requiredDestinationAddress)
+    setShowError(!correct)
+    if (valid && !correct) {
+      recordTaskAddressError({
+        taskNumber: 1,
+        field: 'ride_destination',
+        expectedAddress: requiredDestinationAddress,
+        providedAddress: destination.trim(),
+        source: 'manual_entry',
+      })
+    }
   }
 
   const handleStartRide = () => {
-    if (!destinationValid) {
+    if (!destinationCorrect) {
       setShowError(true)
+      if (destinationValid && !showError) {
+        recordTaskAddressError({
+          taskNumber: 1,
+          field: 'ride_destination',
+          expectedAddress: requiredDestinationAddress,
+          providedAddress: destination.trim(),
+          source: 'continue',
+        })
+      }
       return
     }
     logger.trackEvent('ride.destination_entered', 'ride', 'ride_in_progress', {
@@ -118,7 +166,7 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
                 value={destination}
                 onChange={(e) => handleDestinationChange(e.target.value)}
                 onFocus={() => setFocused(true)}
-                onBlur={() => { setFocused(false); setShowError(!isValidAddress(destination) && destination.length > 0) }}
+                onBlur={handleDestinationBlur}
                 placeholder="Where to?"
                 aria-label="Destination address"
                 aria-invalid={showError}
@@ -163,7 +211,9 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
         {showError && (
           <p data-testid="destination-error" role="alert" className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-red-600 pl-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Enter your destination or choose a matching suggestion to continue.
+            {destinationValid && !destinationCorrect
+              ? `Select ${requiredDestinationAddress} to continue this task.`
+              : 'Enter your destination or choose a matching suggestion to continue.'}
           </p>
         )}
       </div>
@@ -250,9 +300,9 @@ export default function HomeScreen({ onNext, service2Tab, onService2TabClick, se
         <div className="sticky bottom-[70px] w-full px-4 pb-4 pt-4 bg-gradient-to-t from-white via-white to-transparent z-10">
             <button
               onClick={handleStartRide}
-              aria-disabled={!destinationValid}
+              aria-disabled={!destinationCorrect}
               data-testid="btn-start-ride"
-              className={`w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg transition-all duration-200 flex items-center justify-center ${destinationValid ? 'active:scale-[0.97] active:bg-gray-900' : 'opacity-40'}`}
+              className={`w-full h-[56px] bg-black text-white rounded-[16px] font-bold text-[17px] shadow-lg transition-all duration-200 flex items-center justify-center ${destinationCorrect ? 'active:scale-[0.97] active:bg-gray-900' : 'opacity-40'}`}
             >
               Start a Ride
             </button>

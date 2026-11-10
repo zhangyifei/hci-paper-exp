@@ -126,6 +126,7 @@ const ITEMS: SelectItem[] = [
   {
     code: 'SWI1',
     question: 'How familiar are you with switching between different services (e.g. ride → food) within the same app?',
+    presentation: 'likert',
     options: [
       { label: 'Not at all familiar', value: '1' },
       { label: 'Slightly familiar', value: '2' },
@@ -137,12 +138,13 @@ const ITEMS: SelectItem[] = [
   {
     code: 'SWI2',
     question: 'How often do you switch between services mid-session (e.g. finish a ride, then order food without closing the app)?',
+    presentation: 'likert',
     options: [
-      { label: 'Never', value: 'never' },
-      { label: 'Rarely', value: 'rarely' },
-      { label: 'Sometimes', value: 'sometimes' },
-      { label: 'Often', value: 'often' },
-      { label: 'Always', value: 'always' },
+      { label: 'Never', value: '1' },
+      { label: 'Rarely', value: '2' },
+      { label: 'Sometimes', value: '3' },
+      { label: 'Often', value: '4' },
+      { label: 'Always', value: '5' },
     ],
   },
 ]
@@ -289,7 +291,7 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
                 displayNumber={number}
                 hideCode
                 question={item.question}
-                points={7}
+                points={item.options.length}
                 anchors={[item.options[0].label, item.options[item.options.length - 1].label]}
                 pointLabels={item.options.map((option) => option.label)}
                 labelsUnderOptions
@@ -305,13 +307,22 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
               id={`q-${code}`}
               className={`mb-8 scroll-mt-28 ${invalid ? 'rounded-[14px] border-2 border-red-400 bg-red-50/50 p-4' : ''}`}
             >
-              <div className="mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center">
-                    {number}
-                  </span>
+              <div className="mb-3 flex items-start gap-2">
+                <span
+                  data-testid={`question-number-${code}`}
+                  className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-[12px] font-bold flex items-center justify-center"
+                >
+                  {number}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p
+                    data-testid={`question-text-${code}`}
+                    className="text-[15px] font-semibold text-black leading-snug"
+                  >
+                    {item.question}
+                  </p>
                   {invalid && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600">
+                    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-red-600">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
@@ -321,7 +332,6 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
                     </span>
                   )}
                 </div>
-                <p className="text-[15px] font-semibold text-black mt-1.5 leading-snug">{item.question}</p>
               </div>
 
               <div className="space-y-2">

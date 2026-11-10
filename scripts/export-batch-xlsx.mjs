@@ -176,9 +176,12 @@ const designDefs = [
   ['interrelatedness', 'Cross-service bridge (banner + auto-filled details)', 'absent / present', ''],
   ['second_service', 'Second service in the episode', 'Courier / Cinema', ''],
 ]
+const mentalLoadValues = '1 Very low · 2 Low · 3 Somewhat low · 4 Moderate · 5 Somewhat high · 6 High · 7 Very high'
+const agreementValues = '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree'
 const itemDefs = SURVEY_CODES.map((c) => {
   const k = Object.keys(ITEMS).find((key) => ITEMS[key].includes(c))
-  return [c, k ? `${CONSTRUCT_NAMES[k]}${REVERSE.has(c) ? ' (reverse-coded: scored 8 − x)' : ''}` : 'Attention check (correct = 5 "Somewhat agree")', '1–7', ITEM_WORDING[c]]
+  const values = ['CL1', 'CL2', 'CL3'].includes(c) ? mentalLoadValues : agreementValues
+  return [c, k ? `${CONSTRUCT_NAMES[k]}${REVERSE.has(c) ? ' (reverse-coded: scored 8 − x)' : ''}` : 'Attention check (correct = 1 "Strongly disagree")', values, ITEM_WORDING[c]]
 })
 const questDefs = [
   ['DEM1', 'Age range', '18-24 · 25-34 · 35-44 · 45-54 · 55+', ITEM_WORDING.DEM1],
@@ -189,7 +192,7 @@ const questDefs = [
   ['KNW2', 'Self-reported super-app knowledge', '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree', ITEM_WORDING.KNW2],
   ['USE1', 'Super-app use frequency', '1 Never · 2 Very rarely · 3 Rarely · 4 Sometimes · 5 Often · 6 Very often · 7 All the time', ITEM_WORDING.USE1],
   ['SWI1', 'Familiarity with switching services', '1 Not at all familiar · 2 Slightly · 3 Moderately · 4 Very · 5 Extremely', ITEM_WORDING.SWI1],
-  ['SWI2', 'Mid-session switching frequency', 'never · rarely · sometimes · often · always', ITEM_WORDING.SWI2],
+  ['SWI2', 'Mid-session switching frequency', '1 Never · 2 Rarely · 3 Sometimes · 4 Often · 5 Always', ITEM_WORDING.SWI2],
 ]
 const derivedDefs = [
   ['CL / PU / CI / MCi / MCh', 'Construct score = mean of items after reverse scoring (Scored sheet)', '1–7', 'CL: CL1–CL5 · PU: PU1–PU5 (PU5 reversed) · CI: CI1–CI4 · MCi: MC1–MC4 · MCh: MC5–MC9'],

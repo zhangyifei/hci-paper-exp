@@ -944,3 +944,77 @@ Design mockups analyzed. Key findings per condition:
 - Kept the Page 1 and Page 2 buttons labeled `Continue`.
 - Preserved required-answer validation and submission behavior.
 - Passed the production build and standalone TypeScript check; confirmed the production bundle renders `Submit` for `btn-submit-questionnaire`.
+
+## 2026-11-09 — Enforced designated task addresses and recorded recoverable errors
+
+- Added contract-controlled required addresses for the shared Ride task, Courier sender/recipient fields, and Cinema location.
+- Blocked progression after an incorrect address, displayed the required address inline, and kept the participant on the current step until correction.
+- Added the contract-valid `task.error` event with the wrong field, expected/provided addresses, task number, and interaction source; incorrect attempts do not emit task-complete events.
+- Preserved successful progression after correction for G1/G2 Courier and G3/G4 Cinema flows.
+- Added browser regression coverage for wrong Ride destinations in G1–G4, wrong G1 Courier sender/recipient selections, and a wrong G3 Cinema location.
+- Passed the production build, standalone TypeScript check, focused wrong-address recovery tests, and one complete successful browser flow for each of G1–G4.
+
+## 2026-11-10 — Removed the Q15 reading-carefully preamble
+
+- Removed only “To show that you are reading carefully,” from the shared Q15 wording across G1–G4.
+- Kept the remaining wording, seven inline response labels, correct answer (`5 — Somewhat agree`), numbering, required-answer validation, and attention-check behavior unchanged.
+- Updated the active export/codebook wording and exact-text survey regression coverage.
+
+## 2026-11-10 — Removed the incorrect G2 1502 recipient suggestion
+
+- Added a condition-contract exclusion list and removed `1502 Rue Saint-Louis` from G2’s recipient Saved & recent results.
+- Kept `3008 Rue McGill` as the only address that can advance G2 to package details.
+- Confirmed that manually entering `1502 Rue Saint-Louis` shows the required-address error, records `task.error`, and remains on the Courier entry screen.
+- Passed the production build, standalone TypeScript check, focused wrong-address browser test, and successful G2 full flow.
+
+## 2026-11-10 — Applied the same recipient rule to G1
+
+- Removed `1502 Rue Saint-Louis` from G1 recipient suggestions through the shared condition contract.
+- Kept `3008 Rue McGill` as the only G1 recipient that can advance to package details; all other addresses remain blocked and instrumented as task errors.
+- Added regression coverage confirming that typing `150` in G1 does not expose the removed address.
+
+## 2026-11-10 — Kept the Trip Complete CTA visible without scrolling
+
+- Reduced the shared Trip Complete map height from 160px to 96px and its following gap from 32px to 20px.
+- Preserved the image width, all participant-facing text, banner contents, and navigation behavior.
+- Added phone-frame regression assertions verifying the G2 Send Package and G4 Book Tickets CTAs are completely inside the viewport at scroll position zero.
+- Passed the production build, standalone TypeScript check, and focused G2/G4 Trip Complete browser tests.
+
+## 2026-11-10 — Aligned all four surveys with the exact-wording PDF
+
+- Compared all 33 current questions with `Survey_Questions_Exact_Wording.pdf`; Q1–Q14 and Q16–Q33 already matched, while Q15 was restored to the PDF’s full instructed-response wording.
+- Added complete gray inline labels beneath every numbered option for Q1–Q24, preserving seven response points and the PDF’s distinct Q1–Q3 mental-load labels.
+- Kept the existing inline seven-point presentation for Q27–Q31 and converted Q32–Q33 from vertical lists to the PDF’s labeled five-point number scales.
+- Preserved the current UI, three-page pagination, required-answer validation, forward-only navigation, attention-check scoring, and final Submit action across G1–G4.
+- Updated active export/codebook wording, response-value definitions, simulation values, shared test helpers, and exact-label regression coverage.
+- Passed the production build, standalone TypeScript check, exact Q1–Q24 survey test, and Q25–Q33 questionnaire test.
+
+## 2026-11-10 — Revised the Q15 instructed-response check
+
+- Changed Q15 across G1–G4 to `Please select strongly disagree for this statement.`
+- Removed the reading-carefully preamble and quotation marks.
+- Changed the correct answer from `5 — Somewhat agree` to `1 — Strongly disagree` while preserving the existing failed-check termination and invalidation behavior.
+- Updated active exports, simulations, shared browser helpers, and regression coverage without changing any other survey question.
+- Passed the standalone TypeScript check, production build, and three focused browser tests covering exact wording, the correct-answer path, and the failed-answer termination path.
+
+## 2026-11-10 — Evenly spaced the five-point questionnaire scales
+
+- Distributed Q32 and Q33 across five equal-width columns spanning the available survey width.
+- Kept each number centered above its corresponding wording and preserved all question text, options, and seven-point scale layouts.
+- Applied the shared questionnaire layout change to G1–G4.
+- Passed the standalone TypeScript check, production build, and focused page-3 browser layout test.
+
+## 2026-11-10 — Kept every task CTA visible without scrolling
+
+- Reserved persistent footer space for the primary CTA on Courier Entry, Package Details, Cinema Entry, and Seat Selection.
+- Limited scrolling to the form and option-list content above each CTA; bottom navigation remains fully visible where present.
+- Preserved all task wording, controls, validation, instrumentation, and condition behavior.
+- Verified the complete CTA sequence at the 390×844 phone viewport across G1–G4, including Start Ride, ride selection, Trip Complete actions, Courier/Cinema actions, and final Done buttons.
+- Passed the standalone TypeScript check, production build, and four-group no-scroll browser regression.
+
+## 2026-11-10 — Put every survey number and question on the same row
+
+- Top-aligned each numbered badge with the first line of its question for Q1–Q33.
+- Applied the shared layout to both Likert-scale and categorical questions across G1–G4.
+- Preserved all wording, scale labels, response options, pagination, and validation behavior.
+- Passed the standalone TypeScript check, production build, and browser alignment assertions across all three survey pages.

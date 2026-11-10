@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import StatusBar from '../shared/StatusBar'
 import BottomNav from '../shared/BottomNav'
 import BackButton from '../shared/BackButton'
@@ -7,6 +7,11 @@ import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
 import { enterScreen } from '@/lib/screen-tracker'
+import {
+  matchesRequiredAddress,
+  normalizeStudyAddress,
+  recordTaskAddressError,
+} from '@/lib/address-validation'
 
 interface MovieEntryScreenProps {
   config: ConditionConfig
@@ -71,14 +76,13 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   const [showAddressError, setShowAddressError] = useState(false)
   const [selectedCinema, setSelectedCinema] = useState<string | null>(config.autoPopulate ? 'forum' : null)
   const [selectedShowtime, setSelectedShowtime] = useState<string | null>(null)
+  const recordedLocationErrorRef = useRef<string | null>(null)
 
   const cinemas = config.autoPopulate || config.listUI === 'distance-filtered' ? NEARBY_CINEMAS : CITYWIDE_CINEMAS
-  const normalizedLocation = location.trim().toLocaleLowerCase()
-  const normalizedRequiredAddress = config.service2ResultsRequireAddress
-    ?.trim()
-    .toLocaleLowerCase()
-  const showCinemaResults =
-    normalizedRequiredAddress === undefined || normalizedLocation === normalizedRequiredAddress
+  const addressValid = isValidAddress(location)
+  const locationCorrect =
+    addressValid && matchesRequiredAddress(location, config.service2ResultsRequireAddress)
+  const showCinemaResults = locationCorrect
 
   useEffect(() => {
     markService2Entry()
@@ -88,31 +92,63 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
     return cleanup
   }, [])
 
-  const addressValid = config.autoPopulate || isValidAddress(location)
+  const reportLocationError = (
+    providedAddress: string,
+    source: 'suggestion' | 'saved' | 'manual_entry' | 'continue',
+  ) => {
+    const requiredAddress = config.service2ResultsRequireAddress
+    if (requiredAddress === null) return
+    const key = normalizeStudyAddress(providedAddress)
+    if (recordedLocationErrorRef.current === key) return
+    recordedLocationErrorRef.current = key
+    recordTaskAddressError({
+      taskNumber: 2,
+      field: 'cinema_location',
+      expectedAddress: requiredAddress,
+      providedAddress,
+      source,
+    })
+  }
 
   const handleLocationChange = (value: string) => {
     setLocation(value)
+    setLocationFocused(true)
     setLocationSuggestionSelected(false)
     setSelectedCinema(null)
     setSelectedShowtime(null)
-    if (showAddressError && isValidAddress(value)) setShowAddressError(false)
+    setShowAddressError(false)
+    recordedLocationErrorRef.current = null
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active', {
       payload: { field: 'location' },
     })
   }
 
   const handlePickLocationSaved = (place: SavedPlace) => {
+    const correct = matchesRequiredAddress(place.name, config.service2ResultsRequireAddress)
     setLocation(place.name)
     setLocationSuggestionSelected(true)
-    setShowAddressError(false)
+    setSelectedCinema(correct && config.autoPopulate ? 'forum' : null)
+    setSelectedShowtime(null)
+    setShowAddressError(!correct)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { field: 'location', source: 'saved', placeId: place.id },
     })
+    if (!correct) reportLocationError(place.name, 'saved')
+  }
+
+  const handleLocationBlur = () => {
+    setLocationFocused(false)
+    if (location.trim().length === 0) return
+    setShowAddressError(!locationCorrect)
+    if (addressValid && !locationCorrect) {
+      reportLocationError(location.trim(), 'manual_entry')
+    }
   }
 
   const handleSelectCinema = (id: string) => {
-    if (!addressValid || !showCinemaResults) {
+    if (!locationCorrect) {
       setShowAddressError(true)
+      if (addressValid) reportLocationError(location.trim(), 'continue')
       return
     }
     setSelectedCinema(id)
@@ -131,8 +167,9 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
   }
 
   const handleContinue = () => {
-    if (!addressValid || !showCinemaResults) {
+    if (!locationCorrect) {
       setShowAddressError(true)
+      if (addressValid) reportLocationError(location.trim(), 'continue')
       return
     }
     if (!selectedCinema || !selectedShowtime) return
@@ -142,7 +179,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
     onNext(service2EntryEventId, config.service2Options[0]?.price ?? 0)
   }
 
-  const canContinue = addressValid && showCinemaResults && !!selectedCinema && !!selectedShowtime
+  const canContinue = locationCorrect && !!selectedCinema && !!selectedShowtime
   const normalizedLocationQuery = location.trim().toLocaleLowerCase()
   const locationSuggestions = SAVED_LOCATIONS.filter((place) =>
     `${place.name} ${place.detail}`.toLocaleLowerCase().includes(normalizedLocationQuery),
@@ -155,19 +192,19 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
     locationSuggestions.length > 0
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-movie-entry">
+    <div className="relative w-full h-full min-h-0 overflow-hidden bg-white flex flex-col animate-fade-in" data-testid="screen-movie-entry">
       <StatusBar />
       <BackButton onClick={onBack} />
 
       {/* Tab Bar */}
-      <div className="flex items-center space-x-3 px-4 mt-[104px] mb-5 pt-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-shrink-0 items-center space-x-3 px-4 mt-[104px] mb-5 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform">Rides</div>
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform flex items-center">
           <span className="mr-2 text-[18px]">🎬</span> Cinema
         </div>
       </div>
 
-      <div className="px-4 overflow-y-auto pb-4 no-scrollbar">
+      <div className="flex-1 min-h-0 px-4 overflow-y-auto pb-4 no-scrollbar">
         {/* Now showing film banner */}
         <div className="rounded-[16px] bg-gray-50 border border-gray-100 p-4 mb-6 flex items-center">
           <div className="w-14 h-20 rounded-[10px] bg-gray-200 flex items-center justify-center text-[28px] mr-4 flex-shrink-0">🎬</div>
@@ -204,10 +241,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
                   value={location}
                   onChange={(e) => handleLocationChange(e.target.value)}
                   onFocus={() => setLocationFocused(true)}
-                  onBlur={() => {
-                    setLocationFocused(false)
-                    setShowAddressError(!isValidAddress(location) && location.length > 0)
-                  }}
+                  onBlur={handleLocationBlur}
                   placeholder="Enter a location"
                   aria-label="Cinema search location"
                   aria-invalid={showAddressError}
@@ -255,7 +289,11 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
                 </div>
               )}
               {showAddressError && (
-                <p data-testid="movie-location-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Enter a location before choosing a cinema.</p>
+                <p data-testid="movie-location-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">
+                  {addressValid && config.service2ResultsRequireAddress
+                    ? `Use ${config.service2ResultsRequireAddress} to continue this task.`
+                    : 'Enter a location before choosing a cinema.'}
+                </p>
               )}
               {!config.service2EntryAddressTypeahead && location.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="movie-saved-places">
@@ -327,7 +365,7 @@ export default function MovieEntryScreen({ config, onNext, onBack }: MovieEntryS
         )}
       </div>
 
-      <div className="mt-auto px-4 pb-3">
+      <div className="flex-shrink-0 z-40 bg-white px-4 pt-2 pb-3">
         <button
           onClick={handleContinue}
           disabled={!canContinue}

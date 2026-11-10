@@ -7,6 +7,11 @@ import { logger } from '@/lib/logger'
 import { markService2Entry } from '@/lib/timing'
 import { ConditionConfig } from '@/lib/experiment-config'
 import { enterScreen } from '@/lib/screen-tracker'
+import {
+  matchesRequiredAddress,
+  normalizeStudyAddress,
+  recordTaskAddressError,
+} from '@/lib/address-validation'
 
 interface CourierEntryScreenProps {
   config: ConditionConfig
@@ -67,6 +72,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
 
   const [showErrors, setShowErrors] = useState(false)
   const recipientInputRef = useRef<HTMLInputElement>(null)
+  const recordedAddressErrorsRef = useRef<Record<string, string>>({})
 
   useEffect(() => {
     markService2Entry()
@@ -87,6 +93,29 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
 
   const senderValid = isValidAddress(senderAddress)
   const recipientValid = isValidAddress(recipientAddress)
+  const senderCorrect =
+    senderValid && matchesRequiredAddress(senderAddress, config.courierSenderRequiredAddress)
+  const recipientCorrect =
+    recipientValid && matchesRequiredAddress(recipientAddress, config.courierRecipientRequiredAddress)
+
+  const reportAddressError = (
+    field: 'courier_sender' | 'courier_recipient',
+    expectedAddress: string | null,
+    providedAddress: string,
+    source: 'suggestion' | 'saved' | 'manual_entry' | 'continue',
+  ) => {
+    if (expectedAddress === null) return
+    const key = normalizeStudyAddress(providedAddress)
+    if (recordedAddressErrorsRef.current[field] === key) return
+    recordedAddressErrorsRef.current[field] = key
+    recordTaskAddressError({
+      taskNumber: 2,
+      field,
+      expectedAddress,
+      providedAddress,
+      source,
+    })
+  }
 
   const suggestionMatches =
     config.addressSuggestions &&
@@ -100,42 +129,99 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
 
   const handleSenderChange = (value: string) => {
     setSenderAddress(value)
+    setSenderFocused(true)
+    delete recordedAddressErrorsRef.current.courier_sender
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active', {
       payload: { field: 'sender' },
     })
   }
 
   const handlePickSuggestion = (place: SavedAddress) => {
+    const correct = matchesRequiredAddress(place.name, config.courierSenderRequiredAddress)
     setSenderAddress(place.name)
     setSenderFocused(false)
+    setSenderTouched(true)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { field: 'sender', source: 'suggestion', placeId: place.id },
     })
+    if (!correct) {
+      reportAddressError(
+        'courier_sender',
+        config.courierSenderRequiredAddress,
+        place.name,
+        'suggestion',
+      )
+    }
   }
 
   const handlePickSenderSaved = (place: SavedAddress) => {
+    const correct = matchesRequiredAddress(place.detail, config.courierSenderRequiredAddress)
     setSenderAddress(place.detail)
     setSenderTouched(true)
     logger.trackEvent('service2.address_validated', 'service2', 'service2_task_active', {
       payload: { field: 'sender', source: 'saved', placeId: place.id },
     })
+    if (!correct) {
+      reportAddressError(
+        'courier_sender',
+        config.courierSenderRequiredAddress,
+        place.detail,
+        'saved',
+      )
+    }
   }
 
   const handleRecipientChange = (value: string) => {
     setRecipientAddress(value)
     setSelectedRecipientId(null)
+    delete recordedAddressErrorsRef.current.courier_recipient
     logger.trackEvent('service2.address_edited', 'service2', 'service2_task_active', {
       payload: { field: 'recipient' },
     })
   }
 
   const handleSelectSaved = (addr: SavedAddress) => {
-    setRecipientAddress(addr.detail)
+    const correct = matchesRequiredAddress(addr.name, config.courierRecipientRequiredAddress)
+    setRecipientAddress(addr.name)
     setSelectedRecipientId(addr.id)
     setRecipientTouched(true)
     logger.trackEvent('service2.recipient_selected', 'service2', 'service2_task_active', {
-      payload: { recipientId: addr.id, recipient: addr.detail },
+      payload: { recipientId: addr.id, recipient: addr.name },
     })
+    if (!correct) {
+      reportAddressError(
+        'courier_recipient',
+        config.courierRecipientRequiredAddress,
+        addr.name,
+        'saved',
+      )
+    }
+  }
+
+  const handleSenderBlur = () => {
+    setSenderFocused(false)
+    setSenderTouched(true)
+    if (senderValid && !senderCorrect) {
+      reportAddressError(
+        'courier_sender',
+        config.courierSenderRequiredAddress,
+        senderAddress.trim(),
+        'manual_entry',
+      )
+    }
+  }
+
+  const handleRecipientBlur = () => {
+    setRecipientFocused(false)
+    setRecipientTouched(true)
+    if (recipientValid && !recipientCorrect) {
+      reportAddressError(
+        'courier_recipient',
+        config.courierRecipientRequiredAddress,
+        recipientAddress.trim(),
+        'manual_entry',
+      )
+    }
   }
 
   const handleChangeRecipient = () => {
@@ -145,7 +231,23 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
   }
 
   const handleConfirm = () => {
-    if (!selectedOption || !senderValid || !recipientValid) {
+    if (senderValid && !senderCorrect) {
+      reportAddressError(
+        'courier_sender',
+        config.courierSenderRequiredAddress,
+        senderAddress.trim(),
+        'continue',
+      )
+    }
+    if (recipientValid && !recipientCorrect) {
+      reportAddressError(
+        'courier_recipient',
+        config.courierRecipientRequiredAddress,
+        recipientAddress.trim(),
+        'continue',
+      )
+    }
+    if (!selectedOption || !senderCorrect || !recipientCorrect) {
       setShowErrors(true)
       setSenderTouched(true)
       setRecipientTouched(true)
@@ -158,8 +260,8 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
     onNext(service2EntryEventId, fee)
   }
 
-  const senderError = (senderTouched || showErrors) && !senderValid
-  const recipientError = (recipientTouched || showErrors) && !recipientValid
+  const senderError = (senderTouched || showErrors) && !senderCorrect
+  const recipientError = (recipientTouched || showErrors) && !recipientCorrect
   const showRecipientTypeahead =
     config.service2EntryAddressTypeahead &&
     recipientFocused &&
@@ -167,24 +269,25 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
   const recipientQuery = recipientAddress.trim().toLowerCase()
   const recipientSuggestions = showRecipientTypeahead
     ? SAVED_RECIPIENTS
+        .filter((place) => !config.courierRecipientExcludedSuggestionIds.includes(place.id))
         .filter((place) => place.name.toLowerCase().startsWith(recipientQuery))
         .slice(0, config.courierRecipientSuggestionCount)
     : []
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-courier-entry">
+    <div className="relative w-full h-full min-h-0 overflow-hidden bg-white flex flex-col animate-fade-in" data-testid="screen-courier-entry">
       <StatusBar />
       <BackButton onClick={onBack} />
 
       {/* Tab Bar */}
-      <div className="flex items-center space-x-3 px-4 mt-[104px] mb-6 pt-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-shrink-0 items-center space-x-3 px-4 mt-[104px] mb-6 pt-2 overflow-x-auto no-scrollbar">
         <div className="bg-white text-black px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm border border-gray-100 active:scale-95 transition-transform">Rides</div>
         <div className="bg-black text-white px-5 py-2 rounded-full text-[15px] font-semibold shadow-sm active:scale-95 transition-transform flex items-center">
           <span className="mr-2 text-[18px]">📦</span> Courier
         </div>
       </div>
 
-      <div className="px-4 overflow-y-auto pb-4 no-scrollbar">
+      <div className="flex-1 min-h-0 px-4 overflow-y-auto pb-4 no-scrollbar">
         <h1 className="text-[26px] font-bold tracking-tight text-black mb-1 leading-tight">Send a package</h1>
         <p className="text-[14px] text-gray-500 mb-6 leading-snug">Confirm the sender and recipient, then choose a delivery option.</p>
 
@@ -216,7 +319,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   value={senderAddress}
                   onChange={(e) => handleSenderChange(e.target.value)}
                   onFocus={() => setSenderFocused(true)}
-                  onBlur={() => { setSenderFocused(false); setSenderTouched(true) }}
+                  onBlur={handleSenderBlur}
                   placeholder="Enter sender address"
                   aria-label="Sender address"
                   aria-invalid={senderError}
@@ -248,7 +351,11 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                 </div>
               )}
               {senderError && (
-                <p data-testid="sender-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Enter a valid sender address.</p>
+                <p data-testid="sender-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">
+                  {senderValid && config.courierSenderRequiredAddress
+                    ? `Use ${config.courierSenderRequiredAddress} as the sender address.`
+                    : 'Enter a valid sender address.'}
+                </p>
               )}
               {!config.addressSuggestions && senderAddress.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="sender-saved-places">
@@ -277,7 +384,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
         <div className="mb-6">
           <h2 className="text-[13px] font-bold text-black tracking-wide mb-2">Recipient</h2>
           {selectedRecipientId ? (
-            <div className="bg-gray-50 rounded-[16px] p-4 border border-gray-200 flex items-center justify-between" data-testid="recipient-selected">
+            <div className={`bg-gray-50 rounded-[16px] p-4 border flex items-center justify-between ${recipientError ? 'border-red-500' : 'border-gray-200'}`} data-testid="recipient-selected">
               <div className="flex items-center">
                 <span className="w-2.5 h-2.5 rounded-full bg-black mr-3 flex-shrink-0" />
                 <div className="font-bold text-[15px] text-black">
@@ -297,10 +404,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   value={recipientAddress}
                   onChange={(e) => handleRecipientChange(e.target.value)}
                   onFocus={() => setRecipientFocused(true)}
-                  onBlur={() => {
-                    setRecipientFocused(false)
-                    setRecipientTouched(true)
-                  }}
+                  onBlur={handleRecipientBlur}
                   placeholder="Enter recipient address"
                   aria-label="Recipient address"
                   aria-invalid={recipientError}
@@ -347,9 +451,6 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                   ))}
                 </div>
               )}
-              {recipientError && (
-                <p data-testid="recipient-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">Choose a saved address or enter a valid recipient address.</p>
-              )}
               {!config.service2EntryAddressTypeahead && recipientAddress.trim().length === 0 && (
                 <div className="mt-3 space-y-1" data-testid="recipient-saved-places">
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1">Saved &amp; recent</p>
@@ -370,6 +471,13 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
                 </div>
               )}
             </>
+          )}
+          {recipientError && (
+            <p data-testid="recipient-error" role="alert" className="mt-1.5 text-[12px] font-semibold text-red-600 pl-1">
+              {recipientValid && config.courierRecipientRequiredAddress
+                ? `Use ${config.courierRecipientRequiredAddress} as the recipient address.`
+                : 'Choose a saved address or enter a valid recipient address.'}
+            </p>
           )}
         </div>
 
@@ -402,7 +510,7 @@ export default function CourierEntryScreen({ config, onNext, onBack }: CourierEn
         </div>
       </div>
 
-      <div className="mt-auto px-4 pb-3">
+      <div className="flex-shrink-0 z-40 bg-white px-4 pt-2 pb-3">
         <button
           onClick={handleConfirm}
           data-testid="btn-confirm-courier"

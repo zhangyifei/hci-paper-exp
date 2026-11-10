@@ -64,11 +64,11 @@ export default function CourierDetailsScreen({ onNext, onBack, parentEventId }: 
   }
 
   return (
-    <div className="relative w-full min-h-full bg-white flex flex-col animate-fade-in" data-testid="screen-package-details">
+    <div className="relative w-full h-full min-h-0 overflow-hidden bg-white flex flex-col animate-fade-in" data-testid="screen-package-details">
       <StatusBar />
       <BackButton onClick={onBack} />
 
-      <div className="px-5 overflow-y-auto pb-4 no-scrollbar mt-[104px]">
+      <div className="flex-1 min-h-0 px-5 overflow-y-auto pb-4 no-scrollbar mt-[104px]">
         <h1 className="text-[26px] font-bold tracking-tight text-black mb-1.5 leading-tight">Package details</h1>
         <p className="text-[15px] text-gray-500 mb-7 leading-snug">Tell us what you&apos;re sending and add any handling instructions.</p>
 
@@ -174,7 +174,7 @@ export default function CourierDetailsScreen({ onNext, onBack, parentEventId }: 
         </div>
       </div>
 
-      <div className="mt-auto px-5 pb-4">
+      <div className="flex-shrink-0 z-40 bg-white px-5 pt-2 pb-4">
         <button
           onClick={handleConfirm}
           data-testid="btn-confirm-pickup"

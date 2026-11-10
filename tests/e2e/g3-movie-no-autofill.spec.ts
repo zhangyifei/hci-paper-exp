@@ -5,6 +5,7 @@ import {
   assertNoBanner,
   advanceToService2,
   completeMovieEntry,
+  expectPhoneCTAVisibleWithoutScroll,
 } from './shared/helpers'
 
 test.describe('G3 — Ride + Movie, No Auto-fill', () => {
@@ -102,6 +103,38 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
     await expect(page.getByText('0.7 km').first()).toBeVisible()
   })
 
+  test('G3 Movie Entry: wrong location is logged and must be corrected', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, false)
+
+    const locationInput = page.getByTestId('input-movie-location')
+    await locationInput.fill('100')
+    await page.getByTestId('movie-location-suggestion-saint-catherine-east').click()
+    await expect(page.getByTestId('movie-location-error')).toContainText(
+      'Use 1000 Saint-Catherine Street West to continue this task.',
+    )
+    await expect(page.getByTestId('cinema-list')).toHaveCount(0)
+
+    const taskErrors = await page.evaluate(() => {
+      const events = JSON.parse(
+        sessionStorage.getItem('hci_experiment_events') ?? '[]',
+      ) as Array<{ eventName?: string; payload?: { field?: string } }>
+      return events.filter((event) => event.eventName === 'task.error')
+    })
+    expect(taskErrors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          payload: expect.objectContaining({ field: 'cinema_location' }),
+        }),
+      ]),
+    )
+
+    await locationInput.fill('100')
+    await page.getByTestId('movie-location-suggestion-saint-catherine').click()
+    await expect(page.getByTestId('movie-location-error')).toHaveCount(0)
+    await expect(page.getByTestId('cinema-list')).toBeVisible()
+  })
+
   test('G3 full flow: location → showtime → seats → Tickets Booked', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, false)
@@ -111,5 +144,20 @@ test.describe('G3 — Ride + Movie, No Auto-fill', () => {
     await expect(page.getByText('Tickets Booked!', { exact: true })).toBeVisible({ timeout: 5000 })
     // No "Explore More" for G3.
     await expect(page.getByText('Explore More')).not.toBeVisible()
+  })
+
+  test('G3 Cinema CTAs are fully visible without scrolling', async ({ page }) => {
+    await completeRidePhase(page)
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-back-to-home')
+    await advanceToService2(page, false)
+
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-select-cinema')
+    await page.getByTestId('input-movie-location').fill('1000')
+    await page.getByTestId('movie-location-suggestion-saint-catherine').click()
+    await page.getByTestId('showtime-forum-710').click()
+    await page.getByTestId('btn-select-cinema').click()
+
+    await expect(page.getByTestId('screen-movie-seats')).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-tickets')
   })
 })

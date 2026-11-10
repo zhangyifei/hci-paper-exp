@@ -7,6 +7,32 @@ import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSu
  */
 
 const RIDE_INSTRUCTION = 'Book a ride to 1000 Saint-Catherine Street West.'
+const MENTAL_LOAD_LABELS = [
+  'Very low', 'Low', 'Somewhat low', 'Moderate', 'Somewhat high', 'High', 'Very high',
+]
+const AGREEMENT_LABELS = [
+  'Strongly disagree', 'Disagree', 'Somewhat disagree', 'Neither agree nor disagree',
+  'Somewhat agree', 'Agree', 'Strongly agree',
+]
+
+async function expectInlineLabels(page: Page, code: string, labels: string[]) {
+  const item = page.getByTestId(`survey-item-${code}`)
+  await expect(item.getByRole('radio')).toHaveCount(labels.length)
+  for (const [index, label] of labels.entries()) {
+    const inlineLabel = page.getByTestId(`likert-inline-label-${code}-${index + 1}`)
+    await expect(inlineLabel).toHaveText(label)
+    await expect(inlineLabel).toHaveCSS('color', 'rgb(55, 65, 81)')
+  }
+}
+
+async function expectQuestionHeaderInline(page: Page, code: string) {
+  const numberBox = await page.getByTestId(`question-number-${code}`).boundingBox()
+  const questionBox = await page.getByTestId(`question-text-${code}`).boundingBox()
+  expect(numberBox).not.toBeNull()
+  expect(questionBox).not.toBeNull()
+  expect(Math.abs((numberBox?.y ?? 0) - (questionBox?.y ?? 0))).toBeLessThanOrEqual(1)
+  expect(questionBox?.x ?? 0).toBeGreaterThan((numberBox?.x ?? 0) + (numberBox?.width ?? 0))
+}
 
 async function landRaw(page: Page, condition: 'G1' | 'G2' | 'G3' | 'G4') {
   const uniqueSessionId = `TEST_SESSION_${Date.now()}_${Math.floor(Math.random() * 1000)}`
@@ -168,8 +194,14 @@ test.describe('Post-task survey — items + attention check', () => {
     ]) {
       await expect(page.getByText(question, { exact: true })).toBeVisible()
     }
+    for (const code of ['CL1', 'CL2', 'CL3']) {
+      await expectInlineLabels(page, code, MENTAL_LOAD_LABELS)
+    }
+    for (const code of ['CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
+      await expectInlineLabels(page, code, AGREEMENT_LABELS)
+    }
     for (const code of ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
-      await expect(page.getByTestId(`survey-item-${code}`).getByRole('radio')).toHaveCount(7)
+      await expectQuestionHeaderInline(page, code)
     }
     await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toHaveCount(0)
 
@@ -195,7 +227,7 @@ test.describe('Post-task survey — items + attention check', () => {
       'My intentions are to continue using this app rather than use any alternative app.',
       'I would choose this super app again for similar tasks.',
       'I would like to continue my use of this app.',
-      'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
+      'Please select strongly disagree for this statement.',
       'The app provided a direct link from the first service to the second service.',
       'The app allowed me to go straight from the first service to the second service.',
       'Information from the first service was automatically carried over to the second service.',
@@ -212,20 +244,10 @@ test.describe('Post-task survey — items + attention check', () => {
       'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
       'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
     ]) {
-      await expect(page.getByTestId(`survey-item-${code}`).getByRole('radio')).toHaveCount(7)
+      await expectInlineLabels(page, code, AGREEMENT_LABELS)
+      await expectQuestionHeaderInline(page, code)
     }
-    await expect(page.getByText('To show that you are reading carefully, please select "Somewhat agree" for this statement.')).toBeVisible()
-    for (const [index, label] of [
-      'Strongly disagree',
-      'Disagree',
-      'Somewhat disagree',
-      'Neither agree nor disagree',
-      'Somewhat agree',
-      'Agree',
-      'Strongly agree',
-    ].entries()) {
-      await expect(page.getByTestId(`likert-inline-label-AC1-${index + 1}`)).toHaveText(label)
-    }
+    await expect(page.getByText('Please select strongly disagree for this statement.', { exact: true })).toBeVisible()
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await expect(page.getByTestId('btn-submit-survey')).toHaveText('Continue')
     await expect(page.getByTestId('btn-survey-back')).toHaveCount(0)
@@ -245,12 +267,12 @@ test.describe('Post-task survey — items + attention check', () => {
     }
     await page.getByTestId('btn-survey-continue').click({ force: true })
 
-    // Leave MC9 (question 24) unanswered, then submit (AC1 = 5).
+    // Leave MC9 (question 24) unanswered, then submit (AC1 = 1).
     for (const code of [
       'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
       'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8',
     ]) {
-      const value = code === 'AC1' ? 5 : 4
+      const value = code === 'AC1' ? 1 : 4
       await page.getByTestId(`likert-${code}-${value}`).evaluate((n) => (n as HTMLButtonElement).click())
     }
     await page.getByTestId('btn-submit-survey').click({ force: true })
@@ -275,9 +297,9 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
-    // Answer all 24 items with AC1 correct (5), then submit
+    // Answer all 24 items with AC1 correct (1), then submit
     await expect(page.getByTestId('screen-survey')).toBeVisible()
-    await completePostTaskSurvey(page, { ac1Value: 5 })
+    await completePostTaskSurvey(page, { ac1Value: 1 })
 
     // Background questionnaire now appears after the survey (docx order)
     await expect(page.getByTestId('btn-submit-questionnaire')).toBeVisible({ timeout: 10000 })
@@ -299,19 +321,28 @@ test.describe('Post-task survey — items + attention check', () => {
       await expect(page.getByText(question, { exact: true })).toBeVisible()
     }
 
-    const sevenPointItems: Record<string, string[]> = {
+    const labeledItems: Record<string, string[]> = {
       FAM1: ['Not at all familiar', 'Very slightly familiar', 'Slightly familiar', 'Moderately familiar', 'Quite familiar', 'Very familiar', 'Extremely familiar'],
       FAM2: ['Not at all clear', 'Very slightly clear', 'Slightly clear', 'Moderately clear', 'Quite clear', 'Very clear', 'Extremely clear'],
       KNW1: ['Far below average', 'Below average', 'Slightly below average', 'About average', 'Slightly above average', 'Above average', 'Far above average'],
       KNW2: ['Strongly disagree', 'Disagree', 'Somewhat disagree', 'Neither agree nor disagree', 'Somewhat agree', 'Agree', 'Strongly agree'],
       USE1: ['Never', 'Very rarely', 'Rarely', 'Sometimes', 'Often', 'Very often', 'All the time'],
+      SWI1: ['Not at all familiar', 'Slightly familiar', 'Moderately familiar', 'Very familiar', 'Extremely familiar'],
+      SWI2: ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'],
     }
-    for (const [code, labels] of Object.entries(sevenPointItems)) {
-      const item = page.getByTestId(`survey-item-${code}`)
-      await expect(item.getByRole('radio')).toHaveCount(7)
-      for (const [index, label] of labels.entries()) {
-        await expect(page.getByTestId(`likert-inline-label-${code}-${index + 1}`)).toHaveText(label)
-      }
+    for (const [code, labels] of Object.entries(labeledItems)) {
+      await expectInlineLabels(page, code, labels)
+    }
+    for (const code of ['DEM1', 'DEM2', ...Object.keys(labeledItems)]) {
+      await expectQuestionHeaderInline(page, code)
+    }
+    for (const code of ['SWI1', 'SWI2']) {
+      const columns = await page.getByTestId(`likert-labeled-scale-${code}`).evaluate((element) =>
+        getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean),
+      )
+      expect(columns).toHaveLength(5)
+      const widths = columns.map(Number.parseFloat)
+      expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1)
     }
 
     await expect(page.locator('[id^="q-"]')).toHaveCount(9)
@@ -334,7 +365,7 @@ test.describe('Post-task survey — items + attention check', () => {
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 8000 })
     await page.getByTestId('btn-service2-done').click({ force: true })
 
-    // Answer AC1 incorrectly (value 2 instead of 5)
+    // Answer AC1 incorrectly (value 2 instead of 1)
     await expect(page.getByTestId('screen-survey')).toBeVisible()
     await completePostTaskSurvey(page, { ac1Value: 2 })
 

@@ -136,7 +136,7 @@ const DEM = {
   KNW2: ['2', '3', '4', '5'],
   USE1: ['2', '2', '3', '4', '5', '6'],
   SWI1: ['2', '2', '3', '4'],
-  SWI2: ['rarely', 'rarely', 'sometimes'],
+  SWI2: ['2', '2', '3'],
 }
 
 function sampleSurvey(rng, agent) {
@@ -160,7 +160,7 @@ function sampleSurvey(rng, agent) {
   const mcHet = clamp(gauss(rng, agent.construct.mcHet[0], agent.construct.mcHet[1]), 1, 7)
   for (const code of SURVEY_ITEMS.mcInter) responses[code] = responseFor(code, mcInter, 0.5)
   for (const code of SURVEY_ITEMS.mcHet) responses[code] = responseFor(code, mcHet, 0.5)
-  responses.AC1 = 5 // correct attention-check answer (passes)
+  responses.AC1 = 1 // correct attention-check answer (passes)
   const round2 = (a) => Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 100) / 100
   const aggregates = {
     cognitive_load_mean: round2(SURVEY_ITEMS.cl.map(scored)),
@@ -355,7 +355,7 @@ export function buildSessionEvents(agent, rng, opts) {
     const code = SURVEY_ORDER[i]
     adv(1500 + rng() * 3000)
     push('survey.item_answered', 'survey', 'survey_active', {
-      payload: { code, value: code === 'AC1' ? 5 : surveyResp[code], responseSoFar: i + 1 },
+      payload: { code, value: code === 'AC1' ? 1 : surveyResp[code], responseSoFar: i + 1 },
     })
     if (code === 'PU5') push('survey.page_changed', 'survey', 'survey_active', { payload: { from: 1, to: 2 } })
   }

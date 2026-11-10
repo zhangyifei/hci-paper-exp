@@ -15,7 +15,7 @@ import { logger } from '@/lib/logger'
  *   Cognitive Load  (CL1-CL5)      — questions 1–5
  *   Usability       (PU1-PU5)      — questions 6–10; PU5 reverse-coded
  *   Continuance     (CI1-CI4)      — questions 11–14
- *   Attention       (AC1)          — question 15; must select "Somewhat agree" (5).
+ *   Attention       (AC1)          — question 15; must select "Strongly disagree" (1).
  *   MC interrelated (MC1-MC4)      — questions 16–19
  *   MC heterogeneity(MC5-MC9)      — questions 20–24
  *
@@ -23,10 +23,29 @@ import { logger } from '@/lib/logger'
  * All items use a 1–7 response scale (LikertScale default points = 7).
  */
 
-/** AC1 correct answer: "Somewhat agree" on the 1–7 scale. */
+/** AC1 correct answer: "Strongly disagree" on the 1–7 scale. */
 export const AC1_CODE = 'AC1'
-export const AC1_CORRECT_VALUE = 5
+export const AC1_CORRECT_VALUE = 1
 const SURVEY_SCALE_POINTS = 7
+const MENTAL_LOAD_CODES = new Set(['CL1', 'CL2', 'CL3'])
+const MENTAL_LOAD_POINT_LABELS = [
+  'Very low',
+  'Low',
+  'Somewhat low',
+  'Moderate',
+  'Somewhat high',
+  'High',
+  'Very high',
+]
+const AGREEMENT_POINT_LABELS = [
+  'Strongly disagree',
+  'Disagree',
+  'Somewhat disagree',
+  'Neither agree nor disagree',
+  'Somewhat agree',
+  'Agree',
+  'Strongly agree',
+]
 
 interface PostTaskSurveyProps {
   onComplete: () => void
@@ -139,18 +158,10 @@ const SURVEY_ITEMS: SurveyItem[] = [
   {
     code: AC1_CODE,
     construct: 'attention_check',
-    question: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
+    question: 'Please select strongly disagree for this statement.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
     labelsUnderOptions: true,
-    pointLabels: [
-      'Strongly disagree',
-      'Disagree',
-      'Somewhat disagree',
-      'Neither agree nor disagree',
-      'Somewhat agree',
-      'Agree',
-      'Strongly agree',
-    ],
+    pointLabels: AGREEMENT_POINT_LABELS,
   },
   // ── Manipulation checks ──────────────────────────────────────────
   {
@@ -422,6 +433,9 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
         {pageCodes.map((code) => {
           const item = ITEM_BY_CODE[code]
           const number = ORDERED_CODES.indexOf(code) + 1
+          const pointLabels = item.pointLabels ?? (
+            MENTAL_LOAD_CODES.has(code) ? MENTAL_LOAD_POINT_LABELS : AGREEMENT_POINT_LABELS
+          )
           return (
             <LikertScale
               key={code}
@@ -432,8 +446,8 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
               question={item.question}
               points={SURVEY_SCALE_POINTS}
               anchors={item.anchors}
-              pointLabels={item.pointLabels}
-              labelsUnderOptions={item.labelsUnderOptions}
+              pointLabels={pointLabels}
+              labelsUnderOptions
               value={responses[code]}
               invalid={showErrors && responses[code] === undefined}
               onAnswer={(v) => handleAnswer(code, item.construct, v)}

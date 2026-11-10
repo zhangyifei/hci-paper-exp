@@ -5,6 +5,7 @@ import {
   assertBannerVisible,
   advanceToService2,
   completeCourierEntry,
+  expectPhoneCTAVisibleWithoutScroll,
 } from './shared/helpers'
 
 test.describe('G2 — Ride + Courier, Auto-fill', () => {
@@ -25,6 +26,16 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByText(/Send a package from 1000 Saint-Catherine Street West/i)).toBeVisible()
     await expect(page.getByTestId('btn-back-to-home')).toHaveText('Back to Home')
     await expect(page.getByTestId('trip-complete-map')).toBeVisible()
+    await expect(page.getByTestId('trip-complete-map')).toHaveCSS('height', '96px')
+    const ctaIsFullyVisibleWithoutScroll = await page.evaluate(() => {
+      const screen = document.querySelector('.device-screen')
+      const cta = document.querySelector('[data-testid="btn-banner-cta"]')
+      if (!(screen instanceof HTMLElement) || !(cta instanceof HTMLElement)) return false
+      const screenBox = screen.getBoundingClientRect()
+      const ctaBox = cta.getBoundingClientRect()
+      return screen.scrollTop === 0 && ctaBox.bottom <= screenBox.bottom
+    })
+    expect(ctaIsFullyVisibleWithoutScroll).toBe(true)
     await expect(page.getByTestId('guidance-banner')).toContainText(
       "Task reminder: Tap 'Send Package' to send a package to 3008 Rue McGill.",
       { timeout: 12_000 },
@@ -68,6 +79,29 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
     await expect(page.getByTestId('courier-option-large')).toBeVisible()
   })
 
+  test('G2 Courier CTAs are fully visible without scrolling', async ({ page }) => {
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-start-ride')
+    await page.getByTestId('input-destination').fill('1000 Saint-Catherine Street West')
+    await page.getByTestId('btn-start-ride').click()
+
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-choose-uber-x')
+    await page.getByTestId('btn-choose-uber-x').click()
+    await expect(page.getByText('Trip Complete', { exact: true })).toBeVisible({ timeout: 10000 })
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-banner-cta')
+    await page.getByTestId('btn-banner-cta').click()
+
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-courier')
+    await page.getByTestId('input-recipient-address').fill('3008')
+    await page.getByTestId('recipient-suggestion-rue-mcgill').click()
+    await page.getByTestId('btn-confirm-courier').click()
+
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-pickup')
+    await page.getByTestId('btn-confirm-pickup').click()
+    await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-service2-done')
+  })
+
   test('G2 recipient typing shows only prefix-matching options with the task address first', async ({ page }) => {
     await completeRidePhase(page)
     await advanceToService2(page, true)
@@ -91,6 +125,49 @@ test.describe('G2 — Ride + Courier, Auto-fill', () => {
       'Task reminder: Enter 3008 Rue McGill as the recipient and choose a delivery option.',
       { timeout: 12_000 },
     )
+  })
+
+  test('G2 removes 1502 and blocks every recipient except 3008 Rue McGill', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, true)
+
+    const recipient = page.getByTestId('input-recipient-address')
+    await recipient.fill('1')
+    await expect(page.getByTestId('recipient-suggestions')).toHaveCount(0)
+    await expect(page.getByText('1502 Rue Saint-Louis', { exact: true })).toHaveCount(0)
+
+    await recipient.fill('1502 Rue Saint-Louis')
+    const continueButton = page.getByTestId('btn-confirm-courier')
+    await continueButton.scrollIntoViewIfNeeded()
+    await continueButton.click()
+    await expect(page.getByTestId('recipient-error')).toContainText(
+      'Use 3008 Rue McGill as the recipient address.',
+    )
+    await expect(page.getByTestId('screen-courier-entry')).toBeVisible()
+    await expect(page.getByTestId('screen-package-details')).toHaveCount(0)
+
+    const recipientErrors = await page.evaluate(() => {
+      const events = JSON.parse(
+        sessionStorage.getItem('hci_experiment_events') ?? '[]',
+      ) as Array<{ eventName?: string; payload?: { field?: string; providedAddress?: string } }>
+      return events.filter(
+        (event) =>
+          event.eventName === 'task.error' && event.payload?.field === 'courier_recipient',
+      )
+    })
+    expect(recipientErrors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          payload: expect.objectContaining({ providedAddress: '1502 Rue Saint-Louis' }),
+        }),
+      ]),
+    )
+
+    await recipient.fill('3008')
+    await page.getByTestId('recipient-suggestion-rue-mcgill').click()
+    await continueButton.scrollIntoViewIfNeeded()
+    await continueButton.click()
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
   })
 
   test('G2 full flow: Continue → Delivery Complete without Explore More', async ({ page }) => {

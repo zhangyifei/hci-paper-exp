@@ -56,7 +56,7 @@ export const ITEM_WORDING: Record<string, string> = {
   MC7: 'The two services belong to different broad service categories.',
   MC8: 'The two services follow different steps to complete their main tasks.',
   MC9: 'The two services involve different types of activities.',
-  AC1: 'To show that you are reading carefully, please select "Somewhat agree" for this statement.',
+  AC1: 'Please select strongly disagree for this statement.',
   DEM1: 'What is your age range?',
   DEM2: 'What is your gender?',
   FAM1: 'How familiar are you with super apps such as Uber, Grab, WeChat, or similar?',

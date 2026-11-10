@@ -15,6 +15,27 @@ async function tap(page: Page, testId: string) {
   await el.click()
 }
 
+/** Assert a phone-screen primary action is fully visible before any scrolling. */
+export async function expectPhoneCTAVisibleWithoutScroll(page: Page, testId: string) {
+  const metrics = await page.evaluate((ctaTestId) => {
+    const screen = document.querySelector('.device-screen')
+    const cta = document.querySelector(`[data-testid="${ctaTestId}"]`)
+    if (!(screen instanceof HTMLElement) || !(cta instanceof HTMLElement)) return null
+    const screenBox = screen.getBoundingClientRect()
+    const ctaBox = cta.getBoundingClientRect()
+    return {
+      screenScrollTop: screen.scrollTop,
+      topVisible: ctaBox.top >= screenBox.top,
+      bottomVisible: ctaBox.bottom <= screenBox.bottom,
+    }
+  }, testId)
+
+  expect(metrics).not.toBeNull()
+  expect(metrics?.screenScrollTop).toBe(0)
+  expect(metrics?.topVisible).toBe(true)
+  expect(metrics?.bottomVisible).toBe(true)
+}
+
 async function acceptConsent(page: Page) {
   const continueButton = page.getByTestId('btn-consent-continue')
   if (!(await continueButton.isVisible().catch(() => false))) {
@@ -51,8 +72,8 @@ export async function completeBackgroundQuestionnaire(page: Page) {
     'likert-KNW1-4',
     'likert-KNW2-5',
     'likert-USE1-4',
-    'questionnaire-option-SWI1-4',
-    'questionnaire-option-SWI2-sometimes',
+    'likert-SWI1-4',
+    'likert-SWI2-3',
   ]
 
   for (const answerTestId of answers) {
@@ -94,10 +115,10 @@ export async function completeRidePhase(page: Page) {
   await destination.click({ force: true })
   await destination.fill('1000 Saint-Catherine Street West')
 
-  await page.getByTestId('btn-start-ride').click({ force: true })
+  await tap(page, 'btn-start-ride')
 
   // Map screen → tap Choose Uber X
-  await page.getByTestId('btn-choose-uber-x').click({ force: true })
+  await tap(page, 'btn-choose-uber-x')
 
   // RideAlmostThere screen auto-advances after 2.5s
   // Wait longer to ensure transition happens even on slow CI/local
@@ -124,14 +145,14 @@ export async function assertNoBanner(page: Page) {
 
 /**
  * Complete the 24-item post-task survey (23 constructs + AC1 attention check).
- * AC1 must be answered "Somewhat agree" (value 5) to avoid termination; all
+ * AC1 must be answered "Strongly disagree" (value 1) to avoid termination; all
  * other items default to value 4 unless overridden.
  */
 export async function completePostTaskSurvey(
   page: Page,
   opts: { ac1Value?: number } = {},
 ) {
-  const ac1Value = opts.ac1Value ?? 5
+  const ac1Value = opts.ac1Value ?? 1
   const page1 = ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']
   const page2 = [
     'CI1', 'CI2', 'CI3', 'CI4', 'AC1',

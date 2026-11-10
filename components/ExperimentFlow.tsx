@@ -190,6 +190,7 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
             service2Kind={config.service2}
             service2Tab={returnedHomeAfterRide ? config.service2 : undefined}
             onService2TabClick={returnedHomeAfterRide ? goToService2Entry : undefined}
+            requiredDestinationAddress={config.rideRequiredAddress}
           />
         )
         break

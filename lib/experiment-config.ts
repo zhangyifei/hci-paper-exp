@@ -41,6 +41,8 @@ export interface ConditionConfig {
   courierAddressTypeaheadMinChars: number
   /** Number of recipient options shown in the Courier typeahead. */
   courierRecipientSuggestionCount: number
+  /** Saved recipient IDs excluded from this condition's typeahead. */
+  courierRecipientExcludedSuggestionIds: string[]
   /** Optional heading displayed above Courier recipient typeahead options. */
   courierRecipientTypeaheadLabel: string | null
   /** Characters required before Cinema location suggestions appear. */
@@ -57,6 +59,12 @@ export interface ConditionConfig {
   service2CompleteGuidanceText: string
   /** Exact address required before Service 2 results appear; null shows them immediately. */
   service2ResultsRequireAddress: string | null
+  /** Exact destination required for the shared ride task. */
+  rideRequiredAddress: string
+  /** Exact Courier sender required by the task; null for non-Courier conditions. */
+  courierSenderRequiredAddress: string | null
+  /** Exact Courier recipient required by the task; null for non-Courier conditions. */
+  courierRecipientRequiredAddress: string | null
   /** Reminder for the ride-option selection screen. */
   rideSelectionGuidanceText: string
   /** Reminder for the short ride-arrival waiting screen. */

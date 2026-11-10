@@ -5,6 +5,7 @@ import {
   assertNoBanner,
   advanceToService2,
   completeCourierEntry,
+  expectPhoneCTAVisibleWithoutScroll,
 } from './shared/helpers'
 
 test.describe('G1 — Ride + Courier, No Auto-fill', () => {
@@ -80,6 +81,10 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(senderSuggestions.getByRole('button').first()).toContainText('RECENT')
     await page.getByTestId('sender-suggestion-saint-catherine').click()
 
+    await page.getByTestId('input-recipient-address').fill('150')
+    await expect(page.getByTestId('recipient-suggestions')).toHaveCount(0)
+    await expect(page.getByText('1502 Rue Saint-Louis', { exact: true })).toHaveCount(0)
+
     await page.getByTestId('input-recipient-address').fill('30')
     await expect(page.getByTestId('recipient-suggestions')).toHaveCount(0)
     await page.getByTestId('input-recipient-address').fill('300')
@@ -103,6 +108,48 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await expect(page.getByText('$8.00')).toBeVisible()
     await expect(page.getByText('$12.00')).toBeVisible()
     await expect(page.getByText('$24.00')).toBeVisible()
+  })
+
+  test('G1 Courier Entry: wrong task addresses are logged and must be corrected', async ({ page }) => {
+    await completeRidePhase(page)
+    await advanceToService2(page, false)
+
+    const sender = page.getByTestId('input-sender-address')
+    await sender.fill('100')
+    await page.getByTestId('sender-suggestion-saint-catherine-east').click()
+    await expect(page.getByTestId('sender-error')).toContainText(
+      'Use 1000 Saint-Catherine Street West as the sender address.',
+    )
+
+    await sender.fill('100')
+    await page.getByTestId('sender-suggestion-saint-catherine').click()
+    await expect(page.getByTestId('sender-error')).toHaveCount(0)
+
+    const recipient = page.getByTestId('input-recipient-address')
+    await recipient.fill('300')
+    await page.getByTestId('recipient-suggestion-mcgill-300').click()
+    await expect(page.getByTestId('recipient-error')).toContainText(
+      'Use 3008 Rue McGill as the recipient address.',
+    )
+    await page.getByTestId('btn-confirm-courier').click()
+    await expect(page.getByTestId('screen-courier-entry')).toBeVisible()
+    await expect(page.getByTestId('screen-package-details')).toHaveCount(0)
+
+    const errorFields = await page.evaluate(() => {
+      const events = JSON.parse(
+        sessionStorage.getItem('hci_experiment_events') ?? '[]',
+      ) as Array<{ eventName?: string; payload?: { field?: string } }>
+      return events
+        .filter((event) => event.eventName === 'task.error')
+        .map((event) => event.payload?.field)
+    })
+    expect(errorFields).toEqual(expect.arrayContaining(['courier_sender', 'courier_recipient']))
+
+    await page.getByTestId('btn-change-recipient').click()
+    await recipient.fill('3008')
+    await page.getByTestId('recipient-suggestion-rue-mcgill').click()
+    await page.getByTestId('btn-confirm-courier').click()
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
   })
 
   test('G1 full flow: Continue → Package details → Delivery Complete', async ({ page }) => {
@@ -133,5 +180,20 @@ test.describe('G1 — Ride + Courier, No Auto-fill', () => {
     await page.getByTestId('btn-confirm-pickup').click({ force: true })
 
     await expect(page.getByText('Delivery Complete', { exact: true })).toBeVisible({ timeout: 5000 })
+  })
+
+  test('G1 Courier CTAs are fully visible without scrolling', async ({ page }) => {
+    await completeRidePhase(page)
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-back-to-home')
+    await advanceToService2(page, false)
+
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-courier')
+    await page.getByTestId('input-sender-address').fill('1000 Saint-Catherine Street West')
+    await page.getByTestId('input-recipient-address').fill('3008')
+    await page.getByTestId('recipient-suggestion-rue-mcgill').click()
+    await page.getByTestId('btn-confirm-courier').click()
+
+    await expect(page.getByTestId('screen-package-details')).toBeVisible()
+    await expectPhoneCTAVisibleWithoutScroll(page, 'btn-confirm-pickup')
   })
 })
