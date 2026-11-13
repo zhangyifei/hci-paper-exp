@@ -180,7 +180,7 @@ const mentalLoadValues = '1 Very low · 2 Low · 3 Somewhat low · 4 Moderate ·
 const agreementValues = '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree'
 const itemDefs = SURVEY_CODES.map((c) => {
   const k = Object.keys(ITEMS).find((key) => ITEMS[key].includes(c))
-  const values = ['CL1', 'CL2', 'CL3'].includes(c) ? mentalLoadValues : agreementValues
+  const values = ['CL1', 'CL2'].includes(c) ? mentalLoadValues : agreementValues
   return [c, k ? `${CONSTRUCT_NAMES[k]}${REVERSE.has(c) ? ' (reverse-coded: scored 8 − x)' : ''}` : 'Attention check (correct = 1 "Strongly disagree")', values, ITEM_WORDING[c]]
 })
 const questDefs = [

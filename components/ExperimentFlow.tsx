@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Condition, ConditionConfig } from '@/lib/experiment-config'
+import {
+  EXPERIMENT_TIMEOUT_MS,
+  experimentStartedAtStorageKey,
+} from '@/lib/experiment-timeout'
 import { logger } from '@/lib/logger'
 import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
 import PhoneFrame from './shared/PhoneFrame'
@@ -39,6 +43,7 @@ type Screen =
   | 'survey'
   | 'finished'
   | 'terminated'
+  | 'timed_out'
 
 /** Super App screens belonging to Task 1 (the ride). */
 const TASK1_SCREENS: Screen[] = ['home', 'map', 'ride_almost_there', 'trip_complete']
@@ -51,11 +56,65 @@ const TASK2_SCREENS: Screen[] = [
 
 export default function ExperimentFlow({ condition, config }: ExperimentFlowProps) {
   const [screen, setScreen] = useState<Screen>('consent')
+  const finalOutcomeLockedRef = useRef(false)
   const [service2EntryEventId, setService2EntryEventId] = useState<string>('')
   const [returnedHomeAfterRide, setReturnedHomeAfterRide] = useState(false)
   // Prices the participant selected, carried to the completion screens (§4).
   const [ridePrice, setRidePrice] = useState<number>(12.59)
   const [service2Fee, setService2Fee] = useState<number>(config.service2Options[0]?.price ?? 0)
+
+  // Apply one shared 30-minute limit to the complete study session. The start
+  // time is tied to the experiment session so refreshing cannot restart it.
+  useEffect(() => {
+    const sessionId = sessionStorage.getItem('exp_session_id')
+    if (!sessionId) return
+
+    const storageKey = experimentStartedAtStorageKey(sessionId)
+    const now = Date.now()
+    const storedStartedAt = Number(sessionStorage.getItem(storageKey))
+    const startedAt =
+      Number.isFinite(storedStartedAt) && storedStartedAt > 0 && storedStartedAt <= now
+        ? storedStartedAt
+        : now
+
+    if (startedAt === now) {
+      sessionStorage.setItem(storageKey, String(startedAt))
+    }
+
+    const endTimedOutSession = async () => {
+      if (finalOutcomeLockedRef.current) return
+      finalOutcomeLockedRef.current = true
+
+      const elapsedMs = Math.max(0, Date.now() - startedAt)
+      logger.trackEvent('experiment.timed_out', 'experiment', 'timed_out', {
+        payload: { limitMs: EXPERIMENT_TIMEOUT_MS, elapsedMs },
+      })
+      logger.trackEvent('experiment.invalidated', 'experiment', 'timed_out', {
+        payload: { reason: 'timeout', limitMs: EXPERIMENT_TIMEOUT_MS },
+      })
+
+      try {
+        await logger.flushAndWait()
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        logger.trackEvent('experiment.error', 'experiment', 'timed_out', { error: message })
+      }
+
+      setScreen('timed_out')
+    }
+
+    const remainingMs = EXPERIMENT_TIMEOUT_MS - (now - startedAt)
+    if (remainingMs <= 0) {
+      void endTimedOutSession()
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void endTimedOutSession()
+    }, remainingMs)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [])
 
   // Every screen (and phone-frame screen) must start at the top. Without this,
   // React swaps the screen content while the window keeps the previous page's
@@ -84,6 +143,9 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   }
 
   const handleQuestionnaireComplete = async () => {
+    if (finalOutcomeLockedRef.current) return
+    finalOutcomeLockedRef.current = true
+
     try {
       // Include the full navigation path in the completion event
       const navPath = getNavigationPath()
@@ -106,6 +168,9 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     expected: string | number,
     actual: string | number | undefined,
   ) => {
+    if (finalOutcomeLockedRef.current) return
+    finalOutcomeLockedRef.current = true
+
     logger.trackEvent('attention_check.failed', 'experiment', 'terminated', {
       payload: { code, expected, actual: actual ?? null },
     })
@@ -291,6 +356,8 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
       )
     case 'terminated':
       return <CompletionScreen variant="terminated" />
+    case 'timed_out':
+      return <CompletionScreen variant="timed_out" />
     case 'finished':
       return <CompletionScreen variant="completed" />
     default:

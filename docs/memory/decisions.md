@@ -572,6 +572,26 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-10
 **Rationale**: Keeping the number and the first line of its question together creates a consistent scan line and removes unnecessary vertical separation.
 
+### ADR-081: Use Agreement Stems for Q3
+**Decision**: Keep Q3 wording unchanged as `Using this app required a lot of thinking.` but present it with the seven-point agreement scale from `Strongly disagree` through `Strongly agree` across G1–G4. Q1–Q2 retain the mental-load intensity stems.
+**Date**: 2026-11-13
+**Rationale**: Q3 is a declarative statement, so agreement response stems match its grammatical form and intended measurement.
+
+### ADR-082: Move the Attention Check After the First Service-Difference Item
+**Decision**: On survey page 2, place AC1 immediately after `The two services served different purposes.` across G1–G4. AC1 becomes participant-facing Q20; the preceding manipulation-check items become Q15–Q19 and the remaining service-difference items remain Q21–Q24. Keep AC1 wording, correct value `1`, and failure behavior unchanged.
+**Date**: 2026-11-13
+**Rationale**: Moving the instructed-response item later makes its placement less predictable while preserving the approved page and instrument length.
+
+### ADR-083: State the Attention-Check Failure Explicitly
+**Decision**: Prepend `You have failed the attention check.` to the terminated-session message across G1–G4. Keep the existing explanation that the session ended and the participant's data will not be used.
+**Date**: 2026-11-13
+**Rationale**: Participants should receive a direct and unambiguous explanation for why the study ended.
+
+### ADR-084: Invalidate Sessions After the 30-Minute Study Limit
+**Decision**: Apply one shared 30-minute timer across G1–G4 from the start of the experiment session. Persist the start time per experiment session so refreshing cannot restart the timer. When the limit expires, record `experiment.timed_out` and `experiment.invalidated` with reason `timeout`, exclude the session from analysis, and show a dedicated timeout outcome instead of the attention-check failure message.
+**Date**: 2026-11-13
+**Rationale**: Timed-out sessions are incomplete and should not enter the study analysis, while participants need an accurate explanation that is distinct from failing an attention check.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

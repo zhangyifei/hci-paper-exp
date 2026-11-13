@@ -1018,3 +1018,33 @@ Design mockups analyzed. Key findings per condition:
 - Applied the shared layout to both Likert-scale and categorical questions across G1–G4.
 - Preserved all wording, scale labels, response options, pagination, and validation behavior.
 - Passed the standalone TypeScript check, production build, and browser alignment assertions across all three survey pages.
+
+## 2026-11-13 — Changed Q3 to agreement response stems
+
+- Kept the Q3 statement exactly as `Using this app required a lot of thinking.`
+- Changed only its seven response labels to `Strongly disagree` through `Strongly agree` across G1–G4.
+- Kept Q1–Q2 on the mental-load intensity scale and updated active export codebooks and regression coverage.
+- Passed the standalone TypeScript check, production build, and focused browser regression for all seven Q3 labels.
+
+## 2026-11-13 — Moved the attention check to Q20
+
+- Moved `Please select strongly disagree for this statement.` to immediately after `The two services served different purposes.` on survey page 2 across G1–G4.
+- Renumbered the displayed questions automatically: the service-purpose item is Q19, AC1 is Q20, and the remaining service-difference items are Q21–Q24.
+- Preserved the attention-check wording, correct response (`1 — Strongly disagree`), seven-point scale, and failed-check invalidation behavior.
+- Passed the standalone TypeScript check, production build, and focused browser regressions for the new position plus correct and incorrect AC1 responses.
+
+## 2026-11-13 — Clarified the failed-attention-check message
+
+- Added `You have failed the attention check.` to the beginning of the terminated-session message across G1–G4.
+- Preserved the existing explanation that the session ended and the participant's data will not be used.
+- Added browser regression coverage for the complete participant-facing message.
+- Passed the standalone TypeScript check, production build, and focused failed-attention-check browser regression.
+
+## 2026-11-13 — Added a 30-minute session timeout
+
+- Added one shared 30-minute study timer across G1–G4, with a session-scoped start time that survives refreshes.
+- Added `experiment.timed_out` instrumentation and the standard `experiment.invalidated` event with reason `timeout`.
+- Added a distinct `Session Timed Out` outcome explaining that the incomplete responses will not be included in the study analysis.
+- Classified timeout events as failed outcomes for Prolific routing and invalid sessions for paper-facing statistics.
+- Kept the attention-check failure message and scoring behavior unchanged.
+- Passed the standalone TypeScript check, production build, timeout UI/event regression, outcome-classification test, statistics-exclusion test, and existing failed-attention-check regression.

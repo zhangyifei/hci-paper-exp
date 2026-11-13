@@ -155,8 +155,8 @@ export async function completePostTaskSurvey(
   const ac1Value = opts.ac1Value ?? 1
   const page1 = ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']
   const page2 = [
-    'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
-    'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+    'CI1', 'CI2', 'CI3', 'CI4',
+    'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'AC1', 'MC6', 'MC7', 'MC8', 'MC9',
   ]
 
   const answer = async (code: string) => {

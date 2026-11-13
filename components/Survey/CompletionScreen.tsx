@@ -11,16 +11,18 @@ const REDIRECT_DELAY_MS = 2500
  *   - "completed":  the participant finished the study normally.
  *   - "terminated": the participant failed an attention check; the session
  *                   was marked invalid and the test ended early.
+ *   - "timed_out":  the participant exceeded the 30-minute study limit.
  *
  * Both variants share one polished layout for visual consistency.
  */
 
 interface CompletionScreenProps {
-  variant: 'completed' | 'terminated'
+  variant: 'completed' | 'terminated' | 'timed_out'
 }
 
 export default function CompletionScreen({ variant }: CompletionScreenProps) {
   const isCompleted = variant === 'completed'
+  const isTimedOut = variant === 'timed_out'
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -63,7 +65,9 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
     <ResearchPage maxWidthClassName="max-w-[520px]">
       <div
         className="flex flex-col items-center justify-center text-center py-6 animate-fade-in"
-        data-testid={isCompleted ? 'screen-finished' : 'screen-terminated'}
+        data-testid={
+          isCompleted ? 'screen-finished' : isTimedOut ? 'screen-timed-out' : 'screen-terminated'
+        }
       >
         {/* Icon badge with soft gradient ring */}
         <div className="relative mb-7">
@@ -113,14 +117,16 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
 
         {/* Heading */}
         <h1 className="text-[28px] font-bold tracking-tight text-black mb-2.5">
-          {isCompleted ? 'All Done!' : 'Test Ended'}
+          {isCompleted ? 'All Done!' : isTimedOut ? 'Session Timed Out' : 'Test Ended'}
         </h1>
 
         {/* Message */}
         <p className="text-gray-500 text-[15px] leading-relaxed max-w-[320px]">
           {isCompleted
             ? 'Thank you for completing the study. Your responses have been recorded.'
-            : 'Thank you for your time. Based on your responses, this session has ended and your data will not be used.'}
+            : isTimedOut
+              ? 'The 30-minute study limit has passed. This session is incomplete, and your responses will not be included in the study analysis.'
+              : 'You have failed the attention check. Thank you for your time. Based on your responses, this session has ended and your data will not be used.'}
         </p>
 
         {/* Debrief note (completed only) */}

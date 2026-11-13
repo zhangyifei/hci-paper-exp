@@ -15,7 +15,7 @@ import { logger } from '@/lib/logger'
  *   Cognitive Load  (CL1-CL5)      — questions 1–5
  *   Usability       (PU1-PU5)      — questions 6–10; PU5 reverse-coded
  *   Continuance     (CI1-CI4)      — questions 11–14
- *   Attention       (AC1)          — question 15; must select "Strongly disagree" (1).
+ *   Attention       (AC1)          — question 20; must select "Strongly disagree" (1).
  *   MC interrelated (MC1-MC4)      — questions 16–19
  *   MC heterogeneity(MC5-MC9)      — questions 20–24
  *
@@ -27,7 +27,7 @@ import { logger } from '@/lib/logger'
 export const AC1_CODE = 'AC1'
 export const AC1_CORRECT_VALUE = 1
 const SURVEY_SCALE_POINTS = 7
-const MENTAL_LOAD_CODES = new Set(['CL1', 'CL2', 'CL3'])
+const MENTAL_LOAD_CODES = new Set(['CL1', 'CL2'])
 const MENTAL_LOAD_POINT_LABELS = [
   'Very low',
   'Low',
@@ -83,7 +83,7 @@ const SURVEY_ITEMS: SurveyItem[] = [
     code: 'CL3',
     construct: 'cognitive_load',
     question: 'Using this app required a lot of thinking.',
-    anchors: ['Very Low', 'Very High'],
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
   // ── Perceived Usability (SUS adapted) ─────────────────────────────
   {
@@ -154,15 +154,6 @@ const SURVEY_ITEMS: SurveyItem[] = [
     question: 'I would like to continue my use of this app.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
-  // ── Attention Check (scored separately, excluded from constructs) ──
-  {
-    code: AC1_CODE,
-    construct: 'attention_check',
-    question: 'Please select strongly disagree for this statement.',
-    anchors: ['Strongly Disagree', 'Strongly Agree'],
-    labelsUnderOptions: true,
-    pointLabels: AGREEMENT_POINT_LABELS,
-  },
   // ── Manipulation checks ──────────────────────────────────────────
   {
     code: 'MC1',
@@ -194,6 +185,15 @@ const SURVEY_ITEMS: SurveyItem[] = [
     question: 'The two services served different purposes.',
     anchors: ['Strongly Disagree', 'Strongly Agree'],
   },
+  // ── Attention Check (scored separately, excluded from constructs) ──
+  {
+    code: AC1_CODE,
+    construct: 'attention_check',
+    question: 'Please select strongly disagree for this statement.',
+    anchors: ['Strongly Disagree', 'Strongly Agree'],
+    labelsUnderOptions: true,
+    pointLabels: AGREEMENT_POINT_LABELS,
+  },
   {
     code: 'MC6',
     construct: 'mc_heterogeneity',
@@ -222,13 +222,13 @@ const SURVEY_ITEMS: SurveyItem[] = [
 
 /**
  * Participant-facing pagination. Items are split across two pages with the
- * attention check (AC1) placed in the middle of page 2. Internal codes
+ * attention check (AC1) placed after MC5 on page 2. Internal codes
  * (CL1, AC1, …) are never shown — only sequential numbers 1…N.
  */
 const PAGE_1_CODES = ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']
 const PAGE_2_CODES = [
-  'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
-  'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+  'CI1', 'CI2', 'CI3', 'CI4',
+  'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'AC1', 'MC6', 'MC7', 'MC8', 'MC9',
 ]
 const ORDERED_CODES = [...PAGE_1_CODES, ...PAGE_2_CODES]
 const ITEM_BY_CODE: Record<string, SurveyItem> = Object.fromEntries(

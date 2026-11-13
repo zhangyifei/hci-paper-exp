@@ -63,6 +63,7 @@
         "questionnaire.validation_failed",
         "attention_check.passed",
         "attention_check.failed",
+        "experiment.timed_out",
         "experiment.invalidated",
         "experiment.completed",
         "experiment.error"
@@ -114,6 +115,7 @@
         "survey_active",
         "survey_complete",
         "terminated",
+        "timed_out",
         "home",
         "map",
         "ride_almost_there",

@@ -37,12 +37,12 @@ vercel env pull .env.local
 vercel env add PROLIFIC_COMPLETION_URL production
 # Enter: https://app.prolific.com/submissions/complete?cc=VALID_CODE
 
-# Attention-check failure (participant screened out → reject with reason)
+# Invalid session (attention-check failure or timeout → failed-study return)
 vercel env add PROLIFIC_FAILED_URL production
 # Enter: https://app.prolific.com/submissions/complete?cc=FAIL_CODE
 ```
 > Create two completion codes in Prolific Study → "Record completions manually":
-> one for a successful completion and one for a screened-out (attention-fail) return.
+> one for a successful completion and one for an invalidated-session return.
 > These are server-only — /api/complete chooses which to return from recorded events.
 
 ### 5. Set stats/export secret
@@ -223,7 +223,7 @@ events %>%
 |----------|----------|-------------|
 | `BLOB_READ_WRITE_TOKEN` | Yes | Vercel Blob token (auto-injected when store is linked) |
 | `PROLIFIC_COMPLETION_URL` | Yes | Prolific redirect URL for a valid completion (approve). Server-only; chosen by /api/complete |
-| `PROLIFIC_FAILED_URL` | Yes | Prolific redirect URL for an attention-fail return (reject). Server-only |
+| `PROLIFIC_FAILED_URL` | Yes | Prolific redirect URL for an invalidated session (attention-check failure or timeout). Server-only |
 | `STUDY_PASSCODE` | No | Shared access code shown on Prolific; typed on the landing page. Unset = open access |
 | `STATS_SECRET` | Yes | Bearer token protecting `/api/stats` and `/api/export` |
 

@@ -1,5 +1,9 @@
 import { test, expect, Page } from '@playwright/test'
 import { goToCondition, completeRidePhase, advanceToService2, completePostTaskSurvey, completeCourierEntry } from './shared/helpers'
+import {
+  EXPERIMENT_TIMEOUT_MS,
+  experimentStartedAtStorageKey,
+} from '../../lib/experiment-timeout'
 
 /**
  * Coverage for the new onboarding (consent + scenario) screens and the
@@ -26,12 +30,22 @@ async function expectInlineLabels(page: Page, code: string, labels: string[]) {
 }
 
 async function expectQuestionHeaderInline(page: Page, code: string) {
-  const numberBox = await page.getByTestId(`question-number-${code}`).boundingBox()
-  const questionBox = await page.getByTestId(`question-text-${code}`).boundingBox()
-  expect(numberBox).not.toBeNull()
-  expect(questionBox).not.toBeNull()
-  expect(Math.abs((numberBox?.y ?? 0) - (questionBox?.y ?? 0))).toBeLessThanOrEqual(1)
-  expect(questionBox?.x ?? 0).toBeGreaterThan((numberBox?.x ?? 0) + (numberBox?.width ?? 0))
+  const boxes = await page.evaluate((itemCode) => {
+    const number = document.querySelector(`[data-testid="question-number-${itemCode}"]`)
+    const question = document.querySelector(`[data-testid="question-text-${itemCode}"]`)
+    if (!(number instanceof HTMLElement) || !(question instanceof HTMLElement)) return null
+    const numberBox = number.getBoundingClientRect()
+    const questionBox = question.getBoundingClientRect()
+    return {
+      numberTop: numberBox.top,
+      numberRight: numberBox.right,
+      questionTop: questionBox.top,
+      questionLeft: questionBox.left,
+    }
+  }, code)
+  expect(boxes).not.toBeNull()
+  expect(Math.abs((boxes?.numberTop ?? 0) - (boxes?.questionTop ?? 0))).toBeLessThanOrEqual(1)
+  expect(boxes?.questionLeft ?? 0).toBeGreaterThan(boxes?.numberRight ?? 0)
 }
 
 async function landRaw(page: Page, condition: 'G1' | 'G2' | 'G3' | 'G4') {
@@ -161,6 +175,58 @@ test.describe('Onboarding — scenario instruction', () => {
   })
 })
 
+test.describe('Study timeout', () => {
+  test('a session that exceeds 30 minutes is invalidated with a distinct message', async ({ page }) => {
+    await landRaw(page, 'G1')
+
+    const recordedEvents: Array<{
+      eventName: string
+      state: string
+      payload?: Record<string, unknown>
+    }> = []
+    await page.route('**/api/events', async (route) => {
+      const rawBody = route.request().postData()
+      if (rawBody) {
+        const body = JSON.parse(rawBody) as {
+          events?: Array<{
+            eventName: string
+            state: string
+            payload?: Record<string, unknown>
+          }>
+        }
+        recordedEvents.push(...(body.events ?? []))
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })
+    })
+
+    const expSessionId = await page.evaluate(() => sessionStorage.getItem('exp_session_id'))
+    expect(expSessionId).not.toBeNull()
+    const storageKey = experimentStartedAtStorageKey(expSessionId as string)
+    await page.evaluate(
+      ({ key, startedAt }) => sessionStorage.setItem(key, String(startedAt)),
+      { key: storageKey, startedAt: Date.now() - EXPERIMENT_TIMEOUT_MS - 1_000 },
+    )
+
+    await page.reload()
+
+    const timeoutScreen = page.getByTestId('screen-timed-out')
+    await expect(timeoutScreen).toBeVisible({ timeout: 10_000 })
+    await expect(timeoutScreen).toContainText('Session Timed Out')
+    await expect(timeoutScreen).toContainText(
+      'The 30-minute study limit has passed. This session is incomplete, and your responses will not be included in the study analysis.',
+    )
+    await expect(timeoutScreen).not.toContainText('failed the attention check')
+
+    await expect.poll(() => recordedEvents.some((event) => event.eventName === 'experiment.timed_out'))
+      .toBe(true)
+    const invalidated = recordedEvents.find(
+      (event) => event.eventName === 'experiment.invalidated',
+    )
+    expect(invalidated?.state).toBe('timed_out')
+    expect(invalidated?.payload?.reason).toBe('timeout')
+  })
+})
+
 test.describe('Post-task survey — items + attention check', () => {
   test('G1: survey is paginated, hides codes, and places AC1 on page 2', async ({ page }) => {
     await goToCondition(page, 'G1')
@@ -194,10 +260,10 @@ test.describe('Post-task survey — items + attention check', () => {
     ]) {
       await expect(page.getByText(question, { exact: true })).toBeVisible()
     }
-    for (const code of ['CL1', 'CL2', 'CL3']) {
+    for (const code of ['CL1', 'CL2']) {
       await expectInlineLabels(page, code, MENTAL_LOAD_LABELS)
     }
-    for (const code of ['CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
+    for (const code of ['CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
       await expectInlineLabels(page, code, AGREEMENT_LABELS)
     }
     for (const code of ['CL1', 'CL2', 'CL3', 'CL4', 'CL5', 'PU1', 'PU2', 'PU3', 'PU4', 'PU5']) {
@@ -218,7 +284,7 @@ test.describe('Post-task survey — items + attention check', () => {
       await page.getByTestId(`likert-${code}-4`).evaluate((n) => (n as HTMLButtonElement).click())
     }
 
-    // Page 2 holds questions 11–24, with the attention check at question 15.
+    // Page 2 holds questions 11–24, with the attention check at question 20.
     await page.getByTestId('btn-survey-continue').click({ force: true })
     await expect(page.getByTestId('survey-page-indicator')).toHaveText('Page 2 of 3')
     await expect(page.getByTestId('survey-warning')).toHaveCount(0)
@@ -241,13 +307,16 @@ test.describe('Post-task survey — items + attention check', () => {
       await expect(page.getByText(question, { exact: true })).toBeVisible()
     }
     for (const code of [
-      'CI1', 'CI2', 'CI3', 'CI4', 'AC1',
-      'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7', 'MC8', 'MC9',
+      'CI1', 'CI2', 'CI3', 'CI4',
+      'MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'AC1', 'MC6', 'MC7', 'MC8', 'MC9',
     ]) {
       await expectInlineLabels(page, code, AGREEMENT_LABELS)
       await expectQuestionHeaderInline(page, code)
     }
     await expect(page.getByText('Please select strongly disagree for this statement.', { exact: true })).toBeVisible()
+    await expect(page.getByTestId('question-number-MC5')).toHaveText('19')
+    await expect(page.getByTestId('question-number-AC1')).toHaveText('20')
+    await expect(page.getByTestId('question-number-MC6')).toHaveText('21')
     await expect(page.getByText('The second service was a clearly different type of task from booking a ride.')).toHaveCount(0)
     await expect(page.getByTestId('btn-submit-survey')).toHaveText('Continue')
     await expect(page.getByTestId('btn-survey-back')).toHaveCount(0)
@@ -371,6 +440,9 @@ test.describe('Post-task survey — items + attention check', () => {
 
     // Terminated screen shown; questionnaire never reached
     await expect(page.getByTestId('screen-terminated')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('screen-terminated')).toContainText(
+      'You have failed the attention check. Thank you for your time. Based on your responses, this session has ended and your data will not be used.',
+    )
     await expect(page.getByTestId('btn-submit-questionnaire')).not.toBeVisible()
   })
 })

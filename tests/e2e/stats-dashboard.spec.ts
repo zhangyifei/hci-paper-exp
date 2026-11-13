@@ -4,6 +4,7 @@ import {
   computePaperStats,
   type PaperStatsEventRow,
 } from '../../lib/paper-stats/analysis'
+import { EXPERIMENT_TIMEOUT_MS } from '../../lib/experiment-timeout'
 
 function makeSurveyPayload(
   aggregates: {
@@ -125,6 +126,58 @@ test.describe('Stats dashboard access', () => {
         participant_id: 'participant-invalid',
         condition: 'G1',
         payload: { reason: 'attention_check', failedCheck: 'AC1' },
+      }),
+    ]
+
+    const stats = computePaperStats(rows)
+
+    expect(stats.overview.invalidSessions).toBe(1)
+    expect(stats.surveyByCondition.G1?.n).toBe(1)
+    expect(stats.surveyByCondition.G1?.cognitiveLoad.values).toEqual([2])
+    expect(stats.demographics.ages).toEqual({ '25-34': 1 })
+    expect(stats.demographics.genders).toEqual({ female: 1 })
+  })
+
+  test('computePaperStats excludes timed-out sessions from aggregates', async () => {
+    const rows: PaperStatsEventRow[] = [
+      makeRow({
+        id: 1,
+        session_id: 'session-valid',
+        participant_id: 'participant-valid',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 2,
+            usability_mean: 6,
+            continuance_mean: 5,
+            manipulation_check_mean: 4,
+          },
+          { DEM1: '25-34', DEM2: 'female', FAM1: 'weekly' },
+        ),
+      }),
+      makeRow({
+        id: 2,
+        session_id: 'session-timeout',
+        participant_id: 'participant-timeout',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 7,
+            usability_mean: 1,
+            continuance_mean: 1,
+            manipulation_check_mean: 7,
+          },
+          { DEM1: '55-64', DEM2: 'male', FAM1: 'never' },
+        ),
+      }),
+      makeRow({
+        id: 3,
+        event_name: 'experiment.timed_out',
+        state: 'timed_out',
+        session_id: 'session-timeout',
+        participant_id: 'participant-timeout',
+        condition: 'G1',
+        payload: { limitMs: EXPERIMENT_TIMEOUT_MS },
       }),
     ]
 

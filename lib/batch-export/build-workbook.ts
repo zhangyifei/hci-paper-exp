@@ -214,7 +214,7 @@ function addCodebook(wb: ExcelJS.Workbook): void {
       const description = k
         ? `${CONSTRUCT_NAMES[k]}${REVERSE.has(c) ? ' (reverse-coded: scored 8 − x)' : ''}`
         : 'Attention check (correct = 1 "Strongly disagree")'
-      const values = ['CL1', 'CL2', 'CL3'].includes(c) ? mentalLoadValues : agreementValues
+      const values = ['CL1', 'CL2'].includes(c) ? mentalLoadValues : agreementValues
       return [c, description, values, ITEM_WORDING[c]]
     }),
     ['DEM1', 'Age range', '18-24 · 25-34 · 35-44 · 45-54 · 55+', ITEM_WORDING.DEM1],

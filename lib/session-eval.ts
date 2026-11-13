@@ -1,7 +1,11 @@
 export type SessionOutcome = 'valid' | 'failed' | 'incomplete'
 
 // A session is invalid the moment it records a failure event.
-const FAILURE_EVENTS = ['attention_check.failed', 'experiment.invalidated'] as const
+const FAILURE_EVENTS = [
+  'attention_check.failed',
+  'experiment.timed_out',
+  'experiment.invalidated',
+] as const
 
 // A valid completion must carry the full trail, not just a lone completion event —
 // this makes a forged `experiment.completed` detectable.

@@ -18,6 +18,7 @@ export type ExperimentState =
   | 'survey_active'
   | 'survey_complete'
   | 'terminated'
+  | 'timed_out'
   | 'finished'
   | 'error_ride'
   | 'error_service2'

@@ -238,14 +238,15 @@ export function isBotSession(events: PaperStatsEventRow[]): boolean {
 }
 
 /**
- * A session is invalid when the participant failed an attention check. Such
- * sessions are terminated mid-flow and must be excluded from all paper-facing
- * aggregates, just like bot sessions.
+ * A session is invalid when the participant failed an attention check or
+ * exceeded the study time limit. Such sessions must be excluded from all
+ * paper-facing aggregates, just like bot sessions.
  */
 export function isInvalidSession(events: PaperStatsEventRow[]): boolean {
   return events.some(
     (event) =>
       event.event_name === 'experiment.invalidated' ||
+      event.event_name === 'experiment.timed_out' ||
       event.event_name === 'attention_check.failed',
   )
 }
