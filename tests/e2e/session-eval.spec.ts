@@ -16,4 +16,17 @@ test.describe('Session outcome evaluation', () => {
     ).toBe('failed')
     expect(RELEVANT_EVENTS).toContain('experiment.timed_out')
   })
+
+  test('a data-quality flag stays payable when the full completion trail exists', () => {
+    expect(
+      evaluateOutcome([
+        'data_quality.flagged',
+        'experiment.completed',
+        'service2.task.complete',
+        'survey.completed',
+        'questionnaire.completed',
+      ]),
+    ).toBe('valid')
+    expect(RELEVANT_EVENTS).not.toContain('data_quality.flagged')
+  })
 })

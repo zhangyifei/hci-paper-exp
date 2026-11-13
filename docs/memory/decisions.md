@@ -592,6 +592,11 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-13
 **Rationale**: Timed-out sessions are incomplete and should not enter the study analysis, while participants need an accurate explanation that is distinct from failing an attention check.
 
+### ADR-085: Exclude Conservative Low-Quality Patterns Without Withholding Payment
+**Decision**: Across G1–G4, record first-answer timing for all 33 questions and final numeric answers for the 30 non-attention scale questions. Emit `data_quality.flagged` when all 30 scale answers use one value or when at least 80% of first-answer intervals are under one second. Exclude flagged sessions from paper statistics and scored exports, but keep `experiment.completed` and the normal Prolific completion outcome so these internal quality indicators do not automatically withhold participant payment.
+**Date**: 2026-11-13
+**Rationale**: Straightlining and pervasive sub-second responding are useful conservative analysis-exclusion signals, but Prolific does not permit rejection based only on per-question speed or an internal measure. Separating analysis eligibility from payment disposition protects data quality without applying an unsupported automatic rejection.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

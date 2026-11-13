@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import ResearchPage from '../shared/ResearchPage'
 import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
+import { dataQualityTracker } from '@/lib/data-quality'
 
 /**
  * Post-task survey collecting subjective measures. Item wording is based on the
@@ -249,11 +250,27 @@ export default function PostTaskSurvey({ onComplete, onAttentionCheckFail }: Pos
     })
   }, [])
 
+  useEffect(() => {
+    dataQualityTracker.startPage(performance.now())
+  }, [page])
+
   const handleAnswer = useCallback((code: string, construct: string, value: number) => {
+    const timing = dataQualityTracker.recordResponse(
+      code,
+      value,
+      performance.now(),
+      code !== AC1_CODE,
+    )
     setResponses((prev) => {
       const next = { ...prev, [code]: value }
       logger.trackEvent('survey.item_answered', 'survey', 'survey_active', {
-        payload: { code, construct, value, responseSoFar: Object.keys(next).length },
+        payload: {
+          code,
+          construct,
+          value,
+          responseSoFar: Object.keys(next).length,
+          ...timing,
+        },
       })
       return next
     })

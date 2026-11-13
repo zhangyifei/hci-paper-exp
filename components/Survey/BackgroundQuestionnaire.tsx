@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import ResearchPage from '../shared/ResearchPage'
 import LikertScale from './LikertScale'
 import { logger } from '@/lib/logger'
+import { dataQualityTracker } from '@/lib/data-quality'
 
 /**
  * Background questionnaire collecting moderator variables referenced
@@ -167,13 +168,22 @@ export default function BackgroundQuestionnaire({ onComplete }: BackgroundQuesti
     logger.trackEvent('questionnaire.started', 'questionnaire', 'questionnaire_active', {
       payload: { itemCount: ITEMS.length },
     })
+    dataQualityTracker.startPage(performance.now())
   }, [])
 
   const handleAnswer = useCallback((code: string, value: string) => {
+    const item = ITEM_BY_CODE[code]
+    const numericValue = item.presentation === 'likert' ? Number(value) : value
+    const timing = dataQualityTracker.recordResponse(
+      code,
+      numericValue,
+      performance.now(),
+      item.presentation === 'likert',
+    )
     setResponses((prev) => {
       const next = { ...prev, [code]: value }
       logger.trackEvent('questionnaire.item_answered', 'questionnaire', 'questionnaire_active', {
-        payload: { code, value, responseSoFar: Object.keys(next).length },
+        payload: { code, value, responseSoFar: Object.keys(next).length, ...timing },
       })
       return next
     })

@@ -63,6 +63,7 @@
         "questionnaire.validation_failed",
         "attention_check.passed",
         "attention_check.failed",
+        "data_quality.flagged",
         "experiment.timed_out",
         "experiment.invalidated",
         "experiment.completed",

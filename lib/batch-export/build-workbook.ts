@@ -37,8 +37,18 @@ const responsesOf = (e: EventRow | undefined): Record<string, unknown> => {
   return r && typeof r === 'object' ? (r as Record<string, unknown>) : {}
 }
 
-function exclusionReason(a: AssignmentRow, sub: ProlificSubmission | undefined): string {
+function exclusionReason(
+  a: AssignmentRow,
+  sub: ProlificSubmission | undefined,
+  events: EventRow[],
+): string {
   if (BOT_PID.test(a.prolific_pid)) return 'automated test session'
+  const qualityFlag = events.find((event) => event.event_name === 'data_quality.flagged')
+  if (qualityFlag) {
+    const reasons = qualityFlag.payload?.reasons
+    const labels = Array.isArray(reasons) ? reasons.filter((reason) => typeof reason === 'string') : []
+    return `low data quality${labels.length > 0 ? `: ${labels.join(', ')}` : ''}`
+  }
   if (a.status === 'completed') return ''
   if (a.invalid_reason) return `failed ${a.invalid_reason}`
   return sub ? `${a.status} (Prolific: ${sub.status})` : a.status
@@ -52,7 +62,7 @@ function toRecords(data: BatchExportData): ParticipantRecord[] {
     const sub = submissions.find((s) => s.participant_id === a.prolific_pid)
     const ts = events.map((e) => Number(e.timestamp)).filter(Number.isFinite)
     const s2 = find('service2.task.complete')
-    const reason = exclusionReason(a, sub)
+    const reason = exclusionReason(a, sub, events)
     return {
       a, sub, events,
       included: reason === '',
@@ -101,7 +111,7 @@ function addReadme(wb: ExcelJS.Workbook, data: BatchExportData, records: Partici
       ? `${p.study.name} (${p.studyId}) — ${p.study.status} · $${(p.study.reward / 100).toFixed(2)} · est. ${p.study.estimated_completion_time} min · max ${p.study.maximum_allowed_time} min`
       : `${p.studyId ?? '—'} — Prolific columns left blank: ${p.reason}`],
     ['Participants', `${records.length} assigned in the app; ${included.length} completed and included (${perCell})`],
-    ['Inclusion rule', 'App status = completed (full event trail, attention check passed) and not an automated test session. Excluded rows stay in "Raw Responses" with included = FALSE and a reason.'],
+    ['Inclusion rule', 'App status = completed (full event trail, attention check passed), no data_quality.flagged event, and not an automated test session. Excluded rows stay in "Raw Responses" with included = FALSE and a reason.'],
     ['Generated', new Date().toISOString()],
     ['', ''],
     ['Sheet: Raw Responses', 'One row per participant. Survey items are RAW 1–7 answers (no reverse scoring). Background answers are stored codes (see Codebook).'],
@@ -204,7 +214,7 @@ function addCodebook(wb: ExcelJS.Workbook): void {
   const agreementValues = '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree'
   const defs: [string, string, string, string][] = [
     ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific)', 'string', ''],
-    ['included', 'Included in analysis (completed, full event trail, attention check passed, not a test session)', 'TRUE/FALSE', ''],
+    ['included', 'Included in analysis (completed, full event trail, attention check passed, no data-quality flag, not a test session)', 'TRUE/FALSE', ''],
     ['condition', 'Assigned experimental cell', 'G1 / G2 / G3 / G4', ''],
     ['heterogeneity', 'Service-pair dissimilarity factor', 'low (Courier) / high (Cinema)', ''],
     ['interrelatedness', 'Cross-service bridge (banner + auto-filled details)', 'absent / present', ''],

@@ -190,6 +190,58 @@ test.describe('Stats dashboard access', () => {
     expect(stats.demographics.genders).toEqual({ female: 1 })
   })
 
+  test('computePaperStats excludes completed sessions flagged for low data quality', async () => {
+    const rows: PaperStatsEventRow[] = [
+      makeRow({
+        id: 1,
+        session_id: 'session-valid',
+        participant_id: 'participant-valid',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 2,
+            usability_mean: 6,
+            continuance_mean: 5,
+            manipulation_check_mean: 4,
+          },
+          { DEM1: '25-34', DEM2: 'female', FAM1: '4' },
+        ),
+      }),
+      makeRow({
+        id: 2,
+        session_id: 'session-low-quality',
+        participant_id: 'participant-low-quality',
+        condition: 'G1',
+        payload: makeSurveyPayload(
+          {
+            cognitive_load_mean: 1,
+            usability_mean: 1,
+            continuance_mean: 1,
+            manipulation_check_mean: 1,
+          },
+          { DEM1: '55+', DEM2: 'male', FAM1: '1' },
+        ),
+      }),
+      makeRow({
+        id: 3,
+        event_name: 'data_quality.flagged',
+        state: 'finished',
+        session_id: 'session-low-quality',
+        participant_id: 'participant-low-quality',
+        condition: 'G1',
+        payload: { reasons: ['straightlining'] },
+      }),
+    ]
+
+    const stats = computePaperStats(rows)
+
+    expect(stats.overview.invalidSessions).toBe(1)
+    expect(stats.surveyByCondition.G1?.n).toBe(1)
+    expect(stats.surveyByCondition.G1?.cognitiveLoad.values).toEqual([2])
+    expect(stats.demographics.ages).toEqual({ '25-34': 1 })
+    expect(stats.demographics.genders).toEqual({ female: 1 })
+  })
+
   test('computePaperStats returns null comparison stats for empty groups', async () => {
     const stats = computePaperStats([])
 

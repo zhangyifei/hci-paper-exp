@@ -1048,3 +1048,21 @@ Design mockups analyzed. Key findings per condition:
 - Classified timeout events as failed outcomes for Prolific routing and invalid sessions for paper-facing statistics.
 - Kept the attention-check failure message and scoring behavior unchanged.
 - Passed the standalone TypeScript check, production build, timeout UI/event regression, outcome-classification test, statistics-exclusion test, and existing failed-attention-check regression.
+
+## 2026-11-13 — Added automatic low-quality analysis exclusions
+
+- Added first-response timing for all 33 questions and final-value tracking for the 30 non-attention numeric scale questions.
+- Flagged complete straightlining (one value across all tracked scales) and pervasive rapid responding (at least 80% of first-answer intervals under one second).
+- Added the contract-valid `data_quality.flagged` event with auditable reasons, thresholds, counts, and ratios.
+- Excluded flagged sessions from paper statistics and scored Excel exports while preserving normal completion and payment routing.
+- Kept all participant-facing wording, question order, scales, pagination, and required-answer behavior unchanged across G1–G4.
+- Passed the standalone TypeScript check, production build, five focused quality/payment/statistics tests, and a complete browser flow verifying rapid-response exclusion with normal completion.
+
+## 2026-11-13 — Prepared the 12-person Prolific B4 draft
+
+- Verified the live Vercel bundle contains the 30-minute app timeout.
+- Audited completed source study `6aee828c35f9a8818895bf5e` and cloned it with previous participants blocked.
+- Created unpublished study `6af7616e7de01ab7c5a54ed3` (`hci-2x2-us-ca-12-b4`) with 12 places, a five-minute estimate, a 30-minute maximum, a $1.00 reward, manual review completion actions, and the existing US/Canada plus age filters.
+- Confirmed the draft is ready to publish and retains the production URL with Prolific participant, study, and session parameters.
+- The projected cost is $16.00 USD and the workspace now has exactly $16.00 USD available; Prolific reports the draft is ready to publish.
+- Opened live app batch `dd7d4ad3-57df-4f98-9d80-da61c4074ec1` as `Prolific US-CA 18-50 (12) B4`, with three places per group and 12 total; the prior full batch was closed automatically without deleting its records.

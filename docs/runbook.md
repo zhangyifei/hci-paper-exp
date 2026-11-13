@@ -118,6 +118,13 @@ Events are stored in Vercel Blob. Two types of files, both under the same Blob s
 
 ## Monitoring
 
+### Data-quality disposition
+
+- `experiment.timed_out` and `experiment.invalidated` are failed/incomplete outcomes.
+- `data_quality.flagged` is an analysis exclusion, not an automatic Prolific rejection.
+- A session is flagged when all 30 non-attention scale answers use one value, or at least 80% of first-answer intervals are under one second.
+- Flagged participants retain `experiment.completed` and the normal completion-code path. Review and pay them under Prolific policy while excluding them from scored exports and paper-facing aggregates.
+
 ### Live completion rate (during study)
 ```bash
 # Costs 1 Advanced Request (list of stats/ files) + free public CDN reads

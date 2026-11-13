@@ -33,11 +33,21 @@ for (const a of assignments) {
     : []
   const find = (n) => events.find((e) => e.event_name === n)
   const sub = submissions.find((s) => s.participant_id === a.prolific_pid)
-  const included = a.status === 'completed'
+  const qualityFlag = events.find((e) => e.event_name === 'data_quality.flagged')
+  const qualityReasons = Array.isArray(qualityFlag?.payload?.reasons)
+    ? qualityFlag.payload.reasons.filter((reason) => typeof reason === 'string')
+    : []
+  const included = a.status === 'completed' && !qualityFlag
   const ts = events.map((e) => Number(e.timestamp))
   people.push({
     a, sub, events, included,
-    exclusionReason: included ? '' : a.invalid_reason ? `failed ${a.invalid_reason}` : `${a.status} (${sub?.status ?? 'no Prolific submission'})`,
+    exclusionReason: included
+      ? ''
+      : qualityFlag
+        ? `low data quality${qualityReasons.length ? `: ${qualityReasons.join(', ')}` : ''}`
+        : a.invalid_reason
+          ? `failed ${a.invalid_reason}`
+          : `${a.status} (${sub?.status ?? 'no Prolific submission'})`,
     survey: find('survey.completed')?.payload?.responses || {},
     quest: find('questionnaire.completed')?.payload?.responses || {},
     s2: find('service2.task.complete'),
@@ -84,7 +94,7 @@ const README_ROWS = [
   ['Eligibility', 'Country of residence US or Canada; age 18–50; Pilot-1 participants blocked'],
   ['Reward / time', `$${(study.reward / 100).toFixed(2)} · estimated ${study.estimated_completion_time} min · max ${study.maximum_allowed_time} min`],
   ['Participants', `${people.length} Prolific participants assigned in the app; ${included.length} completed and included (${['G1', 'G2', 'G3', 'G4'].map((c) => `${c}=${included.filter((p) => p.a.group_condition === c).length}`).join(', ')})`],
-  ['Inclusion rule', 'App status = completed (full event trail, attention check AC1 passed). Excluded rows are kept in "Raw Responses" with included = FALSE and a reason.'],
+  ['Inclusion rule', 'App status = completed (full event trail, attention check AC1 passed) with no data_quality.flagged event. Excluded rows are kept in "Raw Responses" with included = FALSE and a reason.'],
   ['Generated', new Date().toISOString()],
   ['', ''],
   ['Sheet: Raw Responses', 'One row per Prolific participant. Survey items are RAW 1–7 answers (no reverse scoring). Background answers are stored codes (see Codebook).'],
@@ -170,7 +180,7 @@ addSheet('Disposition', [
 // Codebook
 const designDefs = [
   ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific)', 'string', ''],
-  ['included', 'Included in analysis (app status completed, AC1 passed, full event trail)', 'TRUE/FALSE', ''],
+  ['included', 'Included in analysis (app status completed, AC1 passed, full event trail, no data-quality flag)', 'TRUE/FALSE', ''],
   ['condition', 'Assigned experimental cell', 'G1 / G2 / G3 / G4', ''],
   ['heterogeneity', 'Service-pair dissimilarity factor', 'low (Courier) / high (Cinema)', ''],
   ['interrelatedness', 'Cross-service bridge (banner + auto-filled details)', 'absent / present', ''],

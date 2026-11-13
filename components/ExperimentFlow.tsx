@@ -4,6 +4,7 @@ import {
   EXPERIMENT_TIMEOUT_MS,
   experimentStartedAtStorageKey,
 } from '@/lib/experiment-timeout'
+import { dataQualityTracker } from '@/lib/data-quality'
 import { logger } from '@/lib/logger'
 import { getNavigationPath, resetNavigationPath } from '@/lib/screen-tracker'
 import PhoneFrame from './shared/PhoneFrame'
@@ -62,6 +63,10 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
   // Prices the participant selected, carried to the completion screens (§4).
   const [ridePrice, setRidePrice] = useState<number>(12.59)
   const [service2Fee, setService2Fee] = useState<number>(config.service2Options[0]?.price ?? 0)
+
+  useEffect(() => {
+    dataQualityTracker.reset()
+  }, [])
 
   // Apply one shared 30-minute limit to the complete study session. The start
   // time is tied to the experiment session so refreshing cannot restart it.
@@ -149,8 +154,22 @@ export default function ExperimentFlow({ condition, config }: ExperimentFlowProp
     try {
       // Include the full navigation path in the completion event
       const navPath = getNavigationPath()
+      const dataQuality = dataQualityTracker.assess()
+      if (dataQuality.flagged) {
+        logger.trackEvent('data_quality.flagged', 'experiment', 'finished', {
+          payload: {
+            reasons: dataQuality.reasons,
+            metrics: dataQuality.metrics,
+            paymentDisposition: 'normal_completion',
+          },
+        })
+      }
       logger.trackEvent('experiment.completed', 'experiment', 'finished', {
-        payload: { navigationPath: navPath, totalScreens: navPath.length },
+        payload: {
+          navigationPath: navPath,
+          totalScreens: navPath.length,
+          dataQualityFlagged: dataQuality.flagged,
+        },
       })
       await logger.flushAndWait()
       setScreen('finished')
