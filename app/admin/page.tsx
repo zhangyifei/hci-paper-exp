@@ -26,6 +26,21 @@ const PROLIFIC_ACTION: Record<string, { label: string; className: string }> = {
   released: { label: 'Released', className: 'bg-gray-100 text-gray-400 border-gray-200' },
 }
 
+function prolificActionFor(
+  participant: ParticipantAssignment,
+): { label: string; className: string } {
+  if (participant.invalidReason?.startsWith('prolific_return_requested:')) {
+    return {
+      label: 'Return requested',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+    }
+  }
+  return PROLIFIC_ACTION[participant.status] ?? {
+    label: '—',
+    className: 'bg-gray-50 text-gray-500 border-gray-200',
+  }
+}
+
 const GROUP_COLOR: Record<string, string> = {
   G1: '#1d4ed8',
   G2: '#0369a1',
@@ -69,6 +84,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [batches, setBatches] = useState<BatchSummary[]>([])
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
   // New-batch form
   const [newName, setNewName] = useState('')
@@ -79,6 +95,7 @@ export default function AdminPage() {
   const [roster, setRoster] = useState<ParticipantAssignment[]>([])
   const [rosterLoading, setRosterLoading] = useState(false)
   const [exportingId, setExportingId] = useState<string | null>(null)
+  const [reconcilingId, setReconcilingId] = useState<string | null>(null)
 
   const authHeaders = useCallback(
     (): HeadersInit => ({ 'x-stats-password': password, 'Content-Type': 'application/json' }),
@@ -197,6 +214,8 @@ export default function AdminPage() {
   }
 
   function downloadRosterCsv(batch: BatchSummary) {
+    const csvCell = (value: string): string =>
+      /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
     const header =
       'prolific_pid,group,status,prolific_action,integrity,invalid_reason,prolific_session_id,assigned_at,completed_at'
     const lines = roster.map((p) =>
@@ -204,13 +223,13 @@ export default function AdminPage() {
         p.prolificPid,
         p.groupCondition,
         p.status,
-        PROLIFIC_ACTION[p.status]?.label ?? '',
+        prolificActionFor(p).label,
         p.integrity ?? '',
         p.invalidReason ?? '',
         p.prolificSessionId ?? '',
         p.assignedAt,
         p.completedAt ?? '',
-      ].join(','),
+      ].map(csvCell).join(','),
     )
     const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -219,6 +238,52 @@ export default function AdminPage() {
     a.download = `batch_${batch.name.replace(/\s+/g, '_')}_roster.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function reconcileProlific(batchId: string) {
+    if (
+      !window.confirm(
+        'Reconcile this batch with Prolific? This may send a return request for an older NOCODE submission only when the app has an incomplete server event trail.',
+      )
+    ) {
+      return
+    }
+
+    setReconcilingId(batchId)
+    setError('')
+    setNotice('')
+    try {
+      const res = await fetch(`/api/admin/batches/${batchId}/reconcile`, {
+        method: 'POST',
+        headers: authHeaders(),
+      })
+      if (!res.ok) {
+        setError(`Prolific reconciliation failed (${res.status})`)
+        return
+      }
+      const result: {
+        released: number
+        completed: number
+        returnRequested: number
+      } = await res.json()
+      setNotice(
+        `Prolific reconciled: ${result.returnRequested} return request(s), ${result.released} slot(s) released, ${result.completed} completion record(s) repaired.`,
+      )
+      if (openBatchId === batchId) {
+        const rosterResponse = await fetch(`/api/admin/batches/${batchId}/participants`, {
+          headers: { 'x-stats-password': password },
+        })
+        if (rosterResponse.ok) {
+          const data: ParticipantsResponse = await rosterResponse.json()
+          setRoster(data.participants)
+        }
+      }
+      await loadBatches()
+    } catch (err) {
+      setError(`Prolific reconciliation failed: ${String(err)}`)
+    } finally {
+      setReconcilingId(null)
+    }
   }
 
   async function exportExcel(batch: BatchSummary) {
@@ -337,6 +402,11 @@ export default function AdminPage() {
             {error}
           </div>
         )}
+        {notice && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+            {notice}
+          </div>
+        )}
 
         {/* New batch */}
         <form
@@ -409,6 +479,14 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => reconcileProlific(batch.id)}
+                      disabled={reconcilingId !== null}
+                      title="Check Prolific statuses, request returns for documented incomplete NOCODE submissions, and release confirmed stale slots"
+                      className="text-sm px-3 h-9 rounded-lg border border-gray-200 bg-white font-semibold disabled:opacity-50"
+                    >
+                      {reconcilingId === batch.id ? 'Reconciling…' : 'Reconcile Prolific'}
+                    </button>
+                    <button
                       onClick={() => exportExcel(batch)}
                       disabled={exportingId !== null}
                       title="Download raw responses, scores, event log, disposition and codebook (.xlsx)"
@@ -477,8 +555,9 @@ export default function AdminPage() {
                         attention check — see Reason) · <b className="text-gray-500">Pending</b> =
                         started, not finished · <b className="text-amber-600">⚠ review</b> = marked
                         complete but event trail is incomplete — verify before paying ·{' '}
-                        <b>Release</b> frees an abandoned or rejected slot so a replacement can be
-                        recruited
+                        <b className="text-amber-700">Return requested</b> = evidence recorded but
+                        capacity stays reserved until Prolific confirms the return · <b>Release</b>{' '}
+                        frees a confirmed abandoned or terminal slot
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[13px]">
@@ -519,10 +598,10 @@ export default function AdminPage() {
                                 <td className="py-1.5 pr-3 whitespace-nowrap">
                                   <span
                                     className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                                      PROLIFIC_ACTION[p.status]?.className ?? ''
+                                      prolificActionFor(p).className
                                     }`}
                                   >
-                                    {PROLIFIC_ACTION[p.status]?.label ?? '—'}
+                                    {prolificActionFor(p).label}
                                   </span>
                                   {p.integrity === 'review' && (
                                     <span

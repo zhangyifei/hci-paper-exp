@@ -1,10 +1,22 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import ResearchPage from '../shared/ResearchPage'
+import { logger } from '@/lib/logger'
 
 // Give participants a moment to read the outcome before Prolific takes over.
 const REDIRECT_DELAY_MS = 2500
+const COMPLETION_CHECK_ATTEMPTS = 4
+
+interface CompletionResult {
+  outcome: 'valid' | 'failed' | 'incomplete'
+  url: string | null
+  code: string | null
+  prolificCompleted?: boolean
+}
+
+const wait = (delayMs: number): Promise<void> =>
+  new Promise((resolve) => window.setTimeout(resolve, delayMs))
 
 /**
  * End-of-experiment screen with two variants:
@@ -24,42 +36,68 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
   const isCompleted = variant === 'completed'
   const isTimedOut = variant === 'timed_out'
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+  const [completionCode, setCompletionCode] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [prolificRun, setProlificRun] = useState<boolean | null>(null)
+  const [verificationError, setVerificationError] = useState(false)
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  const verifyCompletion = useCallback(async () => {
     const pid = sessionStorage.getItem('prolific_pid') ?? ''
     const isDebug = sessionStorage.getItem('exp_debug_override') === '1'
-    // Skip the redirect for debug / E2E runs that have no real Prolific participant.
-    if (isDebug || !pid || pid.startsWith('anon_')) return
+    const isRealProlificRun = !isDebug && Boolean(pid) && !pid.startsWith('anon_')
+    setProlificRun(isRealProlificRun)
+    if (!isRealProlificRun) return
 
     const sessionId = sessionStorage.getItem('exp_session_id') ?? ''
-    if (!sessionId) return
+    if (!sessionId) {
+      setVerificationError(true)
+      return
+    }
 
-    // The server picks the completion vs. fail URL from recorded events — the
-    // codes are never exposed client-side and a fail can't be overridden to valid.
-    let cancelled = false
-    let timer: ReturnType<typeof setTimeout> | undefined
-    void (async () => {
+    setChecking(true)
+    setVerificationError(false)
+    for (let attempt = 0; attempt < COMPLETION_CHECK_ATTEMPTS; attempt += 1) {
       try {
+        // If the final upload failed transiently, retry it before asking the
+        // server to validate the completion trail and complete Prolific.
+        await logger.flushAndWait()
         const res = await fetch('/api/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId }),
         })
-        const data: { url: string | null } = await res.json()
-        if (cancelled || !data.url) return
-        setRedirectUrl(data.url)
-        timer = setTimeout(() => {
-          window.location.href = data.url as string
-        }, REDIRECT_DELAY_MS)
+        if (!res.ok) throw new Error(`Completion check failed: ${res.status}`)
+        const data = (await res.json()) as CompletionResult
+        if (data.url) {
+          setRedirectUrl(data.url)
+          setCompletionCode(data.code)
+          setChecking(false)
+          if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current)
+          redirectTimerRef.current = setTimeout(() => {
+            window.location.href = data.url as string
+          }, REDIRECT_DELAY_MS)
+          return
+        }
       } catch {
-        /* leave the participant on this screen; they can return to Prolific manually */
+        // Retry below. Pending events remain in sessionStorage until uploaded.
       }
-    })()
-    return () => {
-      cancelled = true
-      if (timer) clearTimeout(timer)
+
+      if (attempt < COMPLETION_CHECK_ATTEMPTS - 1) {
+        await wait(750 * (attempt + 1))
+      }
     }
+
+    setChecking(false)
+    setVerificationError(true)
   }, [])
+
+  useEffect(() => {
+    void verifyCompletion()
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current)
+    }
+  }, [verifyCompletion])
 
   return (
     <ResearchPage maxWidthClassName="max-w-[520px]">
@@ -140,22 +178,49 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
           </div>
         )}
 
-        {/* Return-to-Prolific redirect, or a close hint for non-Prolific runs */}
+        {/* Return-to-Prolific redirect with a visible, copyable fallback code. */}
         {redirectUrl ? (
-          <div className="mt-7 flex flex-col items-center gap-2">
-            <p className="text-[13px] text-gray-400 font-medium">Returning you to Prolific…</p>
+          <div className="mt-7 flex w-full max-w-[340px] flex-col items-center gap-3">
+            {completionCode && (
+              <div className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="text-[12px] font-medium text-gray-500">Completion code</p>
+                <p className="mt-1 select-all font-mono text-[18px] font-bold tracking-wider text-black">
+                  {completionCode}
+                </p>
+              </div>
+            )}
             <a
               href={redirectUrl}
-              className="text-[13px] font-semibold text-blue-600 underline underline-offset-2"
+              className="flex h-11 w-full items-center justify-center rounded-xl bg-black px-4 text-sm font-bold text-white"
             >
-              Click here if you are not redirected
+              Return to Prolific
             </a>
+            <p className="text-[12px] font-medium text-gray-400">
+              Redirecting automatically… Use the button or code above if needed.
+            </p>
           </div>
-        ) : (
+        ) : prolificRun && checking ? (
+          <p className="mt-7 text-[13px] text-gray-500 font-medium">
+            Saving your responses and confirming completion…
+          </p>
+        ) : prolificRun && verificationError ? (
+          <div className="mt-7 flex w-full max-w-[340px] flex-col items-center gap-3">
+            <p className="text-[13px] leading-relaxed text-gray-500">
+              We could not confirm your completion yet. Please keep this page open and try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => void verifyCompletion()}
+              className="h-11 w-full rounded-xl bg-black px-4 text-sm font-bold text-white"
+            >
+              Try again
+            </button>
+          </div>
+        ) : prolificRun === false ? (
           <p className="mt-7 text-[13px] text-gray-400 font-medium">
             You may now close this window.
           </p>
-        )}
+        ) : null}
       </div>
     </ResearchPage>
   )

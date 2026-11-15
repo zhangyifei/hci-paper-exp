@@ -30,6 +30,7 @@ interface LoggerSession {
 }
 
 const STORAGE_KEY = 'hci_experiment_events'
+const STORAGE_SESSION_KEY = 'hci_experiment_events_session'
 
 class EventLogger {
   private sequenceId = 0
@@ -40,9 +41,19 @@ class EventLogger {
     this.session = session
     this.sequenceId = 0
 
-    // Start fresh in sessionStorage for this session
+    // Preserve unsent events when the same experiment session is re-mounted or
+    // retried. Clear only when this tab starts a genuinely different session.
     if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+      const storedSessionId = sessionStorage.getItem(STORAGE_SESSION_KEY)
+      if (storedSessionId !== session.sessionId) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+      }
+      sessionStorage.setItem(STORAGE_SESSION_KEY, session.sessionId)
+      const events = this.readEvents()
+      this.sequenceId = events.reduce(
+        (next, event) => Math.max(next, event.sequenceId + 1),
+        0,
+      )
     }
 
     // Remove any previous listener before adding a new one
@@ -59,8 +70,11 @@ class EventLogger {
       if (events.length === 0) return
       const body = JSON.stringify({ events })
       if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        navigator.sendBeacon('/api/events', body)
-        this.clearEvents()
+        const queued = navigator.sendBeacon('/api/events', body)
+        // Keep the outbox in sessionStorage whether or not the browser queued
+        // the beacon. A same-tab reload can retry it, and event_id uniqueness
+        // makes a successful beacon plus a later retry safe.
+        if (!queued) console.warn('[logger] beforeunload beacon was not queued')
       }
     }
 

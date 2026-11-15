@@ -22,3 +22,4 @@ CREATE TABLE IF NOT EXISTS experiment_events (
 CREATE INDEX IF NOT EXISTS idx_events_session_id ON experiment_events (session_id);
 CREATE INDEX IF NOT EXISTS idx_events_condition ON experiment_events (condition);
 CREATE INDEX IF NOT EXISTS idx_events_event_name ON experiment_events (event_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_event_id_unique ON experiment_events (event_id);

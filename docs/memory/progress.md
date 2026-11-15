@@ -1058,6 +1058,60 @@ Design mockups analyzed. Key findings per condition:
 - Kept all participant-facing wording, question order, scales, pagination, and required-answer behavior unchanged across G1–G4.
 - Passed the standalone TypeScript check, production build, five focused quality/payment/statistics tests, and a complete browser flow verifying rapid-response exclusion with normal completion.
 
+## 2026-11-14 — Reconciled replacement-participant capacity
+
+- Added full-batch reconciliation to the shared assignment endpoint for all four groups.
+- When a batch first reports full, capacity-occupying app rows are checked against the recorded Prolific study: returned, rejected, and timed-out submissions are released before one atomic assignment retry.
+- Preserved active submissions and incomplete awaiting-review submissions; complete same-session server event trails repair stale app completion status without freeing a legitimate participant slot.
+- Refreshed the experiment-session link for a participant who re-enters an assigned session so later completion events update the correct assignment.
+- Kept assignment fail-closed when Prolific or Supabase cannot be reached, preventing capacity from being granted outside the existing atomic database function.
+- Added eight focused reconciliation regressions and passed them with the standalone TypeScript check and production build.
+
+## 2026-11-14 — Hardened Prolific completion and incomplete NOCODE recovery
+
+- Added server-side Prolific `COMPLETE` transition after the full app event trail is validated, preventing redirect interruption from turning a valid completion into NOCODE.
+- Added final-event upload retries, a visible validated completion code, a persistent `Return to Prolific` button, and a participant-controlled retry state instead of telling an unresolved real participant to close the page.
+- Preserved unsent logger events when the same experiment session is re-mounted and continued sequence numbering from the stored events.
+- Added a protected `Reconcile Prolific` admin action and kept the same recovery in the full-batch assignment path.
+- For older incomplete NOCODE submissions, request a return through Prolific, keep the app slot reserved until a terminal status is confirmed, and store exportable evidence containing the submission ID, missing milestones, and review timestamp.
+- Added a two-minute evidence-upload grace period, prevented duplicate return requests, and corrected CSV escaping so audit evidence remains intact in roster downloads.
+- Passed the standalone TypeScript check, ten focused outcome/reconciliation tests, and the production build.
+
+## 2026-11-14 — Closed the Prolific/app capacity synchronization gap
+
+- Added an HMAC-verified `submission.status.change` webhook endpoint for Prolific.
+- Re-fetch the current Prolific submission before acting, so delayed or out-of-order webhook events cannot roll an assignment backward.
+- Validate submission, participant, and study identifiers against the app assignment before releasing capacity.
+- Release slots only after Prolific confirms `RETURNED`, `REJECTED`, or `TIMED-OUT`; a return request alone now records evidence but continues occupying capacity.
+- Kept terminal updates naturally idempotent for Prolific's at-least-once delivery model and recorded the webhook event ID in the assignment evidence.
+- Added a retryable full-batch response and a participant-facing availability check when the Prolific source is temporarily unavailable.
+- Retained assignment-time reconciliation as a fail-closed fallback and omitted frequent Vercel cron configuration because Hobby deployments reject schedules that run more than once daily.
+- Passed 12 focused reconciliation, webhook-signature, and outcome tests plus the standalone TypeScript check and production build.
+
+## 2026-11-14 — Provisioned the Prolific webhook signing secret
+
+- Confirmed that study `6af7616e7de01ab7c5a54ed3` belongs to the `HCI Study (USD)` workspace.
+- Verified that the workspace had no existing webhook secret before provisioning one through the Prolific API.
+- Stored the generated value in the git-ignored local environment and as a protected Production secret in the `hci-paper-exp` Vercel project without recording the value in project documentation.
+- Vercel requires a new deployment before the running application can read the secret; webhook subscription creation and confirmation remain pending until the endpoint is live.
+
+## 2026-11-14 — Closed local webhook and retry-safety review gaps
+
+- Restricted completion reconciliation to the exact experiment session stored on each assignment, preventing older sessions for the same participant from validating a current incomplete submission.
+- Changed event ingestion to a duplicate-safe `event_id` upsert and added an idempotent SQL migration that deduplicates existing rows before creating the required unique index.
+- Preserved the browser event outbox during `beforeunload`, allowing a same-tab retry regardless of whether `sendBeacon` was queued successfully.
+- Refactored webhook processing behind deterministic dependencies and added coverage for terminal release, non-terminal status, participant/study mismatch, duplicate delivery, and transient Prolific/Supabase failures.
+- Configured the paused B4 study's existing success and failed completion URLs in the git-ignored local environment without recording either code in repository files.
+- Passed the standalone TypeScript check, 18 focused reconciliation/webhook/outcome tests, and the Next.js production build using a temporary checksum-verified Node.js 22 runtime.
+
+## 2026-11-14 — Applied event idempotency and finalized the published-study fallback
+
+- Applied `scripts/migrate-add-event-id-idempotency.sql` to production Supabase: deduplicated 390 repeated event rows (17,407 to 17,017), verified zero remaining duplicate `event_id` values, and verified `idx_events_event_id_unique` exists.
+- Confirmed Prolific does not allow B4's completion-code actions to be edited after publication.
+- Added server-side return requests for validated attention-check failures and timeouts, with an idempotent check for an already-recorded Prolific return request.
+- Verified the final local state with the standalone TypeScript check, 18 focused tests, and the Next.js production build.
+- Stopped the direct Vercel CLI deployment before it created a deployment; release will proceed through the `main` branch integration instead.
+
 ## 2026-11-13 — Prepared the 12-person Prolific B4 draft
 
 - Verified the live Vercel bundle contains the 30-minute app timeout.

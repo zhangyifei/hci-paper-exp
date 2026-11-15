@@ -6,9 +6,11 @@ const REQUEST_TIMEOUT_MS = 10_000
 const MAX_SUBMISSION_PAGES = 20
 
 export interface ProlificSubmission {
+  id?: string
   participant_id: string
   status: string
   study_code?: string | null
+  return_requested?: string | null
   time_taken?: number | null
   started_at?: string | null
   completed_at?: string | null
@@ -20,6 +22,16 @@ export interface ProlificStudyInfo {
   reward: number
   estimated_completion_time: number
   maximum_allowed_time: number
+}
+
+export interface ProlificSubmissionDetail {
+  id: string
+  participant: string | null
+  study_id: string
+  status: string
+  entered_code?: string | null
+  return_requested?: string | null
+  completed_at?: string | null
 }
 
 export type ProlificData =
@@ -37,6 +49,96 @@ async function getJson<T>(url: string, token: string): Promise<T> {
   })
   if (!res.ok) throw new Error(`Prolific API responded ${res.status}`)
   return res.json() as Promise<T>
+}
+
+async function postJson<T>(url: string, token: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Prolific API responded ${res.status}`)
+  return res.json() as Promise<T>
+}
+
+export function completionCodeFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    const code = new URL(url).searchParams.get('cc')?.trim()
+    return code || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Complete a valid Prolific submission from the server before browser redirect.
+ * Prolific documents this transition as idempotent, so a retry is safe.
+ */
+export async function completeProlificSubmission(
+  submissionId: string | null,
+  completionCode: string | null,
+): Promise<boolean> {
+  const token = process.env.PROLIFIC_API_TOKEN
+  if (!token || !isProlificId(submissionId) || !completionCode) return false
+  try {
+    await postJson(`${PROLIFIC_API}/submissions/${submissionId}/transition/`, token, {
+      action: 'COMPLETE',
+      completion_code: completionCode,
+    })
+    return true
+  } catch (err) {
+    console.error('[prolific] completion transition failed:', err)
+    return false
+  }
+}
+
+/** Ask an incomplete participant to return without penalising them. */
+export async function requestProlificSubmissionReturn(
+  submissionId: string,
+): Promise<boolean> {
+  const token = process.env.PROLIFIC_API_TOKEN
+  if (!token || !isProlificId(submissionId)) return false
+  try {
+    await postJson(`${PROLIFIC_API}/submissions/${submissionId}/request-return/`, token, {
+      request_return_reasons: ['Did not finish study.'],
+    })
+    return true
+  } catch (err) {
+    // The completion endpoint intentionally retries after the durable event
+    // upload. If the first request succeeded but its response was lost (or a
+    // second caller races it), treat Prolific's recorded return request as
+    // success instead of surfacing a false failure.
+    try {
+      const current = await getJson<ProlificSubmissionDetail>(
+        `${PROLIFIC_API}/submissions/${submissionId}/`,
+        token,
+      )
+      if (current.return_requested) return true
+    } catch {
+      // Report the original request failure below.
+    }
+    console.error('[prolific] return request failed:', err)
+    return false
+  }
+}
+
+/** Retrieve the current source-of-truth submission state for webhook handling. */
+export async function getProlificSubmission(
+  submissionId: string,
+): Promise<ProlificSubmissionDetail> {
+  const token = process.env.PROLIFIC_API_TOKEN
+  if (!token) throw new Error('PROLIFIC_API_TOKEN is not configured')
+  if (!isProlificId(submissionId)) throw new Error('Invalid Prolific submission id')
+  return getJson<ProlificSubmissionDetail>(
+    `${PROLIFIC_API}/submissions/${submissionId}/`,
+    token,
+  )
 }
 
 /**

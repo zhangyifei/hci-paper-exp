@@ -43,7 +43,35 @@ vercel env add PROLIFIC_FAILED_URL production
 ```
 > Create two completion codes in Prolific Study → "Record completions manually":
 > one for a successful completion and one for an invalidated-session return.
-> These are server-only — /api/complete chooses which to return from recorded events.
+
+Set `PROLIFIC_API_TOKEN` in production as well. After the full app event trail
+is validated, `/api/complete` uses Prolific's idempotent `COMPLETE` transition
+before redirecting the browser. The completion screen also shows the validated
+code and a persistent return button, so a redirect interruption does not force
+a genuine completer to submit NOCODE.
+For a server-validated attention-check failure or timeout, `/api/events`
+directly requests a return using the stored submission ID and `/api/complete`
+retries that request. This also protects studies that were already published
+with a manual-review failure code, because published completion actions cannot
+be edited afterward.
+> The configured URLs remain server-only; `/api/complete` returns only the code
+> selected after validating the recorded event trail.
+
+### 4a. Configure the Prolific terminal-status webhook
+
+1. Use the Prolific API to create or replace the workspace webhook secret.
+2. Store that returned HMAC secret in Vercel as `PROLIFIC_WEBHOOK_SECRET`.
+3. Create a subscription for `submission.status.change` targeting
+   `https://hci-paper-exp.vercel.app/api/prolific/webhook`.
+4. Confirm the subscription with the one-time `X-Hook-Secret` returned when the
+   subscription is created.
+
+The endpoint verifies `X-Prolific-Request-Signature`, re-fetches the current
+submission, verifies participant/study linkage, and releases app capacity only
+for current `RETURNED`, `REJECTED`, or `TIMED-OUT` states. Prolific retries
+failed webhook delivery, and `/api/assign` remains the fail-closed fallback.
+No frequent Vercel cron is configured because Hobby deployments allow only one
+cron invocation per day; a daily backup would not materially reduce this gap.
 
 ### 5. Set stats/export secret
 ```bash
@@ -58,15 +86,38 @@ Run `scripts/migrate-add-batches.sql` once against the Supabase database
 (SQL editor or `psql`). It creates `test_batches`, `participant_assignments`,
 and the atomic `assign_participant()` function. Idempotent — safe to re-run.
 
+Run `scripts/migrate-add-event-id-idempotency.sql` once as well. It removes
+duplicate copies of the same `event_id` (keeping the earliest row) and adds the
+unique index required by the retry-safe `/api/events` upsert.
+
 ### 7. Start a batch before recruiting
 Open `/admin`, enter the secret, and **Start batch** (4 groups × 25 by
 default). Assignment requires an **active** batch — without one, real
 participants (those without a `?condition=` override) see the "Study Not Open"
 screen. When every group hits capacity they see "Study Full".
 
+Before showing `Study Full`, the assignment endpoint performs one fail-closed
+reconciliation pass against Prolific. App reservations whose submissions are
+`RETURNED`, `REJECTED`, or `TIMED-OUT` are released, and the atomic assignment
+is retried once. Active submissions remain reserved. A stale app row is marked
+completed only when the server contains the complete same-session experiment
+event trail. This requires `PROLIFIC_API_TOKEN` in the production environment;
+if Prolific is unavailable, no slot is released automatically.
+
 **Prolific reconciliation**: the `/admin` roster links each `PROLIFIC_PID` to
 its group and completion status. Use *Copy completed PIDs* / *Download CSV* to
 approve payments for participants whose status is `completed`.
+
+If Prolific shows NOCODE, open the batch and select **Reconcile Prolific**. The
+action never rejects a participant. A full app event trail is retained as a
+valid completion. An `AWAITING REVIEW` NOCODE submission that is at least two
+minutes old and still lacks the required trail receives a Prolific return
+request; its app slot stays reserved until Prolific confirms a terminal status.
+The roster's `invalid_reason` records the submission ID, missing completion
+milestones, and checked timestamp, and that
+evidence is preserved in both CSV and Excel exports. Prolific recruits the
+replacement after the participant accepts the return. If they do not return,
+contact Prolific Support before the auto-approval deadline.
 
 ---
 
@@ -229,6 +280,8 @@ events %>%
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `BLOB_READ_WRITE_TOKEN` | Yes | Vercel Blob token (auto-injected when store is linked) |
+| `PROLIFIC_API_TOKEN` | Yes | Server-only token used for validated completion, return requests, exports, and capacity reconciliation |
+| `PROLIFIC_WEBHOOK_SECRET` | Yes | Server-only HMAC secret used to verify Prolific status-change webhooks |
 | `PROLIFIC_COMPLETION_URL` | Yes | Prolific redirect URL for a valid completion (approve). Server-only; chosen by /api/complete |
 | `PROLIFIC_FAILED_URL` | Yes | Prolific redirect URL for an invalidated session (attention-check failure or timeout). Server-only |
 | `STUDY_PASSCODE` | No | Shared access code shown on Prolific; typed on the landing page. Unset = open access |

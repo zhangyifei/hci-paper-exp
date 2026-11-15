@@ -597,6 +597,31 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-13
 **Rationale**: Straightlining and pervasive sub-second responding are useful conservative analysis-exclusion signals, but Prolific does not permit rejection based only on per-question speed or an internal measure. Separating analysis eligibility from payment disposition protects data quality without applying an unsupported automatic rejection.
 
+### ADR-086: Reconcile Stale Reservations Before Showing Study Full
+**Decision**: When the atomic assignment function reports that the active batch is full, reconcile its capacity-occupying `assigned` and `completed` rows against Prolific before retrying assignment once. Release rows whose Prolific submissions are `RETURNED`, `REJECTED`, or `TIMED-OUT`. Mark a stale `assigned` row `completed` only when one experiment session contains the complete server-side event trail (`service2.task.complete`, `survey.completed`, `questionnaire.completed`, and `experiment.completed`). Keep active and incomplete awaiting-review submissions reserved. If Prolific or storage is unavailable, fail closed and preserve the original full result.
+**Date**: 2026-11-14
+**Rationale**: Prolific can recruit replacements after returns, rejections, or timeouts, but those terminal states previously remained reserved in the app and caused valid replacements to see `Study Full`. On-demand reconciliation removes only demonstrably stale reservations while preserving the database's atomic per-group capacity enforcement and preventing over-assignment.
+
+### ADR-087: Prevent Valid NOCODE and Document Incomplete Return Requests
+**Decision**: After the server validates a complete same-session event trail, complete the participant's Prolific submission through the idempotent `COMPLETE` API transition before browser redirect. Keep the automatic redirect, show the validated completion code and a persistent `Return to Prolific` button, retry pending final event uploads, and never tell a real participant to close the page while verification is unresolved. For an `AWAITING REVIEW` submission with an empty or `NOCODE` code and no complete app trail, require a two-minute upload grace period, request a return rather than rejecting, retain its capacity reservation until Prolific confirms a terminal status, and store the submission ID, missing required events, and audit timestamp in `invalid_reason`. Permit the same reconciliation from the protected admin dashboard and the full-batch recovery path.
+**Date**: 2026-11-14
+**Rationale**: A browser redirect is not a reliable payment handoff by itself. Server-side completion plus a visible fallback minimizes valid NOCODE submissions, while evidence-backed return requests recover incomplete places without consuming the researcher's rejection allowance, falsely classifying a delayed event upload, or opening app capacity before Prolific opens recruitment capacity.
+
+### ADR-088: Synchronize Terminal Prolific Statuses by Verified Webhook
+**Decision**: Subscribe the production app to Prolific's `submission.status.change` webhook. Verify every raw payload with the `X-Prolific-Request-Signature` HMAC and request timestamp, re-fetch the current submission from Prolific to neutralize delayed/out-of-order events, validate its participant/study linkage against the assignment, and release app capacity only for current `RETURNED`, `REJECTED`, or `TIMED-OUT` states. Treat duplicate delivery idempotently and retain assignment-time reconciliation as a fail-closed fallback. If that fallback cannot reach Prolific, keep the participant on a short availability-check retry before showing Study Full.
+**Date**: 2026-11-14
+**Rationale**: Push-based terminal status synchronization removes the normal window in which Prolific has reopened a place while the app still counts the old reservation. Current-state re-fetching and terminal-only release protect against webhook retries, out-of-order delivery, forged payloads, and premature capacity release.
+
+### ADR-089: Make Completion Evidence and Event Uploads Session-Safe
+**Decision**: Reconciliation may use completion events only from the exact `exp_session_id` recorded on the capacity-occupying assignment; events from another session for the same Prolific participant never repair the current assignment. Enforce one stored row per client `event_id`, write event batches with a duplicate-safe upsert, and retain the browser outbox during `beforeunload` so a same-tab retry cannot lose or duplicate research events.
+**Date**: 2026-11-14
+**Rationale**: Participants can appear in more than one batch or session, and final uploads can be retried after an uncertain network response. Exact-session evidence prevents an older completion from validating a new incomplete submission, while event-level idempotency makes recovery retries safe for analysis and payment decisions.
+
+### ADR-090: Request Returns Server-Side for Published Failure Codes
+**Decision**: For a server-validated attention-check failure or 30-minute timeout, request the participant's return through the Prolific API as soon as the failed event trail is stored, and retry from `/api/complete`. Continue to use the configured failure URL only as the participant-facing redirect fallback.
+**Date**: 2026-11-14
+**Rationale**: B4 was already published with a manual-review failure completion action, and Prolific does not allow completion-code actions to be edited after publication. A direct, idempotent return request provides the intended non-rejection outcome without depending on that immutable action.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

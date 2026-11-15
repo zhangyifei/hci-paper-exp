@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { ExperimentEvent } from '@/lib/logger'
+import { evaluateOutcome } from '@/lib/session-eval'
+import {
+  completeProlificSubmission,
+  completionCodeFromUrl,
+  isProlificId,
+  requestProlificSubmissionReturn,
+} from '@/lib/batch-export/prolific'
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,7 +43,10 @@ export async function POST(req: NextRequest) {
         prolific_session_id: e.prolificSessionId ?? null,
       }))
 
-    const { error } = await supabaseAdmin.from('experiment_events').insert(rows)
+    const { error } = await supabaseAdmin.from('experiment_events').upsert(rows, {
+      onConflict: 'event_id',
+      ignoreDuplicates: true,
+    })
 
     if (error) {
       console.error('[api/events] Supabase insert error:', error)
@@ -48,10 +58,39 @@ export async function POST(req: NextRequest) {
     // Matched by exp session id (events.session_id === assignment.exp_session_id).
     await syncAssignmentStatus(events)
 
+    // Apply the valid Prolific completion code in the same server request that
+    // durably stores the final event trail. Browser redirect remains a backup,
+    // not the only way a genuine completion receives its code.
+    await syncProlificDisposition(events)
+
     return NextResponse.json({ ok: true, inserted: rows.length })
   } catch (err) {
     console.error('[api/events]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function syncProlificDisposition(events: ExperimentEvent[]): Promise<void> {
+  const bySession = new Map<string, ExperimentEvent[]>()
+  for (const event of events) {
+    const sessionEvents = bySession.get(event.sessionId) ?? []
+    sessionEvents.push(event)
+    bySession.set(event.sessionId, sessionEvents)
+  }
+
+  const completionCode = completionCodeFromUrl(
+    process.env.PROLIFIC_COMPLETION_URL ?? null,
+  )
+  for (const sessionEvents of bySession.values()) {
+    const outcome = evaluateOutcome(sessionEvents.map((event) => event.eventName))
+    const submissionId = sessionEvents
+      .map((event) => event.prolificSessionId)
+      .find((value) => isProlificId(value)) ?? null
+    if (outcome === 'valid') {
+      await completeProlificSubmission(submissionId, completionCode)
+    } else if (outcome === 'failed' && submissionId) {
+      await requestProlificSubmissionReturn(submissionId)
+    }
   }
 }
 

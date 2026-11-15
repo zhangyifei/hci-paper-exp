@@ -8,6 +8,13 @@ import type { AssignOutcome, AssignmentStatus } from '@/lib/types'
 import { Suspense } from 'react'
 import StudyClosedScreen from '@/components/shared/StudyClosedScreen'
 
+interface AssignmentClientResponse {
+  outcome: AssignOutcome
+  condition: Condition | null
+  status: AssignmentStatus | null
+  retryable?: boolean
+}
+
 function persistAndGo(
   router: ReturnType<typeof useRouter>,
   params: { pid: string; studyId: string; sessionId: string; condition: Condition; expSessionId: string },
@@ -28,24 +35,39 @@ function LandingInner() {
   const [passcode, setPasscode] = useState('')
   const [gateError, setGateError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState('Loading experiment…')
 
   const assignAndGo = useCallback(async () => {
     setPhase('loading')
+    setLoadingMessage('Loading experiment…')
     const pid = searchParams.get('PROLIFIC_PID') ?? `anon_${crypto.randomUUID().slice(0, 8)}`
     const studyId = searchParams.get('STUDY_ID') ?? ''
     const sessionId = searchParams.get('SESSION_ID') ?? ''
     const expSessionId = crypto.randomUUID()
     try {
-      const res = await fetch('/api/assign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pid, studyId, sessionId, expSessionId }),
-      })
-      const data: {
-        outcome: AssignOutcome
-        condition: Condition | null
-        status: AssignmentStatus | null
-      } = await res.json()
+      let data: AssignmentClientResponse | null = null
+
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const res = await fetch('/api/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid, studyId, sessionId, expSessionId }),
+        })
+        if (!res.ok) throw new Error(`Assignment failed: ${res.status}`)
+        const attemptData = (await res.json()) as AssignmentClientResponse
+        data = attemptData
+        if (
+          attemptData.outcome !== 'full' ||
+          !attemptData.retryable ||
+          attempt === 2
+        ) {
+          break
+        }
+        setLoadingMessage('Checking study availability…')
+        await new Promise((resolve) => window.setTimeout(resolve, 1_500 * (attempt + 1)))
+      }
+
+      if (!data) throw new Error('Assignment returned no result')
 
       // A participant who already finished, failed, or was released cannot retake the test.
       if (
@@ -177,7 +199,7 @@ function LandingInner() {
     <div className="flex items-center justify-center h-full min-h-[600px]">
       <div className="text-center">
         <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm text-gray-500">Loading experiment…</p>
+        <p className="text-sm text-gray-500">{loadingMessage}</p>
       </div>
     </div>
   )
