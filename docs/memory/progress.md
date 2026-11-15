@@ -1112,6 +1112,14 @@ Design mockups analyzed. Key findings per condition:
 - Verified the final local state with the standalone TypeScript check, 18 focused tests, and the Next.js production build.
 - Stopped the direct Vercel CLI deployment before it created a deployment; release will proceed through the `main` branch integration instead.
 
+## 2026-11-14 — Enabled the production Prolific webhook subscription
+
+- Deployed commit `b2e7b53` through the `main` branch Vercel integration; no direct CLI deployment was created.
+- Verified the live webhook endpoint rejects unsigned requests with HTTP 401.
+- Created and confirmed Prolific subscription `6af9151b3cdbe13af8756073` for `submission.status.change` at the production webhook URL; Prolific reports it enabled.
+- The first signed delivery test detected that Vercel's stored secret did not match the current local Prolific workspace secret byte-for-byte.
+- Updated only the protected Production `PROLIFIC_WEBHOOK_SECRET`; a second `main` pipeline deployment is required before repeating the signed delivery test.
+
 ## 2026-11-13 — Prepared the 12-person Prolific B4 draft
 
 - Verified the live Vercel bundle contains the 30-minute app timeout.
