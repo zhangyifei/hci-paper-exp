@@ -1118,7 +1118,8 @@ Design mockups analyzed. Key findings per condition:
 - Verified the live webhook endpoint rejects unsigned requests with HTTP 401.
 - Created and confirmed Prolific subscription `6af9151b3cdbe13af8756073` for `submission.status.change` at the production webhook URL; Prolific reports it enabled.
 - The first signed delivery test detected that Vercel's stored secret did not match the current local Prolific workspace secret byte-for-byte.
-- Updated only the protected Production `PROLIFIC_WEBHOOK_SECRET`; a second `main` pipeline deployment is required before repeating the signed delivery test.
+- Updated only the protected Production `PROLIFIC_WEBHOOK_SECRET` and deployed it through a second `main` pipeline run.
+- Verified the public production alias resolves to that deployment and a correctly signed, non-mutating integration payload returns HTTP 200 with `{ "ok": true, "ignored": true }`.
 
 ## 2026-11-13 — Prepared the 12-person Prolific B4 draft
 
