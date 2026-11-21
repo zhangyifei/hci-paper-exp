@@ -1129,3 +1129,10 @@ Design mockups analyzed. Key findings per condition:
 - Confirmed the draft is ready to publish and retains the production URL with Prolific participant, study, and session parameters.
 - The projected cost is $16.00 USD and the workspace now has exactly $16.00 USD available; Prolific reports the draft is ready to publish.
 - Opened live app batch `dd7d4ad3-57df-4f98-9d80-da61c4074ec1` as `Prolific US-CA 18-50 (12) B4`, with three places per group and 12 total; the prior full batch was closed automatically without deleting its records.
+
+## 2026-11-20 — Recovered completions from a re-opened study link
+
+- Diagnosed three B5 participants whose valid completions were invisible to the export: re-opening the study link started a new experiment session that replaced the assignment's `exp_session_id`, and they then finished in the earlier tab.
+- Event ingestion now relinks an unmatched completion or invalidation to the participant's still-`assigned` row for the same Prolific submission; full-batch reconciliation accepts a complete session from that same submission when the linked session has none.
+- Repaired the three B5 assignments in production (two G1, one G3) by relinking each to its complete session and marking it completed; B5 now has 22 usable responses.
+- Passed the standalone TypeScript check, 20 focused reconciliation/webhook/session-evaluation tests, and the production build.

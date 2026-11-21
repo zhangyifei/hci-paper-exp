@@ -113,26 +113,60 @@ async function syncAssignmentStatus(events: ExperimentEvent[]): Promise<void> {
   const invalidated = invalidatedSessions(events)
 
   try {
-    if (completed.length > 0) {
-      await supabaseAdmin
+    for (const sessionId of completed) {
+      const completedAt = new Date().toISOString()
+      const { data, error } = await supabaseAdmin
         .from('participant_assignments')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .in('exp_session_id', completed)
+        .update({ status: 'completed', completed_at: completedAt })
+        .eq('exp_session_id', sessionId)
         .not('status', 'in', '("invalid","released")')
+        .select('id')
+      if (error) throw error
+      if ((data?.length ?? 0) === 0) {
+        await relinkSameSubmission(events, sessionId, { status: 'completed', completed_at: completedAt })
+      }
     }
     for (const { sessionId, reason } of invalidated) {
-      await supabaseAdmin
+      const update = {
+        status: 'invalid',
+        invalid_reason: reason,
+        completed_at: new Date().toISOString(),
+      }
+      const { data, error } = await supabaseAdmin
         .from('participant_assignments')
-        .update({
-          status: 'invalid',
-          invalid_reason: reason,
-          completed_at: new Date().toISOString(),
-        })
+        .update(update)
         .eq('exp_session_id', sessionId)
+        .select('id')
+      if (error) throw error
+      if ((data?.length ?? 0) === 0) await relinkSameSubmission(events, sessionId, update)
     }
   } catch (err) {
     console.error('[api/events] assignment status sync failed:', err)
   }
+}
+
+/**
+ * Re-opening the study link starts a new experiment session and re-points the
+ * assignment to it. When the participant then finishes in the earlier tab, its
+ * session matches no assignment, so attach it to the still-open assignment for
+ * the same participant and Prolific submission.
+ */
+async function relinkSameSubmission(
+  events: ExperimentEvent[],
+  sessionId: string,
+  update: Record<string, string | null>,
+): Promise<void> {
+  const source = events.find(
+    (e) => e.sessionId === sessionId && e.participantId && isProlificId(e.prolificSessionId),
+  )
+  if (!source?.prolificSessionId) return
+  const { error } = await supabaseAdmin
+    .from('participant_assignments')
+    .update({ ...update, exp_session_id: sessionId })
+    .eq('prolific_pid', source.participantId)
+    .eq('prolific_session_id', source.prolificSessionId)
+    .eq('status', 'assigned')
+  if (error) throw error
 }
 
 interface InvalidatedSession {

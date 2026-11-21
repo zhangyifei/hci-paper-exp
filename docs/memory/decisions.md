@@ -664,3 +664,7 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 - Both fields reveal suggestions after three characters; the task address is first and marked RECENT.
 - G1 Recipient shows three results, while G2 retains its existing two-result dropdown.
 - The result count is contract-controlled to avoid condition checks in the shared Courier UI.
+
+## 2026-11-20 — Match stray completions by Prolific submission, not by participant alone
+
+A participant can hold several experiment sessions for one Prolific submission (re-opened link, second tab). When the completing session is not the one linked on the assignment, it is relinked only if it carries the same Prolific submission ID as the still-`assigned` row. Sessions from other submissions never validate the current one, preserving the 2026-11-14 rule against reusing older sessions.
