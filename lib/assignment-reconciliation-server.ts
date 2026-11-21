@@ -21,6 +21,7 @@ interface AssignmentRow {
   id: string
   prolific_pid: string
   prolific_study_id: string | null
+  prolific_session_id: string | null
   exp_session_id: string | null
   status: 'assigned' | 'completed'
 }
@@ -29,6 +30,7 @@ interface EventRow {
   session_id: string
   event_name: string
   timestamp: number
+  prolific_session_id: string | null
 }
 
 export interface FullBatchReconciliationResult {
@@ -52,7 +54,7 @@ async function loadCapacityRows(batchId: string): Promise<AssignmentRow[]> {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await supabaseAdmin
       .from('participant_assignments')
-      .select('id,prolific_pid,prolific_study_id,exp_session_id,status')
+      .select('id,prolific_pid,prolific_study_id,prolific_session_id,exp_session_id,status')
       .eq('batch_id', batchId)
       .in('status', ['assigned', 'completed'])
       .order('assigned_at', { ascending: true })
@@ -73,30 +75,47 @@ function dominantStudyId(rows: AssignmentRow[]): string | null {
   return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 }
 
+const COMPLETION_EVENT_NAMES = [
+  'service2.task.complete',
+  'survey.completed',
+  'questionnaire.completed',
+  'experiment.completed',
+]
+
 async function loadCompletionEvents(assignments: AssignmentRow[]): Promise<EventRow[]> {
-  const rows: EventRow[] = []
-  const sessionIds = Array.from(
-    new Set(
-      assignments
-        .map((assignment) => assignment.exp_session_id)
-        .filter((sessionId): sessionId is string => Boolean(sessionId)),
-    ),
+  const unique = (values: (string | null)[]): string[] =>
+    Array.from(new Set(values.filter((value): value is string => Boolean(value))))
+  const sessionIds = unique(assignments.map((assignment) => assignment.exp_session_id))
+  // Also load sessions from the same Prolific submission, so a participant who
+  // finished in an earlier tab after re-opening the study link is recognized.
+  const submissionIds = unique(
+    assignments
+      .filter((assignment) => assignment.status === 'assigned')
+      .map((assignment) => assignment.prolific_session_id)
+      .filter((value) => isProlificId(value)),
   )
-  for (const sessionChunk of chunks(sessionIds, QUERY_CHUNK_SIZE)) {
-    const { data, error } = await supabaseAdmin
-      .from('experiment_events')
-      .select('participant_id,session_id,event_name,timestamp')
-      .in('session_id', sessionChunk)
-      .in('event_name', [
-        'service2.task.complete',
-        'survey.completed',
-        'questionnaire.completed',
-        'experiment.completed',
-      ])
-    if (error) throw error
-    rows.push(...((data ?? []) as EventRow[]))
+
+  const byEventKey = new Map<string, EventRow>()
+  const load = async (column: 'session_id' | 'prolific_session_id', values: string[]) => {
+    for (const valueChunk of chunks(values, QUERY_CHUNK_SIZE)) {
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const { data, error } = await supabaseAdmin
+          .from('experiment_events')
+          .select('event_id,participant_id,session_id,event_name,timestamp,prolific_session_id')
+          .in(column, valueChunk)
+          .in('event_name', COMPLETION_EVENT_NAMES)
+          .order('id')
+          .range(from, from + PAGE_SIZE - 1)
+        if (error) throw error
+        const page = (data ?? []) as (EventRow & { event_id: string })[]
+        for (const { event_id: eventId, ...row } of page) byEventKey.set(eventId, row)
+        if (page.length < PAGE_SIZE) break
+      }
+    }
   }
-  return rows
+  await load('session_id', sessionIds)
+  await load('prolific_session_id', submissionIds)
+  return [...byEventKey.values()]
 }
 
 function toSubmissionRows(submissions: ProlificSubmission[]): ReconciliationSubmission[] {
@@ -219,6 +238,7 @@ export async function reconcileFullBatch(
     id: row.id,
     prolificPid: row.prolific_pid,
     expSessionId: row.exp_session_id,
+    prolificSessionId: isProlificId(row.prolific_session_id) ? row.prolific_session_id : null,
     status: row.status,
   }))
   const events: ReconciliationEvent[] = eventRows.map((event) => ({
@@ -226,6 +246,7 @@ export async function reconcileFullBatch(
     sessionId: event.session_id,
     eventName: event.event_name,
     timestamp: Number(event.timestamp),
+    prolificSessionId: event.prolific_session_id,
   }))
   const actions = planAssignmentReconciliation(
     assignments,

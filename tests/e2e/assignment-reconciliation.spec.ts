@@ -215,4 +215,56 @@ test.describe('full-batch assignment reconciliation', () => {
       },
     ])
   })
+  test('recovers a completion from an earlier tab of the same Prolific submission', () => {
+    const completedAt = Date.UTC(2026, 10, 20, 16, 22)
+    const submission = 'a'.repeat(24)
+    const earlierTab = completeEvents('pid-two-tabs', 'session-tab-1', completedAt).map((event) => ({
+      ...event,
+      prolificSessionId: submission,
+    }))
+    const actions = planAssignmentReconciliation(
+      [
+        {
+          id: 'assignment-two-tabs',
+          prolificPid: 'pid-two-tabs',
+          expSessionId: 'session-tab-2',
+          prolificSessionId: submission,
+          status: 'assigned',
+        },
+      ],
+      [{ participantId: 'pid-two-tabs', status: 'AWAITING REVIEW', completionCode: 'VALID12' }],
+      earlierTab,
+    )
+
+    expect(actions).toEqual([
+      {
+        assignmentId: 'assignment-two-tabs',
+        action: 'complete',
+        expSessionId: 'session-tab-1',
+        completedAt: new Date(completedAt).toISOString(),
+      },
+    ])
+  })
+
+  test('does not recover a completion recorded under a different Prolific submission', () => {
+    const previous = completeEvents('pid-two-tabs', 'session-previous').map((event) => ({
+      ...event,
+      prolificSessionId: 'b'.repeat(24),
+    }))
+    const actions = planAssignmentReconciliation(
+      [
+        {
+          id: 'assignment-current',
+          prolificPid: 'pid-two-tabs',
+          expSessionId: 'session-current',
+          prolificSessionId: 'a'.repeat(24),
+          status: 'assigned',
+        },
+      ],
+      [{ participantId: 'pid-two-tabs', status: 'AWAITING REVIEW', completionCode: 'VALID12' }],
+      previous,
+    )
+
+    expect(actions).toEqual([])
+  })
 })
