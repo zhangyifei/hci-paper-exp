@@ -2,6 +2,7 @@ export interface ReconciliationAssignment {
   id: string
   prolificPid: string
   expSessionId: string | null
+  prolificSessionId?: string | null
   status: 'assigned' | 'completed'
 }
 export interface ReconciliationSubmission {
@@ -18,6 +19,7 @@ export interface ReconciliationEvent {
   sessionId: string
   eventName: string
   timestamp: number
+  prolificSessionId?: string | null
 }
 
 export type ReconciliationAction =
@@ -55,15 +57,13 @@ const REQUIRED_COMPLETION_EVENTS = [
 ] as const
 const RETURN_REQUEST_GRACE_MS = 2 * 60 * 1_000
 
-function completionEvidence(
+function sessionCompletion(
   participantId: string,
-  expSessionId: string | null,
+  sessionId: string,
   events: ReconciliationEvent[],
-): { expSessionId: string; completedAt: string } | null {
-  if (!expSessionId) return null
+): { expSessionId: string; completedAt: string; completedAtMs: number } | null {
   const rows = events.filter(
-    (event) =>
-      event.participantId === participantId && event.sessionId === expSessionId,
+    (event) => event.participantId === participantId && event.sessionId === sessionId,
   )
   const names = new Set(rows.map((row) => row.eventName))
   if (!REQUIRED_COMPLETION_EVENTS.every((name) => names.has(name))) return null
@@ -72,9 +72,43 @@ function completionEvidence(
     .sort((a, b) => b.timestamp - a.timestamp)[0]
   if (!completion || !Number.isFinite(completion.timestamp)) return null
   return {
-    expSessionId,
+    expSessionId: sessionId,
     completedAt: new Date(completion.timestamp).toISOString(),
+    completedAtMs: completion.timestamp,
   }
+}
+
+/**
+ * Prefer the experiment session linked on the assignment. A participant who
+ * re-opens the study link gets a new session that replaces that link, so when
+ * they finish in the earlier tab, accept another complete session only if it
+ * belongs to the same Prolific submission. Older submissions never qualify.
+ */
+function completionEvidence(
+  assignment: ReconciliationAssignment,
+  events: ReconciliationEvent[],
+): { expSessionId: string; completedAt: string } | null {
+  const linked = assignment.expSessionId
+    ? sessionCompletion(assignment.prolificPid, assignment.expSessionId, events)
+    : null
+  if (linked) return { expSessionId: linked.expSessionId, completedAt: linked.completedAt }
+
+  const submissionId = assignment.prolificSessionId
+  if (!submissionId) return null
+  const sameSubmissionSessions = new Set(
+    events
+      .filter(
+        (event) =>
+          event.participantId === assignment.prolificPid &&
+          event.prolificSessionId === submissionId,
+      )
+      .map((event) => event.sessionId),
+  )
+  const latest = [...sameSubmissionSessions]
+    .map((sessionId) => sessionCompletion(assignment.prolificPid, sessionId, events))
+    .filter((evidence): evidence is NonNullable<typeof evidence> => evidence !== null)
+    .sort((a, b) => b.completedAtMs - a.completedAtMs)[0]
+  return latest ? { expSessionId: latest.expSessionId, completedAt: latest.completedAt } : null
 }
 
 /**
@@ -108,11 +142,7 @@ export function planAssignmentReconciliation(
       continue
     }
 
-    const evidence = completionEvidence(
-      assignment.prolificPid,
-      assignment.expSessionId,
-      events,
-    )
+    const evidence = completionEvidence(assignment, events)
     if (evidence) {
       if (assignment.status === 'assigned') {
         actions.push({

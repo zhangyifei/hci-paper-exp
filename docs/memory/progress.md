@@ -1163,6 +1163,13 @@ Design mockups analyzed. Key findings per condition:
 - Current usable-condition counts are G1=4, G2=6, G3=4, and G4=6; reaching the planned balanced 24 requires two additional valid G1 records and two additional valid G3 records.
 - Preserved all raw records and made no Prolific, database, assignment, payment, approval, rejection, return, or deployment changes.
 
+## 2026-11-20 — Recovered completions from a re-opened study link
+
+- Diagnosed three B5 participants whose valid completions were invisible to the export: re-opening the study link started a new experiment session that replaced the assignment's `exp_session_id`, and they then finished in the earlier tab.
+- Event ingestion now relinks an unmatched completion or invalidation to the participant's still-`assigned` row for the same Prolific submission; full-batch reconciliation accepts a complete session from that same submission when the linked session has none.
+- Repaired the three B5 assignments in production (two G1, one G3) by relinking each to its complete session and marking it completed; B5 now has 22 usable responses.
+- Passed the standalone TypeScript check, 20 focused reconciliation/webhook/session-evaluation tests, and the production build.
+
 ## 2026-11-23 — Diagnosed B5 23/24 Study Full incident
 
 - Confirmed B5 is paused with 23 places taken and 23 submissions awaiting review.
@@ -1274,3 +1281,4 @@ Design mockups analyzed. Key findings per condition:
 ## 2026-11-24 — B6 release checks on main
 
 - Before the requested production deployment, the TypeScript check, 26 focused tests for Prolific completion, webhook handling, reconciliation and session outcomes, and the Next.js production build all passed.
+- Merged the earlier-tab completion fix from GitHub with the B6 changes and restored the shared Prolific ID validator import used for relinking. All 28 focused tests and the production build passed on the combined code.
