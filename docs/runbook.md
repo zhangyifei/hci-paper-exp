@@ -41,14 +41,18 @@ vercel env add PROLIFIC_COMPLETION_URL production
 vercel env add PROLIFIC_FAILED_URL production
 # Enter: https://app.prolific.com/submissions/complete?cc=FAIL_CODE
 ```
-> Create two completion codes in Prolific Study → "Record completions manually":
-> one for a successful completion and one for an invalidated-session return.
+> Create participant-operated codes in Prolific for a successful completion and
+> an invalidated-session return. Also create exactly one researcher-operated
+> `COMPLETED` code whose only action is `MANUALLY_REVIEW`; the server uses this
+> separate code for its backup completion transition.
 
 Set `PROLIFIC_API_TOKEN` in production as well. After the full app event trail
-is validated, `/api/complete` uses Prolific's idempotent `COMPLETE` transition
-before redirecting the browser. The completion screen also shows the validated
-code and a persistent return button, so a redirect interruption does not force
-a genuine completer to submit NOCODE.
+is validated, `/api/complete` looks up the unique researcher-operated manual
+review code for the study recorded in the event trail, and uses it for
+Prolific's idempotent `COMPLETE` transition before redirecting the browser.
+If that code is missing, ambiguous, or has another action, the server skips
+the transition. The completion screen continues to show the participant code
+and a persistent return button as the fallback.
 For a server-validated attention-check failure or timeout, `/api/events`
 directly requests a return using the stored submission ID and `/api/complete`
 retries that request. This also protects studies that were already published
@@ -90,6 +94,10 @@ Run `scripts/migrate-add-event-id-idempotency.sql` once as well. It removes
 duplicate copies of the same `event_id` (keeping the earliest row) and adds the
 unique index required by the retry-safe `/api/events` upsert.
 
+Run `scripts/migrate-validate-prolific-assignment-identity.sql` once as well.
+It rejects missing, malformed, or literal URL-template Prolific identifiers
+inside the atomic assignment function before they can reserve a group slot.
+
 ### 7. Start a batch before recruiting
 Open `/admin`, enter the secret, and **Start batch** (4 groups × 25 by
 default). Assignment requires an **active** batch — without one, real
@@ -108,9 +116,21 @@ if Prolific is unavailable, no slot is released automatically.
 its group and completion status. Use *Copy completed PIDs* / *Download CSV* to
 approve payments for participants whose status is `completed`.
 
-If Prolific shows NOCODE, open the batch and select **Reconcile Prolific**. The
-action never rejects a participant. A full app event trail is retained as a
-valid completion. An `AWAITING REVIEW` NOCODE submission that is at least two
+The signed `submission.status.change` webhook is the normal reconciliation
+path. Every `AWAITING REVIEW` transition checks the current Prolific submission,
+the matching app assignment, and the exact-session event trail. A valid full
+trail repairs a stale app completion automatically. An incomplete NOCODE is
+given the two-minute event-upload grace period; while that grace is active the
+endpoint responds retryably so Prolific redelivers the same signed event. If the
+trail is still incomplete after the grace period, the retry requests a return
+and stores the missing-event evidence. Confirmed `RETURNED`, `REJECTED`, and
+`TIMED-OUT` transitions release app capacity automatically.
+
+**Reconcile Prolific** is a backup for a missed or exhausted webhook delivery,
+not a routine during-study action. Use it only when Prolific and the app still
+disagree, a NOCODE remains unresolved, or a replacement reports Study Full.
+The action never rejects a participant. A full app event trail is retained as
+a valid completion. An `AWAITING REVIEW` NOCODE submission that is at least two
 minutes old and still lacks the required trail receives a Prolific return
 request; its app slot stays reserved until Prolific confirms a terminal status.
 The roster's `invalid_reason` records the submission ID, missing completion
@@ -175,6 +195,8 @@ Events are stored in Vercel Blob. Two types of files, both under the same Blob s
 - `data_quality.flagged` is an analysis exclusion, not an automatic Prolific rejection.
 - A session is flagged when all 30 non-attention scale answers use one value, or at least 80% of first-answer intervals are under one second.
 - Flagged participants retain `experiment.completed` and the normal completion-code path. Review and pay them under Prolific policy while excluding them from scored exports and paper-facing aggregates.
+- When reviewing a batch, preserve the original raw events, responses, timestamps, identifiers, Prolific status, and recorded quality reasons. Manually review every app-generated flag against the complete event trail before recommending approval, a return request, or rejection. Do not delete or rewrite excluded records; mark confirmed invalid records as excluded only in analysis outputs.
+- Prolific's study-level `EXCEPTIONALLY_FAST` category is separate: when enabled, Prolific automatically rejects submissions that meet its platform criterion. Do not treat the app's rapid-response or straightlining flags as equivalent to that Prolific category.
 
 ### Live completion rate (during study)
 ```bash

@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { assignCondition } from '../../../lib/assignment'
+import {
+  hasValidProlificAssignmentIdentity,
+  isProlificId,
+} from '../../../lib/prolific-identity'
 
 /**
  * Unit-style tests for between-subjects assignment logic.
@@ -71,6 +75,75 @@ test.describe('API — /api/assign endpoint', () => {
     expect(response.status()).toBe(200)
     const body = await response.json()
     expect(body.condition).toBe('G3')
+  })
+
+  test('rejects literal Prolific URL placeholders before reserving capacity', async ({ request }) => {
+    const response = await request.post('/api/assign', {
+      data: {
+        pid: '{{%PROLIFIC_PID%}}',
+        studyId: '{{%STUDY_ID%}}',
+        sessionId: '{{%SESSION_ID%}}',
+        expSessionId: 'fd7b3be7-13d7-4c1d-8ca7-51aa599fc3c2',
+      },
+    })
+
+    expect(response.status()).toBe(400)
+    expect(await response.json()).toEqual({
+      outcome: 'invalid_prolific_params',
+      condition: null,
+      batchId: null,
+      status: null,
+      retryable: false,
+    })
+  })
+
+  test('rejects non-string launch parameters without calling assignment', async ({ request }) => {
+    const response = await request.post('/api/assign', {
+      data: {
+        pid: 123,
+        studyId: null,
+        sessionId: ['not', 'a', 'submission'],
+        expSessionId: {},
+      },
+    })
+
+    expect(response.status()).toBe(400)
+    expect((await response.json()).outcome).toBe('invalid_prolific_params')
+  })
+})
+
+test.describe('Prolific assignment identity validation', () => {
+  const identity = {
+    participantId: '5f4dcc3b5aa765d61d8327de',
+    studyId: '6afa22a4d1d094651d61d973',
+    submissionId: '6afa22a4d1d094651d61d974',
+    experimentSessionId: 'fd7b3be7-13d7-4c1d-8ca7-51aa599fc3c2',
+  }
+
+  test('accepts a complete Prolific launch identity', () => {
+    expect(hasValidProlificAssignmentIdentity(identity)).toBe(true)
+    expect(isProlificId(identity.participantId)).toBe(true)
+  })
+
+  test('rejects missing, placeholder, and malformed launch values', () => {
+    expect(
+      hasValidProlificAssignmentIdentity({
+        ...identity,
+        participantId: '{{%PROLIFIC_PID%}}',
+      }),
+    ).toBe(false)
+    expect(
+      hasValidProlificAssignmentIdentity({
+        ...identity,
+        submissionId: '',
+      }),
+    ).toBe(false)
+    expect(
+      hasValidProlificAssignmentIdentity({
+        ...identity,
+        experimentSessionId: 'not-a-uuid',
+      }),
+    ).toBe(false)
   })
 })
 

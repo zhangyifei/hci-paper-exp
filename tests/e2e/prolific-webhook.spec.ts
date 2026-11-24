@@ -36,12 +36,13 @@ function terminalPayload() {
   }
 }
 
-function submission(status = 'RETURNED'): WebhookSubmission {
+function submission(status = 'RETURNED', enteredCode = 'VALID12'): WebhookSubmission {
   return {
     id: SUBMISSION_ID,
     participant: PARTICIPANT_ID,
     study_id: STUDY_ID,
     status,
+    entered_code: enteredCode,
   }
 }
 
@@ -50,6 +51,7 @@ function assignment(
 ): WebhookAssignment {
   return {
     id: 'assignment-1',
+    batch_id: 'batch-1',
     prolific_pid: PARTICIPANT_ID,
     prolific_study_id: STUDY_ID,
     status: 'assigned',
@@ -65,6 +67,14 @@ function dependencies(
     getSubmission: async () => submission(),
     findAssignment: async () => assignment(),
     releaseAssignment: async () => true,
+    reconcileBatch: async () => ({
+      released: 0,
+      completed: 0,
+      returnRequested: 0,
+      waitingForGrace: 0,
+      changed: 0,
+      sourceAvailable: true,
+    }),
     now: () => new Date('2026-11-14T18:00:00.000Z'),
     ...overrides,
   }
@@ -121,12 +131,12 @@ test.describe('Prolific webhook processing', () => {
     expect(releases[0].evidence).toContain('webhook_event=evt-terminal-1')
   })
 
-  test('ignores a non-terminal source-of-truth status', async () => {
+  test('ignores a non-terminal source-of-truth status that needs no reconciliation', async () => {
     let assignmentLookups = 0
     const result = await processProlificWebhook(
       signedInput(terminalPayload()),
       dependencies({
-        getSubmission: async () => submission('AWAITING REVIEW'),
+        getSubmission: async () => submission('ACTIVE'),
         findAssignment: async () => {
           assignmentLookups += 1
           return assignment()
@@ -136,9 +146,100 @@ test.describe('Prolific webhook processing', () => {
 
     expect(result).toEqual({
       status: 200,
-      body: { ok: true, ignored: true, status: 'AWAITING REVIEW' },
+      body: { ok: true, ignored: true, status: 'ACTIVE' },
     })
     expect(assignmentLookups).toBe(0)
+  })
+
+  test('repairs count mismatches for a valid awaiting-review completion', async () => {
+    const result = await processProlificWebhook(
+      signedInput(terminalPayload()),
+      dependencies({
+        getSubmission: async () => submission('AWAITING REVIEW', 'VALID12'),
+        reconcileBatch: async (_batchId, currentSubmission) => {
+          expect(currentSubmission.id).toBe(SUBMISSION_ID)
+          return {
+            released: 0,
+            completed: 1,
+            returnRequested: 0,
+            waitingForGrace: 0,
+            changed: 1,
+            sourceAvailable: true,
+          }
+        },
+      }),
+    )
+
+    expect(result).toEqual({
+      status: 200,
+      body: {
+        ok: true,
+        reconciled: true,
+        released: 0,
+        completed: 1,
+        returnRequested: 0,
+      },
+    })
+  })
+
+  test('retries an incomplete NOCODE webhook during the upload grace period', async () => {
+    let reconciliations = 0
+    const result = await processProlificWebhook(
+      signedInput(terminalPayload()),
+      dependencies({
+        getSubmission: async () => submission('AWAITING REVIEW', 'NOCODE'),
+        reconcileBatch: async (batchId) => {
+          expect(batchId).toBe('batch-1')
+          reconciliations += 1
+          return {
+            released: 0,
+            completed: 0,
+            returnRequested: 0,
+            waitingForGrace: 1,
+            changed: 0,
+            sourceAvailable: true,
+          }
+        },
+      }),
+    )
+
+    expect(result).toEqual({
+      status: 503,
+      body: {
+        error: 'Awaiting completion evidence',
+        retry: true,
+        waitingForGrace: 1,
+      },
+    })
+    expect(reconciliations).toBe(1)
+  })
+
+  test('automatically reconciles an incomplete NOCODE after the grace period', async () => {
+    const result = await processProlificWebhook(
+      signedInput(terminalPayload()),
+      dependencies({
+        getSubmission: async () => submission('AWAITING REVIEW', 'NOCODE'),
+        reconcileBatch: async () => ({
+          released: 0,
+          completed: 0,
+          returnRequested: 1,
+          waitingForGrace: 0,
+          changed: 1,
+          sourceAvailable: true,
+        }),
+      }),
+    )
+
+    expect(result).toEqual({
+      status: 200,
+      body: {
+        ok: true,
+        reconciled: true,
+        released: 0,
+        completed: 0,
+        returnRequested: 1,
+      },
+    })
   })
 
   test('rejects participant and assignment linkage mismatches', async () => {

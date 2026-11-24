@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { uniqueProlificId } from '@/lib/prolific-completion'
 import { evaluateOutcome } from '@/lib/session-eval'
 import {
   completeProlificSubmission,
   completionCodeFromUrl,
-  isProlificId,
   requestProlificSubmissionReturn,
 } from '@/lib/batch-export/prolific'
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('experiment_events')
-    .select('event_name,prolific_session_id')
+    .select('event_name,prolific_session_id,prolific_study_id')
     .eq('session_id', sessionId)
 
   if (error) {
@@ -49,13 +49,16 @@ export async function POST(req: NextRequest) {
   // Prevent a genuine completer from becoming NOCODE if the browser redirect
   // is interrupted. The submission id is derived from stored server events,
   // never accepted from the request body.
-  const submissionId = (data ?? [])
-    .map((row) => row.prolific_session_id as string | null)
-    .find((value) => isProlificId(value)) ?? null
+  const submissionId = uniqueProlificId(
+    (data ?? []).map((row) => row.prolific_session_id as string | null),
+  )
+  const studyId = uniqueProlificId(
+    (data ?? []).map((row) => row.prolific_study_id as string | null),
+  )
   let prolificCompleted = false
   let returnRequested = false
   if (outcome === 'valid') {
-    prolificCompleted = await completeProlificSubmission(submissionId, code)
+    prolificCompleted = await completeProlificSubmission(submissionId, studyId)
   } else if (outcome === 'failed' && submissionId) {
     // B4 was already published with a manual-review failure code, which can no
     // longer be edited. Request the policy-safe return directly after the

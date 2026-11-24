@@ -9,12 +9,13 @@ import ResearchPage from './ResearchPage'
  *   - "closed":  no batch is currently open for recruitment.
  *   - "already": this participant already completed (or was invalidated) and
  *                cannot retake the test.
+ *   - "invalid_link": required Prolific launch identifiers are missing.
  *
  * Mirrors the calm, single-column look of the completion screen so a turned
  * -away participant still sees a polished, trustworthy page.
  */
 interface StudyClosedScreenProps {
-  variant: 'full' | 'closed' | 'already'
+  variant: 'full' | 'closed' | 'already' | 'invalid_link'
 }
 
 const COPY: Record<
@@ -35,6 +36,11 @@ const COPY: Record<
     testId: 'screen-already-participated',
     title: 'Already Completed',
     body: 'Our records show you have already taken part in this study, so it cannot be completed again. This does not affect any payment for your previous submission.',
+  },
+  invalid_link: {
+    testId: 'screen-invalid-prolific-link',
+    title: 'Invalid Study Link',
+    body: 'We could not verify the Prolific information in this link, so the experiment did not start and no study place was reserved. Please reopen the study directly from Prolific.',
   },
 }
 

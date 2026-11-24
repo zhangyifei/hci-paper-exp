@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getProlificSubmission } from '@/lib/batch-export/prolific'
+import { reconcileFullBatch } from '@/lib/assignment-reconciliation-server'
 import {
   processProlificWebhook,
   type WebhookAssignment,
@@ -11,7 +12,7 @@ async function findAssignment(
 ): Promise<WebhookAssignment | null> {
   const { data, error } = await supabaseAdmin
     .from('participant_assignments')
-    .select('id,prolific_pid,prolific_study_id,status,invalid_reason')
+    .select('id,batch_id,prolific_pid,prolific_study_id,status,invalid_reason')
     .eq('prolific_session_id', submissionId)
     .limit(1)
     .maybeSingle()
@@ -56,11 +57,16 @@ export async function POST(req: NextRequest) {
       getSubmission: getProlificSubmission,
       findAssignment,
       releaseAssignment,
+      reconcileBatch: (batchId, submission) =>
+        reconcileFullBatch(batchId, submission),
       onError: (stage, error) => {
         console.error(`[prolific-webhook] ${stage} failed:`, error)
       },
     },
   )
 
-  return NextResponse.json(result.body, { status: result.status })
+  return NextResponse.json(result.body, {
+    status: result.status,
+    headers: result.body.retry ? { 'Retry-After': '60' } : undefined,
+  })
 }

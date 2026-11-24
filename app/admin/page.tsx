@@ -243,7 +243,7 @@ export default function AdminPage() {
   async function reconcileProlific(batchId: string) {
     if (
       !window.confirm(
-        'Reconcile this batch with Prolific? This may send a return request for an older NOCODE submission only when the app has an incomplete server event trail.',
+        'Run backup reconciliation with Prolific? Webhook reconciliation is normally automatic. This may send a return request for an older NOCODE submission only when the app still has an incomplete server event trail after the upload grace period.',
       )
     ) {
       return
@@ -265,9 +265,10 @@ export default function AdminPage() {
         released: number
         completed: number
         returnRequested: number
+        waitingForGrace: number
       } = await res.json()
       setNotice(
-        `Prolific reconciled: ${result.returnRequested} return request(s), ${result.released} slot(s) released, ${result.completed} completion record(s) repaired.`,
+        `Prolific reconciled: ${result.returnRequested} return request(s), ${result.released} slot(s) released, ${result.completed} completion record(s) repaired, ${result.waitingForGrace} submission(s) still in the upload grace period.`,
       )
       if (openBatchId === batchId) {
         const rosterResponse = await fetch(`/api/admin/batches/${batchId}/participants`, {
@@ -481,7 +482,7 @@ export default function AdminPage() {
                     <button
                       onClick={() => reconcileProlific(batch.id)}
                       disabled={reconcilingId !== null}
-                      title="Check Prolific statuses, request returns for documented incomplete NOCODE submissions, and release confirmed stale slots"
+                      title="Backup for missed webhook delivery: check Prolific statuses, request documented incomplete NOCODE returns, and release confirmed stale slots"
                       className="text-sm px-3 h-9 rounded-lg border border-gray-200 bg-white font-semibold disabled:opacity-50"
                     >
                       {reconcilingId === batch.id ? 'Reconciling…' : 'Reconcile Prolific'}

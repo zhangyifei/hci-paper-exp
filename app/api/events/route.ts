@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { uniqueProlificId } from '@/lib/prolific-completion'
 import type { ExperimentEvent } from '@/lib/logger'
 import { evaluateOutcome } from '@/lib/session-eval'
 import {
   completeProlificSubmission,
-  completionCodeFromUrl,
-  isProlificId,
   requestProlificSubmissionReturn,
 } from '@/lib/batch-export/prolific'
 
@@ -78,16 +77,16 @@ async function syncProlificDisposition(events: ExperimentEvent[]): Promise<void>
     bySession.set(event.sessionId, sessionEvents)
   }
 
-  const completionCode = completionCodeFromUrl(
-    process.env.PROLIFIC_COMPLETION_URL ?? null,
-  )
   for (const sessionEvents of bySession.values()) {
     const outcome = evaluateOutcome(sessionEvents.map((event) => event.eventName))
-    const submissionId = sessionEvents
-      .map((event) => event.prolificSessionId)
-      .find((value) => isProlificId(value)) ?? null
+    const submissionId = uniqueProlificId(
+      sessionEvents.map((event) => event.prolificSessionId),
+    )
+    const studyId = uniqueProlificId(
+      sessionEvents.map((event) => event.prolificStudyId),
+    )
     if (outcome === 'valid') {
-      await completeProlificSubmission(submissionId, completionCode)
+      await completeProlificSubmission(submissionId, studyId)
     } else if (outcome === 'failed' && submissionId) {
       await requestProlificSubmissionReturn(submissionId)
     }

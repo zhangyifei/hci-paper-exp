@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { assignCondition } from '@/lib/assignment'
 import { reconcileFullBatch } from '@/lib/assignment-reconciliation-server'
 import { CONDITIONS, type Condition } from '@/lib/experiment-config'
+import { hasValidProlificAssignmentIdentity } from '@/lib/prolific-identity'
 import type { AssignOutcome, AssignmentStatus } from '@/lib/types'
 
 interface AssignResponse {
@@ -14,10 +15,17 @@ interface AssignResponse {
 }
 
 interface AssignBody {
-  pid?: string
-  studyId?: string
-  sessionId?: string
-  expSessionId?: string
+  pid?: unknown
+  studyId?: unknown
+  sessionId?: unknown
+  expSessionId?: unknown
+}
+
+interface ValidAssignBody {
+  pid: string
+  studyId: string
+  sessionId: string
+  expSessionId: string
 }
 
 interface AssignmentRpcRow {
@@ -43,7 +51,7 @@ function parseAssignmentResult(data: unknown): AssignResponse {
   }
 }
 
-async function assignParticipant(body: AssignBody, pid: string): Promise<AssignResponse> {
+async function assignParticipant(body: ValidAssignBody, pid: string): Promise<AssignResponse> {
   const { data, error } = await supabaseAdmin.rpc('assign_participant', {
     p_pid: pid,
     p_study: body.studyId ?? '',
@@ -56,7 +64,7 @@ async function assignParticipant(body: AssignBody, pid: string): Promise<AssignR
 
 async function refreshExistingSession(
   assignment: AssignResponse,
-  body: AssignBody,
+  body: ValidAssignBody,
   pid: string,
 ): Promise<void> {
   if (
@@ -113,16 +121,21 @@ export async function GET(req: NextRequest) {
  *   - existing         → already assigned (idempotent re-entry keeps the group)
  *   - full             → every group in the active batch is at capacity
  *   - no_active_batch  → no batch is currently open for recruitment
+ *   - invalid_prolific_params → missing/malformed Prolific launch identity
  */
 export async function POST(req: NextRequest): Promise<NextResponse<AssignResponse>> {
   let body: AssignBody
 
   try {
-    body = await req.json()
+    const rawBody: unknown = await req.json()
+    if (!rawBody || typeof rawBody !== 'object' || Array.isArray(rawBody)) {
+      throw new Error('Invalid assignment request body')
+    }
+    body = rawBody as AssignBody
   } catch {
     return NextResponse.json(
       {
-        outcome: 'no_active_batch',
+        outcome: 'invalid_prolific_params',
         condition: null,
         batchId: null,
         status: null,
@@ -132,11 +145,22 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
     )
   }
 
-  const pid = (body.pid ?? '').trim()
-  if (!pid) {
+  const pid = typeof body.pid === 'string' ? body.pid.trim() : ''
+  const studyId = typeof body.studyId === 'string' ? body.studyId.trim() : ''
+  const submissionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : ''
+  const expSessionId =
+    typeof body.expSessionId === 'string' ? body.expSessionId.trim() : ''
+  if (
+    !hasValidProlificAssignmentIdentity({
+      participantId: pid,
+      studyId,
+      submissionId,
+      experimentSessionId: expSessionId,
+    })
+  ) {
     return NextResponse.json(
       {
-        outcome: 'no_active_batch',
+        outcome: 'invalid_prolific_params',
         condition: null,
         batchId: null,
         status: null,
@@ -144,11 +168,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
       },
       { status: 400 },
     )
+  }
+
+  const validBody: ValidAssignBody = {
+    pid,
+    studyId,
+    sessionId: submissionId,
+    expSessionId,
   }
 
   let assignment: AssignResponse
   try {
-    assignment = await assignParticipant(body, pid)
+    assignment = await assignParticipant(validBody, pid)
   } catch (error) {
     console.error('[api/assign] rpc error:', error)
     return NextResponse.json(
@@ -167,7 +198,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
     try {
       const reconciliation = await reconcileFullBatch(assignment.batchId)
       if (reconciliation.released > 0) {
-        assignment = await assignParticipant(body, pid)
+        assignment = await assignParticipant(validBody, pid)
       } else if (!reconciliation.sourceAvailable) {
         assignment.retryable = true
       }
@@ -179,6 +210,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<AssignRespons
     }
   }
 
-  await refreshExistingSession(assignment, body, pid)
+  await refreshExistingSession(assignment, validBody, pid)
   return NextResponse.json(assignment)
 }

@@ -1129,3 +1129,148 @@ Design mockups analyzed. Key findings per condition:
 - Confirmed the draft is ready to publish and retains the production URL with Prolific participant, study, and session parameters.
 - The projected cost is $16.00 USD and the workspace now has exactly $16.00 USD available; Prolific reports the draft is ready to publish.
 - Opened live app batch `dd7d4ad3-57df-4f98-9d80-da61c4074ec1` as `Prolific US-CA 18-50 (12) B4`, with three places per group and 12 total; the prior full batch was closed automatically without deleting its records.
+
+## 2026-11-15 — Enabled B5 exceptionally-fast protection and recorded review policy
+
+- Updated unpublished Prolific study `6afa22a4d1d094651d61d973` (`hci-2x2-us-ca-24-b5`) so `submissions_config.auto_rejection_categories` contains only `EXCEPTIONALLY_FAST`.
+- Re-read the study through the Prolific API and confirmed it remains `UNPUBLISHED`, ready to publish, limited to one submission per participant, and configured with the exceptionally-fast protection.
+- Recorded the standing data-review rule: preserve original raw records and audit evidence, manually review app-generated flags before recommending a return or rejection, and exclude confirmed invalid records from analysis without deleting or altering their source data.
+- Kept the policy distinction explicit: Prolific's exceptionally-fast category is automatic, while app flags such as straightlining or pervasive sub-second responses remain manual-review indicators.
+
+## 2026-11-15 — Automated Prolific reconciliation with webhook retries
+
+- Extended the signed `submission.status.change` handler so every awaiting-review submission reconciles its matching app batch automatically.
+- Kept complete NOCODE data valid, repaired stale completed assignments, and preserved exact participant/study/session linkage checks.
+- Added an explicit waiting-for-grace reconciliation state. Incomplete NOCODE submissions receive the existing two-minute evidence-upload grace, and the endpoint returns retryably so Prolific's webhook backoff redelivers the event instead of requiring an admin click.
+- After the grace period, a still-incomplete NOCODE automatically receives the existing evidence-backed return request; confirmed terminal statuses continue releasing capacity automatically.
+- Retained **Reconcile Prolific** as a backup for missed/exhausted webhook delivery and clarified that behavior in the admin confirmation, tooltip, and runbook.
+- Passed 21 focused reconciliation, webhook, and outcome tests; passed the standalone TypeScript check and the Next.js production build.
+
+## 2026-11-18 — Diagnosed B5 Prolific review pause
+
+- Confirmed Prolific study `6afa22a4d1d094651d61d973` (`hci-2x2-us-ca-24-b5`) was published on 2026-11-16 and is currently `PAUSED` by Prolific review.
+- Verified the pause happened before recruitment: Prolific reports zero places taken and zero submissions in every status, and the B5 app batch has zero assignments.
+- Verified the researcher API account status is `OK`, the full $32 USD remains correctly reserved, and the study configuration remains ready to publish/restart once Prolific completes its review.
+- Verified the live app returns HTTP 200, the B5 app batch remains active with six places per group, and the enabled `submission.status.change` webhook points to the production endpoint; prior webhook deliveries report success and unsigned requests are rejected.
+- No app, database, Prolific, or deployment settings were changed during diagnosis. The exact review trigger is not exposed by the Prolific API and requires Prolific's review email or Support response.
+
+## 2026-11-20 — Reviewed B5 response quality without changing participant status
+
+- Matched the live B5 Prolific submissions to the app assignments and item-level event trails.
+- Confirmed all 20 submissions awaiting review have the required task, survey, questionnaire, and experiment-completion events; all passed the attention check, and none triggered the configured straightlining or rapid-response flag.
+- Confirmed no awaiting-review submission finished in under two minutes and Prolific marked none of them as exceptionally fast.
+- Identified two non-exclusion manual-review signals: one participant answered 11 of 33 items in under one second but remained below the 80% rapid-response threshold, and one participant gave the neutral response on 20 of 23 scale items but did not exactly straightline and spent more than three minutes on the survey.
+- Current usable-condition counts are G1=4, G2=6, G3=4, and G4=6; reaching the planned balanced 24 requires two additional valid G1 records and two additional valid G3 records.
+- Preserved all raw records and made no Prolific, database, assignment, payment, approval, rejection, return, or deployment changes.
+
+## 2026-11-23 — Diagnosed B5 23/24 Study Full incident
+
+- Confirmed B5 is paused with 23 places taken and 23 submissions awaiting review.
+- Verified the reported participant has no app assignment or event data; their 38-second NOCODE submission was automatically rejected by Prolific's exceptionally-fast rule after the app displayed Study Full.
+- Identified the capacity mismatch: a stale G3 assignment created with literal Prolific URL-template placeholders remains `assigned`, so the app counts 24 active slots while Prolific counts 23.
+- Determined the fair remediation is to keep the study paused, release only the stale placeholder assignment, reverse the participant's rejection to awaiting review, ask the participant to return voluntarily, and resume recruitment only after the return is confirmed.
+- Made no Prolific, Supabase, participant, payment, study-status, or deployment changes during diagnosis.
+
+## 2026-11-23 — Released the stale B5 template assignment
+
+- Re-read the exact G3 placeholder assignment and verified its participant, study, and session fields still contained the literal Prolific URL-template values before changing it.
+- Preserved the row and released only assignment `a5d095c7-edcc-4892-add7-5c9c5dedc5ee`, recording `manual_release:stale_prolific_template_placeholder;diagnosed_2026-11-23` as audit evidence.
+- Verified B5 app capacity is now 23 active assignments: G1=6, G2=6, G3=5, and G4=6. The next valid participant can therefore receive the remaining G3 slot instead of seeing Study Full.
+- Prolific still reported the study as `PAUSED` with 23/24 places immediately after the repair, despite the researcher having attempted to activate it; no Prolific study-status or participant-status change was made.
+
+## 2026-11-23 — Restarted B5 recruitment through the Prolific API
+
+- Transitioned only Prolific study `6afa22a4d1d094651d61d973` (`hci-2x2-us-ca-24-b5`) with the `START` action after the researcher explicitly requested API activation.
+- Verified Prolific reports the study as `ACTIVE` with 23/24 places taken.
+- Re-verified the app has 23 active assignments with G1=6, G2=6, G3=5, and G4=6, so the remaining valid participant can enter G3.
+
+## 2026-11-23 — Re-audited all current B5 data
+
+- Matched all 23 awaiting-review Prolific submissions to complete app event trails and item-level response timing.
+- Confirmed every awaiting-review record completed both tasks and all survey/questionnaire items, passed the attention check, avoided the app's straightlining and rapid-response thresholds, and was not marked exceptionally fast by Prolific.
+- Current Prolific completion time is 3:07–13:08 (median 6:13; mean 6:54); no awaiting-review participant completed in under two minutes.
+- Retained two non-exclusion sensitivity-review signals from the earlier audit: one participant answered 11/33 items in under one second but stayed below the 80% rule, and one selected the neutral point on 20/23 scale items but spent more than three minutes on the survey.
+- Found one fully completed G4 submission had subsequently been rejected despite a valid completion code, complete events, a passed attention check, coherent construct responses, no app quality flag, and no Prolific exceptionally-fast flag. Its 2:36 duration is above the study's two-minute review threshold; the evidence supports reversing that rejection if the record will be used.
+- The 23 awaiting-review records currently balance as G1=6, G2=6, G3=6, and G4=5. Restoring the valid rejected G4 record would yield the intended 24-person balance of six per group without further recruitment.
+- Made no participant, submission, payment, study-status, database, or deployment changes during this audit.
+
+## 2026-11-23 — Reviewed the four approximately three-minute B5 records
+
+- Audited the complete task paths, survey and questionnaire durations, item-level response times, answer revisions, reverse-worded usability item, attention check, and corrected task errors for the four participant IDs requested by the researcher.
+- All four completed the full experiment in 3:07–3:26, passed the attention check, had complete events, used 3–6 distinct scale values, and had only 3–5 of 33 first responses under one second (9%–15%, far below the 80% flag rule).
+- Their median item-response times were 1.87–2.62 seconds; survey durations were 58–70 seconds, questionnaire durations were 18–23 seconds, and second-task durations were 15–31 seconds.
+- Response patterns were construct-coherent rather than random. One participant endorsed both ease and frustration, which is a plausible mixed evaluation and not an exclusion criterion; two Courier participants made incorrect-address errors but corrected them and completed successfully, so those errors are valid behavioral outcomes rather than bad data.
+- Recommended retaining all four records. No participant or study state was changed.
+
+## 2026-11-23 — Tested hypothesis alignment and under-four-minute influence
+
+- Scored the current instrument exactly as deployed: CL1–CL5, PU1–PU4 plus reverse-scored PU5, CI1–CI4, MC1–MC4 for interrelatedness, and MC5–MC9 for heterogeneity.
+- For the 23 awaiting-review records, both manipulation checks separated in the intended direction: heterogeneity d=1.29, p=.005; interrelatedness d=1.01, p=.023.
+- H1 was in the expected but negligible direction (Cinema/high heterogeneity CL=2.85 vs Courier/low=2.75, d=.11, p=.794); H2 was in the expected direction (bridge CL=2.69 vs no bridge=2.90, d=-.22, p=.603). H3 (CL–PU r=-.57, p=.005) and H4 (PU–CI r=.53, p=.009) were supported.
+- Identified five awaiting-review participants under four minutes and ran leave-one-out analysis for each. Removing any one preserved the supported directions of H3 and H4; no fast record creates those results artificially.
+- Participant ending `0f6e` was the strongest descriptive mismatch: removing that record strengthened H1 d from .11 to .27, H2 d from -.22 to -.38, H3 r from -.57 to -.73, and H4 r from .53 to .70. The record nevertheless passed every quality check and must not be excluded for disagreeing with the hypotheses.
+- Participant ending `c41f` aligned most strongly with the predicted pattern; participants ending `ac3d` and `47d7` weakened H1/H2 to different degrees, while participant ending `75e1` mainly weakened H4. These are legitimate individual differences, not quality failures.
+- No participant, submission, payment, study, database, or deployment state was changed.
+
+## 2026-11-23 — Verified restarted B5 capacity was claimed by real participants
+
+- Confirmed Prolific reports B5 as `ACTIVE` with 24/24 places taken.
+- Confirmed the app has 24 active-capacity records balanced at six per condition.
+- Verified the two remaining `assigned` app records belong to real Prolific submissions currently marked `ACTIVE`: one G3 and one G4, both started seconds before their app assignments.
+- The submission roster currently contains 22 awaiting review and two active participants; no safe stale slot remains to release.
+- Left both active participant slots intact and made no Prolific, database, participant, payment, or deployment changes.
+
+## 2026-11-23 — Reviewed the final G3 and G4 participants
+
+- Verified both replacement participants completed with `VALID12`, complete task/survey/questionnaire trails, correct attention checks, and no app data-quality flag.
+- The G4 participant completed in 3:17 with zero sub-second first responses and construct scores CL=1.00, PU=7.00, CI=7.00, MC-interrelatedness=7.00, and MC-heterogeneity=7.00. This aligns with H2–H4 and both manipulation checks, but its low cognitive load does not align with H1's high-heterogeneity prediction.
+- The G3 participant completed in 2:14 (app events span 1:58), was marked below Prolific's auto-approval time threshold, but changed four answers, had only 5/33 sub-second first responses, and had median item time 1.74 seconds. Scores were CL=1.60, PU=6.40, CI=5.75, MC-interrelatedness=6.75, and MC-heterogeneity=6.20.
+- The G3 participant aligns with H3/H4 and the heterogeneity manipulation, but the low cognitive load weakens H1/H2 and the high interrelatedness rating does not align with the no-bridge manipulation. The record remains internally coherent and does not meet the app's rapid-response or straightlining exclusion rules.
+- Recommended retaining both records and treating the G3 speed only as a documented sensitivity-review signal. No participant or study state was changed.
+
+## 2026-11-23 — Reviewed participant ending `56124`
+
+- Verified the G2 participant completed with `VALID12` in 4:17, passed the attention check, generated a complete event trail, had no task errors or app quality flag, and recorded zero sub-second first responses (median item time 3.19 seconds).
+- Construct scores were CL=2.00, PU=6.00, CI=5.50, MC-interrelatedness=6.50, and MC-heterogeneity=5.00.
+- The low cognitive load in a low-heterogeneity bridge condition, paired with high usability and above-midpoint continuance, is descriptively aligned with H1–H4. The high interrelatedness manipulation score also matches G2 as intended.
+- Recommended retaining the record. No participant or study state was changed.
+
+## 2026-11-24 — Counted valid research records collected since October
+
+- Audited all batches, assignments, and 13,913 experiment events from October 1 through November 24 using the strict inclusion rule: real Prolific ID, app status `completed`, complete Service-2/survey/questionnaire/experiment trail, and no attention failure, invalidation, timeout, or data-quality flag.
+- Found 59 unique strict-valid participants across the four real Prolific batches: October batch=12, B3=12, B4=11, and B5=24. Condition totals are G1=15, G2=15, G3=14, and G4=15.
+- The October batch used the older instrument (20 post-task items and six background questions). B3–B5 use the current item structure (24 post-task items including attention check and nine background questions), yielding 47 directly comparable current-instrument records: G1=12, G2=12, G3=11, and G4=12.
+- Identified five additional complete, quality-valid event trails whose app assignments are not completed because Prolific later returned or rejected them (two in B3 and three in B5). These are not included in the 59 strict-valid count and should not be analyzed unless payment/status and consent are resolved.
+- Excluded internal test batches and placeholder assignments. Verified all 59 strict-valid participant IDs are unique across batches.
+- Made no participant, submission, payment, database, study-status, or deployment changes.
+
+## 2026-11-24 — Hardened assignment against placeholder-driven NOCODE incidents
+
+- Added shared validation requiring real-format Prolific participant, study, and submission identifiers plus a valid experiment-session UUID before balanced assignment.
+- Made `/api/assign` reject missing, malformed, and literal Prolific URL-template parameters before the database RPC can reserve a group slot.
+- Added a participant-facing invalid-link recovery screen that confirms the experiment did not start and no place was reserved.
+- Added an idempotent database migration enforcing the same identity checks inside `assign_participant`, while preserving historical audit rows.
+- Kept the existing server-side Prolific completion transition, automatic redirect, visible fallback code, retry path, and signed-webhook reconciliation unchanged.
+- Passed the standalone TypeScript check, 32 focused assignment/reconciliation/webhook tests, and the Next.js production build.
+
+## 2026-11-24 — Prepared Prolific B6 for 64 balanced places
+
+- Re-read the completed B5 Prolific study and duplicated it with previous participants blocked. The new draft is `6b05fc967abaa54d5fd0da66` (`hci-2x2-us-ca-64-b6`), ready to publish with 64 places.
+- Verified B6 retains the US/Canada and 18–50 audience, the prior-study exclusions (October, B3, B4, and B5), $1.00 reward, five-minute estimate, 30-minute maximum, manual-review completion codes `VALID12`/`FAILAC12`, and the production link carrying Prolific participant/study/session parameters.
+- The researcher explicitly chose to retain B5's `EXCEPTIONALLY_FAST` automatic-rejection setting in B6.
+- Prolific's projected study cost is $85.33 USD; the workspace had $32.00 available, leaving a $53.33 funding gap. B6 remains `UNPUBLISHED` until funded.
+- Applied the production SQL assignment-identity guard and verified the literal Prolific URL placeholders are rejected with SQLSTATE `22023`.
+- Opened app batch `6a1aeff8-494e-476a-8d84-5545885e2def` (`Prolific US-CA 18-50 (64) B6`) with 16 places each in G1–G4. Verified all four groups have zero assigned participants; the completed B5 app batch was closed.
+- Deployed the validated app to a Vercel preview, verified placeholder parameters return `invalid_prolific_params`, then deployed production `dpl_5s9rNJaBaMzMrf3S479SW2HkivEv` at `https://hci-paper-exp.vercel.app`. The public endpoint now returns HTTP 400 for placeholder parameters and leaves B6 at zero assignments.
+
+## 2026-11-24 — Corrected B6 server completion code
+
+- Confirmed B6 has a 30-minute maximum in Prolific and the app, a five-minute estimated duration, and no fixed two-minute minimum. Its selected `EXCEPTIONALLY_FAST` rule follows Prolific's own criteria; the two-minute NOCODE upload grace is a separate setting.
+- Added a researcher-operated `COMPLETED` code with only `MANUALLY_REVIEW` to the unpublished B6 draft while preserving its participant completion and failure codes.
+- Updated both server completion paths to look up the unique researcher-operated manual-review code from the recorded Prolific study. Inconsistent study or submission IDs, ambiguous code configurations, and automatic-action paths cannot trigger the server transition; the participant-facing redirect retains its original code.
+- Passed the TypeScript check, 26 focused completion/reconciliation/webhook tests, and the Next.js production build. A real B6 participant completion remains to be tested after a safe test participant is available.
+- Deployed and smoke-tested preview `dpl_FBryqN6UpzwSbPbD6bL6yRGqi8nv`, then production `dpl_9b78eQWfS9PWuUkmAsfBhWQ6bWoo`. Re-read B6 as unpublished with exactly one eligible researcher code, its original participant codes, 30-minute maximum, and 64 places; verified its active app batch still has zero assignments and 16 slots per condition.
+
+## 2026-11-24 — B6 release checks on main
+
+- Before the requested production deployment, the TypeScript check, 26 focused tests for Prolific completion, webhook handling, reconciliation and session outcomes, and the Next.js production build all passed.

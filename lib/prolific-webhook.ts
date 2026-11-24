@@ -43,10 +43,14 @@ export interface WebhookSubmission {
   participant: string | null
   study_id: string
   status: string
+  entered_code?: string | null
+  return_requested?: string | null
+  completed_at?: string | null
 }
 
 export interface WebhookAssignment {
   id: string
+  batch_id: string
   prolific_pid: string
   prolific_study_id: string | null
   status: 'assigned' | 'completed' | 'invalid' | 'released'
@@ -61,8 +65,19 @@ export interface ProlificWebhookDependencies {
     evidence: string
     receivedAt: string
   }) => Promise<boolean>
+  reconcileBatch: (batchId: string, submission: WebhookSubmission) => Promise<{
+    released: number
+    completed: number
+    returnRequested: number
+    waitingForGrace: number
+    changed: number
+    sourceAvailable: boolean
+  }>
   now?: () => Date
-  onError?: (stage: 'submission' | 'assignment' | 'release', error: unknown) => void
+  onError?: (
+    stage: 'submission' | 'assignment' | 'release' | 'reconcile',
+    error: unknown,
+  ) => void
 }
 
 export interface ProlificWebhookResult {
@@ -118,7 +133,12 @@ export async function processProlificWebhook(
   }
 
   const currentStatus = submission.status.trim().toUpperCase()
-  if (!TERMINAL_PROLIFIC_STATUSES.has(currentStatus)) {
+  const completionCode = submission.entered_code?.trim().toUpperCase() ?? ''
+  const isAwaitingReview = currentStatus === 'AWAITING REVIEW'
+  const isIncompleteNoCode =
+    isAwaitingReview &&
+    (completionCode === '' || completionCode === 'NOCODE')
+  if (!TERMINAL_PROLIFIC_STATUSES.has(currentStatus) && !isAwaitingReview) {
     return {
       status: 200,
       body: { ok: true, ignored: true, status: currentStatus },
@@ -155,6 +175,41 @@ export async function processProlificWebhook(
   }
   if (assignment.status === 'released' || assignment.status === 'invalid') {
     return { status: 200, body: { ok: true, duplicate: true } }
+  }
+
+  if (isAwaitingReview) {
+    try {
+      const reconciliation = await dependencies.reconcileBatch(
+        assignment.batch_id,
+        submission,
+      )
+      if (!reconciliation.sourceAvailable) {
+        return { status: 503, body: { error: 'Reconciliation source unavailable' } }
+      }
+      if (isIncompleteNoCode && reconciliation.waitingForGrace > 0) {
+        return {
+          status: 503,
+          body: {
+            error: 'Awaiting completion evidence',
+            retry: true,
+            waitingForGrace: reconciliation.waitingForGrace,
+          },
+        }
+      }
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          reconciled: true,
+          released: reconciliation.released,
+          completed: reconciliation.completed,
+          returnRequested: reconciliation.returnRequested,
+        },
+      }
+    } catch (error) {
+      dependencies.onError?.('reconcile', error)
+      return { status: 503, body: { error: 'Reconciliation failed' } }
+    }
   }
 
   const receivedAt = (dependencies.now?.() ?? new Date()).toISOString()

@@ -622,6 +622,31 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-14
 **Rationale**: B4 was already published with a manual-review failure completion action, and Prolific does not allow completion-code actions to be edited after publication. A direct, idempotent return request provides the intended non-rejection outcome without depending on that immutable action.
 
+### ADR-091: Preserve Evidence and Review Quality Flags Before Disposition
+**Decision**: Enable Prolific's `EXCEPTIONALLY_FAST` automatic-rejection category for B5. Treat that Prolific-managed category separately from app-generated quality flags. Whenever the researcher asks to review collected data, retain the original raw app events, responses, timing evidence, Prolific identifiers, and Prolific status; manually review app flags and the complete event trail before recommending approval, a return request, or rejection. Exclude only confirmed invalid records from analysis and derived paper statistics without deleting or rewriting the original evidence.
+**Date**: 2026-11-15
+**Rationale**: Prolific can automatically handle its own exceptionally-fast category, while straightlining, sub-second response patterns, incomplete trails, and other app flags require contextual review. Preserving immutable evidence supports auditability and allows analysis eligibility to remain separate from participant-payment decisions.
+
+### ADR-092: Reconcile Prolific Status and NOCODE Automatically by Webhook
+**Decision**: Treat the signed `submission.status.change` webhook as the primary reconciliation path. Re-fetch the current submission and validate participant/study linkage before reconciling its batch. Automatically repair complete awaiting-review event trails, and automatically release capacity for confirmed terminal submissions. For an incomplete NOCODE, preserve the two-minute upload grace by returning a retryable response; rely on Prolific's signed webhook redelivery, then request a documented return only if the exact-session trail remains incomplete after the grace period. Retain the admin `Reconcile Prolific` action as a manual backup.
+**Date**: 2026-11-15
+**Rationale**: Webhook-driven reconciliation closes the operational gap without polling, while retrying through the established grace period prevents a delayed final event upload from causing a false return request. Current-state re-fetching, linkage checks, exact-session evidence, idempotent updates, and terminal-only capacity release preserve the existing safety guarantees.
+
+### ADR-093: Reject Invalid Prolific Launch Identity Before Assignment
+**Decision**: Require valid 24-character participant, study, and submission identifiers plus a valid experiment-session UUID before calling the atomic balanced-assignment function. Reject missing or literal URL-template values without reserving capacity, show the participant an invalid-link recovery screen, and enforce the same validation inside the database assignment function.
+**Date**: 2026-11-24
+**Rationale**: A literal Prolific URL-template launch previously occupied a real condition slot and caused a genuine participant to see Study Full and submit NOCODE. Validating at both the API and database boundaries prevents recurrence while preserving historical audit rows.
+
+### ADR-094: Prepare a 64-Place B6 Study With Balanced App Capacity
+**Decision**: Duplicate the completed B5 Prolific study for B6, block participants from B5 and the three earlier linked Prolific studies, retain its audience, reward, duration, completion paths, and `EXCEPTIONALLY_FAST` setting, and set 64 Prolific places. Open a matching app batch of 16 places for each of G1–G4. Publish only when Prolific funding covers the projected study cost and the production assignment safeguards are verified.
+**Date**: 2026-11-24
+**Rationale**: The 64-place batch provides balanced recruitment with a buffer for exclusions against the study's 100-valid-record target. The existing four-condition config and event contract remain unchanged. The researcher explicitly chose to retain B5's automatic exceptionally-fast rule for B6.
+
+### ADR-095: Separate Server and Participant Completion Codes
+**Decision**: Keep the participant-operated completion URL for the browser and add one researcher-operated `COMPLETED` code with `MANUALLY_REVIEW` to B6. For server-side `COMPLETE` requests, obtain the unique eligible code from the Prolific study identified in the stored event trail; do not use the participant code or a path with automatic actions. Require consistent study and submission identifiers, and fall back to the participant redirect when the server path is unavailable.
+**Date**: 2026-11-24
+**Rationale**: Prolific requires researcher-operated codes for its server completion transition. Keeping a separate participant code preserves the existing redirect and review behavior while making the server backup compatible with the API.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

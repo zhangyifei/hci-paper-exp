@@ -40,7 +40,12 @@ export interface ExperimentSession {
 export type BatchStatus = 'active' | 'closed'
 export type AssignmentStatus = 'assigned' | 'completed' | 'invalid' | 'released'
 /** Result of an assignment attempt against the active batch. */
-export type AssignOutcome = 'assigned' | 'existing' | 'full' | 'no_active_batch'
+export type AssignOutcome =
+  | 'assigned'
+  | 'existing'
+  | 'full'
+  | 'no_active_batch'
+  | 'invalid_prolific_params'
 
 export interface TestBatch {
   id: string

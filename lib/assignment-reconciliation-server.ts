@@ -6,6 +6,7 @@ import {
   fetchProlificData,
   requestProlificSubmissionReturn,
   type ProlificSubmission,
+  type ProlificSubmissionDetail,
 } from '@/lib/batch-export/prolific'
 import {
   planAssignmentReconciliation,
@@ -35,6 +36,7 @@ export interface FullBatchReconciliationResult {
   released: number
   completed: number
   returnRequested: number
+  waitingForGrace: number
   changed: number
   sourceAvailable: boolean
 }
@@ -110,14 +112,34 @@ function toSubmissionRows(submissions: ProlificSubmission[]): ReconciliationSubm
   }))
 }
 
+function currentSubmissionRow(
+  current: ProlificSubmissionDetail,
+): ReconciliationSubmission | null {
+  if (!current.participant) return null
+  return {
+    submissionId: current.id,
+    participantId: current.participant,
+    status: current.status,
+    completionCode: current.entered_code,
+    returnRequestedAt: current.return_requested,
+    completedAt: current.completed_at,
+  }
+}
+
 async function applyActions(
   actions: ReturnType<typeof planAssignmentReconciliation>,
 ): Promise<FullBatchReconciliationResult> {
   let released = 0
   let completed = 0
   let returnRequested = 0
+  let waitingForGrace = 0
 
   for (const action of actions) {
+    if (action.action === 'wait-for-grace') {
+      waitingForGrace += 1
+      continue
+    }
+
     if (action.action === 'release') {
       const { data, error } = await supabaseAdmin
         .from('participant_assignments')
@@ -178,6 +200,7 @@ async function applyActions(
     released,
     completed,
     returnRequested,
+    waitingForGrace,
     changed: released + completed + returnRequested,
     sourceAvailable: true,
   }
@@ -190,6 +213,7 @@ async function applyActions(
  */
 export async function reconcileFullBatch(
   batchId: string,
+  currentSubmission?: ProlificSubmissionDetail,
 ): Promise<FullBatchReconciliationResult> {
   const rows = await loadCapacityRows(batchId)
   if (rows.length === 0) {
@@ -197,9 +221,47 @@ export async function reconcileFullBatch(
       released: 0,
       completed: 0,
       returnRequested: 0,
+      waitingForGrace: 0,
       changed: 0,
       sourceAvailable: true,
     }
+  }
+
+  // The webhook already re-fetched this submission directly from Prolific.
+  // Reconcile only its matching assignment and avoid another study-wide API
+  // fetch for every completion event, which also prevents rate-limit bursts.
+  if (currentSubmission) {
+    const submission = currentSubmissionRow(currentSubmission)
+    if (!submission) {
+      return {
+        released: 0,
+        completed: 0,
+        returnRequested: 0,
+        waitingForGrace: 0,
+        changed: 0,
+        sourceAvailable: true,
+      }
+    }
+    const matchingRows = rows.filter(
+      (row) => row.prolific_pid === submission.participantId,
+    )
+    const eventRows = await loadCompletionEvents(matchingRows)
+    const actions = planAssignmentReconciliation(
+      matchingRows.map((row) => ({
+        id: row.id,
+        prolificPid: row.prolific_pid,
+        expSessionId: row.exp_session_id,
+        status: row.status,
+      })),
+      [submission],
+      eventRows.map((event) => ({
+        participantId: event.participant_id,
+        sessionId: event.session_id,
+        eventName: event.event_name,
+        timestamp: Number(event.timestamp),
+      })),
+    )
+    return applyActions(actions)
   }
 
   const studyId = dominantStudyId(rows)
@@ -209,6 +271,7 @@ export async function reconcileFullBatch(
       released: 0,
       completed: 0,
       returnRequested: 0,
+      waitingForGrace: 0,
       changed: 0,
       sourceAvailable: false,
     }

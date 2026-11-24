@@ -30,7 +30,9 @@ function persistAndGo(
 function LandingInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [blocked, setBlocked] = useState<'full' | 'closed' | 'already' | null>(null)
+  const [blocked, setBlocked] = useState<
+    'full' | 'closed' | 'already' | 'invalid_link' | null
+  >(null)
   const [phase, setPhase] = useState<'init' | 'passcode' | 'loading'>('init')
   const [passcode, setPasscode] = useState('')
   const [gateError, setGateError] = useState('')
@@ -53,8 +55,10 @@ function LandingInner() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pid, studyId, sessionId, expSessionId }),
         })
-        if (!res.ok) throw new Error(`Assignment failed: ${res.status}`)
         const attemptData = (await res.json()) as AssignmentClientResponse
+        if (!res.ok && attemptData.outcome !== 'invalid_prolific_params') {
+          throw new Error(`Assignment failed: ${res.status}`)
+        }
         data = attemptData
         if (
           attemptData.outcome !== 'full' ||
@@ -83,7 +87,13 @@ function LandingInner() {
         persistAndGo(router, { pid, studyId, sessionId, condition: data.condition, expSessionId })
         return
       }
-      setBlocked(data.outcome === 'full' ? 'full' : 'closed')
+      setBlocked(
+        data.outcome === 'full'
+          ? 'full'
+          : data.outcome === 'invalid_prolific_params'
+            ? 'invalid_link'
+            : 'closed',
+      )
     } catch {
       setBlocked('closed')
     }

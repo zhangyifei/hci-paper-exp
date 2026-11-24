@@ -157,7 +157,14 @@ test.describe('full-batch assignment reconciliation', () => {
       now,
     )
 
-    expect(actions).toEqual([])
+    expect(actions).toEqual([
+      {
+        assignmentId: 'assignment-grace',
+        action: 'wait-for-grace',
+        submissionId: '6af7616e7de01ab7c5a54ed4',
+        remainingMs: 90_000,
+      },
+    ])
   })
 
   test('does not combine completion events from different experiment sessions', () => {

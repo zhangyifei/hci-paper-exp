@@ -39,6 +39,12 @@ export type ReconciliationAction =
       alreadyRequested: boolean
       missingEvents: string[]
     }
+  | {
+      assignmentId: string
+      action: 'wait-for-grace'
+      submissionId: string
+      remainingMs: number
+    }
 
 const TERMINAL_PROLIFIC_STATUSES = new Set(['RETURNED', 'REJECTED', 'TIMED-OUT'])
 const REQUIRED_COMPLETION_EVENTS = [
@@ -123,11 +129,12 @@ export function planAssignmentReconciliation(
     const completedAtMs = Date.parse(submission?.completedAt ?? '')
     const oldEnough =
       Number.isFinite(completedAtMs) && nowMs - completedAtMs >= RETURN_REQUEST_GRACE_MS
-    const shouldRequestReturn =
+    const isIncompleteNoCode =
       prolificStatus === 'AWAITING REVIEW' &&
       Boolean(submission?.submissionId) &&
-      (completionCode === '' || completionCode === 'NOCODE') &&
-      (Boolean(submission?.returnRequestedAt) || oldEnough)
+      (completionCode === '' || completionCode === 'NOCODE')
+    const shouldRequestReturn =
+      isIncompleteNoCode && (Boolean(submission?.returnRequestedAt) || oldEnough)
 
     if (shouldRequestReturn && submission?.submissionId) {
       const observedEvents = new Set(
@@ -147,6 +154,19 @@ export function planAssignmentReconciliation(
         missingEvents: REQUIRED_COMPLETION_EVENTS.filter(
           (eventName) => !observedEvents.has(eventName),
         ),
+      })
+      continue
+    }
+
+    if (isIncompleteNoCode && submission?.submissionId) {
+      const elapsedMs = Number.isFinite(completedAtMs)
+        ? Math.max(0, nowMs - completedAtMs)
+        : 0
+      actions.push({
+        assignmentId: assignment.id,
+        action: 'wait-for-grace',
+        submissionId: submission.submissionId,
+        remainingMs: Math.max(0, RETURN_REQUEST_GRACE_MS - elapsedMs),
       })
     }
   }

@@ -1,7 +1,11 @@
 import 'server-only'
 
+import { completeWithResearcherCode } from '@/lib/prolific-completion'
+import { isProlificId } from '@/lib/prolific-identity'
+
+export { isProlificId }
+
 const PROLIFIC_API = 'https://api.prolific.com/api/v1'
-const PROLIFIC_ID = /^[a-f0-9]{24}$/
 const REQUEST_TIMEOUT_MS = 10_000
 const MAX_SUBMISSION_PAGES = 20
 
@@ -37,9 +41,6 @@ export interface ProlificSubmissionDetail {
 export type ProlificData =
   | { available: true; studyId: string; study: ProlificStudyInfo; submissions: ProlificSubmission[] }
   | { available: false; studyId: string | null; reason: string }
-
-export const isProlificId = (value: string | null | undefined): value is string =>
-  typeof value === 'string' && PROLIFIC_ID.test(value)
 
 async function getJson<T>(url: string, token: string): Promise<T> {
   const res = await fetch(url, {
@@ -78,20 +79,33 @@ export function completionCodeFromUrl(url: string | null | undefined): string | 
 
 /**
  * Complete a valid Prolific submission from the server before browser redirect.
+ * The participant-facing redirect code cannot be used here: Prolific requires
+ * a researcher-operated code for its COMPLETE API. The study is looked up from
+ * the stored event identity so each study uses only its own configured code.
  * Prolific documents this transition as idempotent, so a retry is safe.
  */
 export async function completeProlificSubmission(
   submissionId: string | null,
-  completionCode: string | null,
+  studyId: string | null,
 ): Promise<boolean> {
   const token = process.env.PROLIFIC_API_TOKEN
-  if (!token || !isProlificId(submissionId) || !completionCode) return false
+  if (!token) return false
   try {
-    await postJson(`${PROLIFIC_API}/submissions/${submissionId}/transition/`, token, {
-      action: 'COMPLETE',
-      completion_code: completionCode,
+    return await completeWithResearcherCode(submissionId, studyId, {
+      loadCodes: async (id) => {
+        const study = await getJson<{ completion_codes?: unknown }>(
+          `${PROLIFIC_API}/studies/${id}/`,
+          token,
+        )
+        return study.completion_codes
+      },
+      complete: async (id, code) => {
+        await postJson(`${PROLIFIC_API}/submissions/${id}/transition/`, token, {
+          action: 'COMPLETE',
+          completion_code: code,
+        })
+      },
     })
-    return true
   } catch (err) {
     console.error('[prolific] completion transition failed:', err)
     return false
