@@ -31,11 +31,47 @@ interface LoggerSession {
 
 const STORAGE_KEY = 'hci_experiment_events'
 const STORAGE_SESSION_KEY = 'hci_experiment_events_session'
+const AUTO_FLUSH_BYTES = 32 * 1024
+
+// Fetch's keepalive budget is 64 KiB across in-flight requests. Keep each
+// payload comfortably below that ceiling so completion uploads cannot fail in
+// the browser before reaching /api/events.
+export const EVENT_UPLOAD_MAX_BYTES = 48 * 1024
+
+export function eventUploadBody(events: ExperimentEvent[]): string {
+  return JSON.stringify({ events })
+}
+
+export function eventUploadBodyBytes(events: ExperimentEvent[]): number {
+  return new TextEncoder().encode(eventUploadBody(events)).byteLength
+}
+
+export function splitEventUploadChunks(
+  events: ExperimentEvent[],
+  maxBytes = EVENT_UPLOAD_MAX_BYTES,
+): ExperimentEvent[][] {
+  const chunks: ExperimentEvent[][] = []
+  let current: ExperimentEvent[] = []
+
+  for (const event of events) {
+    const candidate = [...current, event]
+    if (current.length > 0 && eventUploadBodyBytes(candidate) > maxBytes) {
+      chunks.push(current)
+      current = [event]
+    } else {
+      current = candidate
+    }
+  }
+
+  if (current.length > 0) chunks.push(current)
+  return chunks
+}
 
 class EventLogger {
   private sequenceId = 0
   private session: LoggerSession | null = null
   private unloadHandler: (() => void) | null = null
+  private flushPromise: Promise<void> | null = null
 
   init(session: LoggerSession): void {
     this.session = session
@@ -61,19 +97,17 @@ class EventLogger {
       window.removeEventListener('beforeunload', this.unloadHandler)
     }
 
-    // Safety net: if user closes the tab, send everything accumulated so far.
-    // After a successful send, sessionStorage is cleared, so this is a no-op
-    // if flushAndWait() already completed.
+    // Safety net: if the tab closes between background flushes, send one safe
+    // chunk. Keep the outbox because a same-tab reload can retry it, and event
+    // IDs make a successful beacon plus a later retry idempotent.
     this.unloadHandler = () => {
       if (!this.session) return
       const events = this.readEvents()
       if (events.length === 0) return
-      const body = JSON.stringify({ events })
+      const chunk = splitEventUploadChunks(events)[0]
+      const body = eventUploadBody(chunk)
       if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
         const queued = navigator.sendBeacon('/api/events', body)
-        // Keep the outbox in sessionStorage whether or not the browser queued
-        // the beacon. A same-tab reload can retry it, and event_id uniqueness
-        // makes a successful beacon plus a later retry safe.
         if (!queued) console.warn('[logger] beforeunload beacon was not queued')
       }
     }
@@ -114,28 +148,30 @@ class EventLogger {
     }
 
     this.appendEvent(event)
+    if (eventUploadBodyBytes(this.readEvents()) >= AUTO_FLUSH_BYTES) {
+      void this.flushAndWait().catch((error: unknown) => {
+        console.warn('[logger] background event upload failed:', error)
+      })
+    }
 
     return eventId
   }
 
-  /** Send all accumulated events to the server in a single request. */
+  /** Upload the outbox sequentially in keepalive-safe, retryable chunks. */
   async flushAndWait(): Promise<void> {
-    const events = this.readEvents()
-    if (events.length === 0) return
+    const activeFlush = this.flushPromise ?? this.flushQueuedEvents()
+    this.flushPromise = activeFlush
 
-    const response = await fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ events }),
-      keepalive: true,
-    })
-
-    if (!response.ok) {
-      throw new Error(`[logger] POST /api/events failed: ${response.status}`)
+    try {
+      await activeFlush
+    } finally {
+      if (this.flushPromise === activeFlush) this.flushPromise = null
     }
 
-    // Clear storage after successful send so beforeunload won't resend
-    this.clearEvents()
+    // Cover an event appended after the active flush observed an empty outbox.
+    if (this.readEvents().length > 0) {
+      await this.flushAndWait()
+    }
   }
 
   destroy(): void {
@@ -153,6 +189,28 @@ class EventLogger {
     }
   }
 
+  private async flushQueuedEvents(): Promise<void> {
+    while (true) {
+      const events = this.readEvents()
+      if (events.length === 0) return
+
+      const chunk = splitEventUploadChunks(events)[0]
+      const body = eventUploadBody(chunk)
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: eventUploadBodyBytes(chunk) <= EVENT_UPLOAD_MAX_BYTES,
+      })
+
+      if (!response.ok) {
+        throw new Error(`[logger] POST /api/events failed: ${response.status}`)
+      }
+
+      this.removeEvents(chunk.map((event) => event.eventId))
+    }
+  }
+
   private readEvents(): ExperimentEvent[] {
     if (typeof sessionStorage === 'undefined') return []
     try {
@@ -164,10 +222,12 @@ class EventLogger {
     }
   }
 
-  private clearEvents(): void {
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.removeItem(STORAGE_KEY)
-    }
+  private removeEvents(eventIds: string[]): void {
+    if (typeof sessionStorage === 'undefined') return
+    const uploaded = new Set(eventIds)
+    const remaining = this.readEvents().filter((event) => !uploaded.has(event.eventId))
+    if (remaining.length === 0) sessionStorage.removeItem(STORAGE_KEY)
+    else sessionStorage.setItem(STORAGE_KEY, JSON.stringify(remaining))
   }
 }
 

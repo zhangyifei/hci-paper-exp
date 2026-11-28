@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { EVENT_UPLOAD_MAX_BYTES } from '../../lib/logger'
 
 import {
   advanceToService2,
@@ -14,9 +15,11 @@ test('rapid responses are excluded from analysis but still finish normally', asy
     eventName: string
     payload?: Record<string, unknown>
   }> = []
+  const uploadSizes: number[] = []
   await page.route('**/api/events', async (route) => {
     const rawBody = route.request().postData()
     if (rawBody) {
+      uploadSizes.push(new TextEncoder().encode(rawBody).byteLength)
       const body = JSON.parse(rawBody) as {
         events?: Array<{ eventName: string; payload?: Record<string, unknown> }>
       }
@@ -42,4 +45,6 @@ test('rapid responses are excluded from analysis but still finish normally', asy
   const completion = recordedEvents.find((event) => event.eventName === 'experiment.completed')
   expect(completion?.payload?.dataQualityFlagged).toBe(true)
   expect(recordedEvents.some((event) => event.eventName === 'experiment.invalidated')).toBe(false)
+  expect(uploadSizes.length).toBeGreaterThan(1)
+  expect(Math.max(...uploadSizes)).toBeLessThanOrEqual(EVENT_UPLOAD_MAX_BYTES)
 })

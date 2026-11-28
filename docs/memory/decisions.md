@@ -647,6 +647,11 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 **Date**: 2026-11-24
 **Rationale**: Prolific requires researcher-operated codes for its server completion transition. Keeping a separate participant code preserves the existing redirect and review behavior while making the server backup compatible with the API.
 
+### ADR-096: Keep Event Uploads Below the Browser Keepalive Limit
+**Decision**: Begin uploading the browser outbox at 32 KiB, split every upload into sequential chunks no larger than 48 KiB, and remove only acknowledged event IDs after each successful request. Retain unacknowledged events for retry and send one safe chunk on page exit. Evaluate Prolific completion and failure against the complete persisted session trail so required evidence can span multiple chunks.
+**Date**: 2026-11-27
+**Rationale**: Fetch rejects keepalive request bodies when the in-flight total exceeds 64 KiB. B6 successful sessions reached 65,293 bytes, and a participant who reached the completion screen repeatedly failed the final upload with no server events. Early, idempotent chunking prevents the browser from rejecting a full-session payload and preserves partial evidence when a later request fails.
+
 ## 2026-10-09 — “Back to Home” returns home in every condition
 
 - G2 and G4 now use `tripCompleteBackDestination: "home"`, matching the visible button label.

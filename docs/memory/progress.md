@@ -1282,3 +1282,17 @@ Design mockups analyzed. Key findings per condition:
 
 - Before the requested production deployment, the TypeScript check, 26 focused tests for Prolific completion, webhook handling, reconciliation and session outcomes, and the Next.js production build all passed.
 - Merged the earlier-tab completion fix from GitHub with the B6 changes and restored the shared Prolific ID validator import used for relinking. All 28 focused tests and the production build passed on the combined code.
+
+## 2026-11-24 — Checked B6 before recruitment
+
+- Verified all three identity placeholders in the Prolific launch link, the participant-facing access code against the production gate, the participant completion and failure codes against local redirect settings, and the study's researcher-operated manual-review code.
+- Verified the enabled submission-status subscription points to production. A signed synthetic event was acknowledged and ignored, while an unsigned event was rejected. B6 was the only active app batch, with 16 places per group and zero assignments.
+- Completed four isolated browser runs on the deployed app, one per condition. Each preserved the launch identities through the final event trail and displayed and followed the simulated completion link. Assignment, event writes, completion responses and the outgoing Prolific navigation were intercepted. All 28 focused integration-logic tests passed.
+- Actual acceptance of a completion by Prolific remains unverified. The study was unpublished at the time of these checks.
+
+## 2026-11-27 — Fixed completion uploads at the browser keepalive limit
+
+- Diagnosed a B6 participant who reached the final thank-you screen but repeatedly received the completion-verification error. Prolific recorded a six-minute submission while the server received zero experiment events.
+- Confirmed the root cause with the Fetch 64 KiB keepalive limit. A 60 KB production probe succeeded and a 70 KB probe failed in the browser before reaching the endpoint. Recorded successful B6 sessions reached 65,293 bytes.
+- Added early outbox flushing at 32 KiB, sequential 48 KiB upload chunks, per-chunk acknowledgement, retry preservation, and one safe exit beacon. The server now evaluates completion or failure from the full persisted session trail across chunks.
+- Passed the TypeScript check, 30 focused upload/completion/reconciliation tests, the chunked full-flow browser test, and the production build. The broader browser suite passed 111 of 113 tests; the two failures are pre-existing scenario-label assertions that expect uppercase DOM text while the UI applies uppercase through CSS.

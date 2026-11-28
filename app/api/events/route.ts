@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { uniqueProlificId } from '@/lib/prolific-completion'
 import { isProlificId } from '@/lib/prolific-identity'
 import type { ExperimentEvent } from '@/lib/logger'
-import { evaluateOutcome } from '@/lib/session-eval'
+import { evaluateOutcome, RELEVANT_EVENTS } from '@/lib/session-eval'
 import {
   completeProlificSubmission,
   requestProlificSubmissionReturn,
@@ -71,20 +71,27 @@ export async function POST(req: NextRequest) {
 }
 
 async function syncProlificDisposition(events: ExperimentEvent[]): Promise<void> {
-  const bySession = new Map<string, ExperimentEvent[]>()
-  for (const event of events) {
-    const sessionEvents = bySession.get(event.sessionId) ?? []
-    sessionEvents.push(event)
-    bySession.set(event.sessionId, sessionEvents)
-  }
+  const sessionIds = Array.from(
+    new Set(events.map((event) => event.sessionId).filter(Boolean)),
+  )
 
-  for (const sessionEvents of bySession.values()) {
-    const outcome = evaluateOutcome(sessionEvents.map((event) => event.eventName))
+  for (const sessionId of sessionIds) {
+    // Uploads can arrive in several browser-safe chunks. Re-read the durable
+    // session trail so a valid completion or failure can span those chunks.
+    const { data, error } = await supabaseAdmin
+      .from('experiment_events')
+      .select('event_name,prolific_session_id,prolific_study_id')
+      .eq('session_id', sessionId)
+      .in('event_name', [...RELEVANT_EVENTS])
+    if (error) throw error
+
+    const sessionEvents = data ?? []
+    const outcome = evaluateOutcome(sessionEvents.map((event) => event.event_name as string))
     const submissionId = uniqueProlificId(
-      sessionEvents.map((event) => event.prolificSessionId),
+      sessionEvents.map((event) => event.prolific_session_id as string | null),
     )
     const studyId = uniqueProlificId(
-      sessionEvents.map((event) => event.prolificStudyId),
+      sessionEvents.map((event) => event.prolific_study_id as string | null),
     )
     if (outcome === 'valid') {
       await completeProlificSubmission(submissionId, studyId)

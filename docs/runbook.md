@@ -126,6 +126,13 @@ trail is still incomplete after the grace period, the retry requests a return
 and stores the missing-event evidence. Confirmed `RETURNED`, `REJECTED`, and
 `TIMED-OUT` transitions release app capacity automatically.
 
+The browser starts flushing its event outbox at 32 KiB and sends sequential
+chunks capped at 48 KiB. This stays below Fetch's 64 KiB keepalive limit. Each
+successful chunk removes only its acknowledged event IDs, leaving later or
+failed chunks available for retry. `/api/events` evaluates Prolific disposition
+from the complete persisted session trail, so completion evidence can span
+several chunks.
+
 **Reconcile Prolific** is a backup for a missed or exhausted webhook delivery,
 not a routine during-study action. Use it only when Prolific and the app still
 disagree, a NOCODE remains unresolved, or a replacement reports Study Full.
