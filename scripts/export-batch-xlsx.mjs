@@ -9,7 +9,7 @@ import { mkdirSync } from 'node:fs'
 import ExcelJS from 'exceljs'
 import {
   OUT, DEFAULT_BATCH_ID, DEFAULT_STUDY_ID, db, prolific, query,
-  ITEMS, REVERSE, SURVEY_CODES, QUEST_CODES, PROLIFIC_PID, DESIGN, CONSTRUCT_NAMES, ITEM_WORDING, scored, construct,
+  ITEMS, REVERSE, SURVEY_CODES, QUEST_CODES, PROLIFIC_PID, EXTERNAL_PID, DESIGN, CONSTRUCT_NAMES, ITEM_WORDING, scored, construct,
 } from './lib/batch-common.mjs'
 
 const BATCH_ID = process.argv[2] || DEFAULT_BATCH_ID
@@ -24,7 +24,7 @@ const submissions = (await prolific(`/studies/${STUDY_ID}/submissions/?limit=500
 const batch = await query(db.from('test_batches').select('*').eq('id', BATCH_ID).single(), 'batch')
 const assignments = (await query(
   db.from('participant_assignments').select('*').eq('batch_id', BATCH_ID).order('assigned_at'), 'assignments',
-)).filter((a) => PROLIFIC_PID.test(a.prolific_pid))
+)).filter((a) => PROLIFIC_PID.test(a.prolific_pid) || EXTERNAL_PID.test(a.prolific_pid))
 
 const people = []
 for (const a of assignments) {
@@ -78,6 +78,7 @@ function addSheet(name, columns, rows) {
 }
 
 const designCols = (p) => ({
+  recruitment: EXTERNAL_PID.test(p.a.prolific_pid) ? 'external' : 'prolific',
   condition: p.a.group_condition,
   heterogeneity: DESIGN[p.a.group_condition].het,
   interrelatedness: DESIGN[p.a.group_condition].inter,
@@ -112,7 +113,7 @@ readme.getColumn(2).alignment = { wrapText: true, vertical: 'top' }
 // Raw Responses
 const rawCols = [
   ['participant_id', 28], ['included', 10], ['exclusion_reason', 30],
-  ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
+  ['recruitment', 11], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
   ...SURVEY_CODES.map((c) => [c, 7]), ...QUEST_CODES.map((c) => [c, 11]),
   ['banner_tapped'], ['reminders_shown'], ['service2_task_sec'], ['session_sec'],
   ['prolific_status', 18], ['completion_code'], ['prolific_time_min'], ['prolific_started_at', 24], ['prolific_completed_at', 24],
@@ -136,7 +137,7 @@ addSheet('Raw Responses', rawCols, people.map((p) => ({
 // Scored
 const allItems = Object.values(ITEMS).flat()
 addSheet('Scored', [
-  ['participant_id', 28], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
+  ['participant_id', 28], ['recruitment', 11], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
   ...allItems.map((c) => [REVERSE.has(c) ? `${c}_r` : c, 8]),
   ...Object.keys(ITEMS).map((k) => [k, 8]),
   ['banner_tapped'], ['service2_task_sec'], ['session_sec'],
@@ -179,7 +180,8 @@ addSheet('Disposition', [
 
 // Codebook
 const designDefs = [
-  ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific)', 'string', ''],
+  ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific), or ext_… for an externally recruited participant', 'string', ''],
+    ['recruitment', 'Recruitment source: Prolific, or a single-use external invite link', 'prolific / external', ''],
   ['included', 'Included in analysis (app status completed, AC1 passed, full event trail, no data-quality flag)', 'TRUE/FALSE', ''],
   ['condition', 'Assigned experimental cell', 'G1 / G2 / G3 / G4', ''],
   ['heterogeneity', 'Service-pair dissimilarity factor', 'low (Courier) / high (Cinema)', ''],

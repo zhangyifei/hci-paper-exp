@@ -15,6 +15,12 @@ interface AssignmentClientResponse {
   retryable?: boolean
 }
 
+interface ExternalClaimClientResponse {
+  outcome: 'claimed' | 'used' | 'closed' | 'full' | 'invalid_invite'
+  condition: Condition | null
+  participantId: string | null
+}
+
 function persistAndGo(
   router: ReturnType<typeof useRouter>,
   params: { pid: string; studyId: string; sessionId: string; condition: Condition; expSessionId: string },
@@ -31,7 +37,7 @@ function LandingInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [blocked, setBlocked] = useState<
-    'full' | 'closed' | 'already' | 'invalid_link' | null
+    'full' | 'closed' | 'already' | 'invalid_link' | 'invite_used' | 'invalid_invite' | null
   >(null)
   const [phase, setPhase] = useState<'init' | 'passcode' | 'loading'>('init')
   const [passcode, setPasscode] = useState('')
@@ -99,7 +105,49 @@ function LandingInner() {
     }
   }, [router, searchParams])
 
+  const claimInviteAndGo = useCallback(async (invite: string) => {
+    setPhase('loading')
+    const expSessionId = crypto.randomUUID()
+    try {
+      const res = await fetch('/api/external/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite, expSessionId }),
+      })
+      const data = (await res.json()) as ExternalClaimClientResponse
+      if (data.outcome === 'claimed' && data.condition && data.participantId) {
+        persistAndGo(router, {
+          pid: data.participantId,
+          studyId: '',
+          sessionId: '',
+          condition: data.condition,
+          expSessionId,
+        })
+        return
+      }
+      setBlocked(
+        data.outcome === 'used'
+          ? 'invite_used'
+          : data.outcome === 'full'
+            ? 'full'
+            : data.outcome === 'closed'
+              ? 'closed'
+              : 'invalid_invite',
+      )
+    } catch {
+      setBlocked('invalid_invite')
+    }
+  }, [router])
+
   useEffect(() => {
+    const invite = searchParams.get('invite')
+    if (invite) {
+      // External invite links carry their own single-use credential.
+      sessionStorage.removeItem('exp_debug_override')
+      void claimInviteAndGo(invite)
+      return
+    }
+
     const conditionOverride = searchParams.get('condition')
 
     // Explicit override (debug / E2E): bypass the passcode gate and batch system.
@@ -146,7 +194,7 @@ function LandingInner() {
     return () => {
       cancelled = true
     }
-  }, [router, searchParams, assignAndGo])
+  }, [router, searchParams, assignAndGo, claimInviteAndGo])
 
   async function submitPasscode(e: FormEvent) {
     e.preventDefault()

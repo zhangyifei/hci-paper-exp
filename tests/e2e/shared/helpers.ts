@@ -36,7 +36,7 @@ export async function expectPhoneCTAVisibleWithoutScroll(page: Page, testId: str
   expect(metrics?.bottomVisible).toBe(true)
 }
 
-async function acceptConsent(page: Page) {
+export async function acceptConsent(page: Page) {
   const continueButton = page.getByTestId('btn-consent-continue')
   if (!(await continueButton.isVisible().catch(() => false))) {
     return
@@ -47,7 +47,7 @@ async function acceptConsent(page: Page) {
   await expect(page.getByTestId('btn-scenario-start')).toBeVisible({ timeout: 10000 })
 }
 
-async function continueScenarioInstruction(page: Page) {
+export async function continueScenarioInstruction(page: Page) {
   const startButton = page.getByTestId('btn-scenario-start')
   await expect(startButton).toBeVisible({ timeout: 10000 })
   await startButton.click({ force: true })

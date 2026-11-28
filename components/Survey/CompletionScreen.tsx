@@ -13,7 +13,10 @@ interface CompletionResult {
   url: string | null
   code: string | null
   prolificCompleted?: boolean
+  external?: boolean
 }
+
+const isExternalPid = (pid: string): boolean => /^ext_[0-9a-f]{10}$/.test(pid)
 
 const wait = (delayMs: number): Promise<void> =>
   new Promise((resolve) => window.setTimeout(resolve, delayMs))
@@ -39,15 +42,19 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
   const [completionCode, setCompletionCode] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [prolificRun, setProlificRun] = useState<boolean | null>(null)
+  const [externalRun, setExternalRun] = useState(false)
+  const [externalSaved, setExternalSaved] = useState(false)
   const [verificationError, setVerificationError] = useState(false)
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const verifyCompletion = useCallback(async () => {
     const pid = sessionStorage.getItem('prolific_pid') ?? ''
     const isDebug = sessionStorage.getItem('exp_debug_override') === '1'
-    const isRealProlificRun = !isDebug && Boolean(pid) && !pid.startsWith('anon_')
+    const isExternal = !isDebug && isExternalPid(pid)
+    const isRealProlificRun = !isDebug && !isExternal && Boolean(pid) && !pid.startsWith('anon_')
+    setExternalRun(isExternal)
     setProlificRun(isRealProlificRun)
-    if (!isRealProlificRun) return
+    if (!isRealProlificRun && !isExternal) return
 
     const sessionId = sessionStorage.getItem('exp_session_id') ?? ''
     if (!sessionId) {
@@ -69,7 +76,14 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
         })
         if (!res.ok) throw new Error(`Completion check failed: ${res.status}`)
         const data = (await res.json()) as CompletionResult
-        if (data.url) {
+        if (isExternal) {
+          // Stored trail confirmed (valid or failed); nothing to hand off.
+          if (data.external && data.outcome !== 'incomplete') {
+            setExternalSaved(true)
+            setChecking(false)
+            return
+          }
+        } else if (data.url) {
           setRedirectUrl(data.url)
           setCompletionCode(data.code)
           setChecking(false)
@@ -199,6 +213,27 @@ export default function CompletionScreen({ variant }: CompletionScreenProps) {
               Redirecting automatically… Use the button or code above if needed.
             </p>
           </div>
+        ) : externalRun ? (
+          externalSaved ? (
+            <p className="mt-7 text-[13px] text-gray-400 font-medium" data-testid="external-saved">
+              Your responses have been saved. You may now close this window.
+            </p>
+          ) : verificationError ? (
+            <div className="mt-7 flex w-full max-w-[340px] flex-col items-center gap-3">
+              <p className="text-[13px] leading-relaxed text-gray-500">
+                We could not confirm your responses were saved yet. Please keep this page open and try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => void verifyCompletion()}
+                className="h-11 w-full rounded-xl bg-black px-4 text-sm font-bold text-white"
+              >
+                Try again
+              </button>
+            </div>
+          ) : (
+            <p className="mt-7 text-[13px] text-gray-500 font-medium">Saving your responses…</p>
+          )
         ) : prolificRun && checking ? (
           <p className="mt-7 text-[13px] text-gray-500 font-medium">
             Saving your responses and confirming completion…

@@ -49,6 +49,8 @@ export const REVERSE = new Set(['PU5'])
 export const SURVEY_CODES = [...Object.values(ITEMS).flat(), 'AC1']
 export const QUEST_CODES = ['DEM1', 'DEM2', 'FAM1', 'FAM2', 'KNW1', 'KNW2', 'USE1', 'SWI1', 'SWI2']
 export const PROLIFIC_PID = /^[a-f0-9]{24}$/
+// Single-use external invite participants (scripts/external-invites.mjs).
+export const EXTERNAL_PID = /^ext_[0-9a-f]{10}$/
 export const CELLS = ['G1', 'G2', 'G3', 'G4']
 export const DESIGN = {
   G1: { het: 'low', inter: 'absent', svc2: 'Courier' },

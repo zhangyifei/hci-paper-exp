@@ -1,6 +1,7 @@
 import 'server-only'
 
 import ExcelJS from 'exceljs'
+import { EXTERNAL_PARTICIPANT_PATTERN as EXTERNAL_PID } from '@/lib/external-invites'
 import {
   CONSTRUCT_ITEMS, CONSTRUCT_KEYS, CONSTRUCT_NAMES, DESIGN, ITEMS, ITEM_WORDING, QUEST_CODES, REVERSE, SURVEY_CODES,
   constructScore, scoreItem,
@@ -92,6 +93,7 @@ function addSheet(wb: ExcelJS.Workbook, name: string, columns: [string, number?]
 }
 
 const designCols = (p: ParticipantRecord): Row => ({
+  recruitment: EXTERNAL_PID.test(p.a.prolific_pid) ? 'external' : 'prolific',
   condition: p.a.group_condition,
   heterogeneity: DESIGN[p.a.group_condition].het,
   interrelatedness: DESIGN[p.a.group_condition].inter,
@@ -130,7 +132,7 @@ function addReadme(wb: ExcelJS.Workbook, data: BatchExportData, records: Partici
 function addRawResponses(wb: ExcelJS.Workbook, records: ParticipantRecord[]): void {
   const columns: [string, number?][] = [
     ['participant_id', 28], ['included', 10], ['exclusion_reason', 30],
-    ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
+    ['recruitment', 11], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
     ...SURVEY_CODES.map((c): [string, number] => [c, 7]), ...QUEST_CODES.map((c): [string, number] => [c, 11]),
     ['banner_tapped'], ['reminders_shown'], ['service2_task_sec'], ['session_sec'],
     ['prolific_status', 18], ['completion_code'], ['prolific_time_min'], ['prolific_started_at', 24], ['prolific_completed_at', 24],
@@ -157,7 +159,7 @@ function addRawResponses(wb: ExcelJS.Workbook, records: ParticipantRecord[]): vo
 function addScored(wb: ExcelJS.Workbook, records: ParticipantRecord[]): void {
   const itemKey = (c: string) => (REVERSE.has(c) ? `${c}_r` : c)
   const columns: [string, number?][] = [
-    ['participant_id', 28], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
+    ['participant_id', 28], ['recruitment', 11], ['condition'], ['heterogeneity'], ['interrelatedness'], ['second_service'],
     ...CONSTRUCT_ITEMS.map((c): [string, number] => [itemKey(c), 8]),
     ...CONSTRUCT_KEYS.map((k): [string, number] => [k, 8]),
     ['banner_tapped'], ['service2_task_sec'], ['session_sec'],
@@ -213,7 +215,8 @@ function addCodebook(wb: ExcelJS.Workbook): void {
   const mentalLoadValues = '1 Very low · 2 Low · 3 Somewhat low · 4 Moderate · 5 Somewhat high · 6 High · 7 Very high'
   const agreementValues = '1 Strongly disagree · 2 Disagree · 3 Somewhat disagree · 4 Neither agree nor disagree · 5 Somewhat agree · 6 Agree · 7 Strongly agree'
   const defs: [string, string, string, string][] = [
-    ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific)', 'string', ''],
+    ['participant_id', 'Prolific participant ID (pseudonymous key linking app ↔ Prolific), or ext_… for an externally recruited participant', 'string', ''],
+    ['recruitment', 'Recruitment source: Prolific, or a single-use external invite link', 'prolific / external', ''],
     ['included', 'Included in analysis (completed, full event trail, attention check passed, no data-quality flag, not a test session)', 'TRUE/FALSE', ''],
     ['condition', 'Assigned experimental cell', 'G1 / G2 / G3 / G4', ''],
     ['heterogeneity', 'Service-pair dissimilarity factor', 'low (Courier) / high (Cinema)', ''],

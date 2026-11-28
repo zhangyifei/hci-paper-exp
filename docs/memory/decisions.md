@@ -698,3 +698,24 @@ semantics). Source: 0809 Prototype Revision Instructions PDF §4–§5.
 ## 2026-11-20 — Match stray completions by Prolific submission, not by participant alone
 
 A participant can hold several experiment sessions for one Prolific submission (re-opened link, second tab). When the completing session is not the one linked on the assignment, it is relinked only if it carries the same Prolific submission ID as the still-`assigned` row. Sessions from other submissions never validate the current one, preserving the 2026-11-14 rule against reusing older sessions.
+
+## 2026-11-27 — Lost B6 records are excluded, not imputed
+
+Participant responses lost by the upload bug are not reconstructed or imputed from patterns in other participants' data, because that would fabricate study data. Affected assignments are released and refilled with new participants in the same cell. Payment decisions stay with the researcher in Prolific.
+
+## 2026-11-27 — External (non-Prolific) participant cohort
+
+The researcher confirmed that the ethics approval permits participants recruited outside Prolific. These participants are a separate cohort that is reported separately from B6:
+- They use the condition link `/?condition=Gx&PROLIFIC_PID=external_YYYYMMDD_NN`. The flow is identical, including consent; only the Prolific completion redirect is skipped.
+- Their conditions fill B6's vacated cells: G1 ×1, G2 ×2, G3 ×1.
+- Participants must not see any example or suggested answers.
+- The `external_` prefix keeps them out of the B6 queries, which require a 24-hex Prolific PID. Any analysis that includes them must label them as externally recruited.
+- Session `researcher_test_g1` (2026-11-27) stays excluded as a test run, because it was started from a debug test link and suggested answers had been shared.
+- Session `external_20261127_01` (G1, 2026-11-28 03:29Z) is also excluded. All 24 post-task survey answers are identical to the excluded `researcher_test_g1` run, so the response is not independent. Only the demographic answers differ. The G1 external place remains open.
+
+## 2026-11-27 — Single-use external invites fill B6's released places
+
+- B6's remaining 4 places (G1 ×1, G2 ×2, G3 ×1) are filled by externally recruited participants (ethics-approved) instead of Prolific.
+- They use single-use `?invite=` links created by `scripts/external-invites.mjs`. These replace the earlier `?condition=Gx&PROLIFIC_PID=external_…` debug links, which bypass batch assignment and must not be used for study data.
+- Each invite is bound to one batch cell. Claiming it atomically (`claim_external_invite`) creates a B6 assignment with the participant ID `ext_…`, without exceeding a cell's capacity.
+- Exports carry `recruitment = external`, and analyses must report these participants as externally recruited.

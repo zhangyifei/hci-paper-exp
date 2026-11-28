@@ -304,6 +304,19 @@ events %>%
 
 ---
 
+## External (non-Prolific) participants
+
+Use single-use invite links to fill specific cells of an active batch without Prolific (for example, places released after data loss).
+
+1. Apply the schema once: `node scripts/db-migrate.mjs scripts/migrate-add-external-invites.sql`.
+2. Create one invite per open place, giving the cell for each:
+   `node scripts/external-invites.mjs create <batchId> G1 G2 G2 G3`
+   The script refuses to issue more invites than a cell has open places. Only token hashes are stored, so save the printed links immediately.
+3. Send each link to exactly one eligible participant. The link does not reveal the condition, needs no access code, and works only once. Do not share example answers.
+4. Track progress with `node scripts/external-invites.mjs list <batchId>`.
+
+Claiming an invite creates a normal `participant_assignments` row (`prolific_pid = ext_…`) in the batch, so the usual event sync marks it `completed` or `invalid`. At the end, the participant sees a "responses saved" confirmation instead of a Prolific redirect. Exports label these rows `recruitment = external`; report them separately from Prolific participants.
+
 ## Environment Variables
 
 | Variable | Required | Description |

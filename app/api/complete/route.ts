@@ -7,6 +7,7 @@ import {
   completionCodeFromUrl,
   requestProlificSubmissionReturn,
 } from '@/lib/batch-export/prolific'
+import { isExternalParticipantId } from '@/lib/external-invites'
 
 /**
  * Server-side Prolific completion decision. Completion URLs live in server-only
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('experiment_events')
-    .select('event_name,prolific_session_id,prolific_study_id')
+    .select('event_name,participant_id,prolific_session_id,prolific_study_id')
     .eq('session_id', sessionId)
 
   if (error) {
@@ -37,6 +38,16 @@ export async function POST(req: NextRequest) {
   }
 
   const outcome = evaluateOutcome((data ?? []).map((r) => r.event_name as string))
+
+  // External (non-Prolific) participants only need confirmation that the full
+  // trail is stored; they never receive a Prolific code or redirect.
+  const participantIds = new Set((data ?? []).map((row) => row.participant_id as string | null))
+  if (
+    participantIds.size === 1 &&
+    isExternalParticipantId([...participantIds][0])
+  ) {
+    return NextResponse.json({ outcome, url: null, code: null, external: true })
+  }
   const completionUrl = process.env.PROLIFIC_COMPLETION_URL ?? null
   const failedUrl = process.env.PROLIFIC_FAILED_URL ?? null
 

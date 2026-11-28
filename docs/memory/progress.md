@@ -1296,3 +1296,15 @@ Design mockups analyzed. Key findings per condition:
 - Confirmed the root cause with the Fetch 64 KiB keepalive limit. A 60 KB production probe succeeded and a 70 KB probe failed in the browser before reaching the endpoint. Recorded successful B6 sessions reached 65,293 bytes.
 - Added early outbox flushing at 32 KiB, sequential 48 KiB upload chunks, per-chunk acknowledgement, retry preservation, and one safe exit beacon. The server now evaluates completion or failure from the full persisted session trail across chunks.
 - Passed the TypeScript check, 30 focused upload/completion/reconciliation tests, the chunked full-flow browser test, and the production build. The broader browser suite passed 111 of 113 tests; the two failures are pre-existing scenario-label assertions that expect uppercase DOM text while the UI applies uppercase through CSS.
+
+## 2026-11-27 — Released four unrecoverable B6 records
+
+- B6 has 60 usable completed participants: G1 15, G2 14, G3 15, G4 16.
+- Four Prolific submissions awaiting review had no task, survey, or questionnaire data on the server. Three had no events, and one G1 session ended at its 53rd event, on the Home screen. The data was lost to the pre-fix keepalive upload limit. The client only buffered events in `sessionStorage`, so nothing can be recovered.
+- Released those four app assignments with reason `admin_release:upload_lost_keepalive_limit;data_unrecoverable`, freeing one slot in G1 and G3 and two in G2. Their Prolific submissions were left awaiting review for the researcher. No substitute data was generated.
+
+## 2026-11-27 — External invite links for B6
+
+- Added single-use external invites. Components: the `external_invites` table and `claim_external_invite` function, `POST /api/external/claim`, `?invite=` handling on the landing page, external completion confirmation (upload verified on the server, no Prolific redirect), invite-specific error screens, and a `recruitment` column in both exports.
+- Verified with the type check, 7 new invite tests (including a full G1 invite flow), the export and completion tests, the production build, and a rolled-back database test of claim, reuse, full-cell and unknown-invite outcomes. Deployed preview `dpl_CNJgVee63uAC6VJpUHxvhK4vKYQU` and production `dpl_2t1ATXyR6yw9QNpcc41FVriSkyJD`, then smoke-tested the claim endpoint on both.
+- Created 4 unclaimed B6 invites: G1 `ext_e5727a8441`; G2 `ext_359c01a27e` and `ext_8080426e9e`; G3 `ext_c5e45b9c03`.

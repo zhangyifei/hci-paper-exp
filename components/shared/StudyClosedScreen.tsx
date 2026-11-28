@@ -10,37 +10,57 @@ import ResearchPage from './ResearchPage'
  *   - "already": this participant already completed (or was invalidated) and
  *                cannot retake the test.
  *   - "invalid_link": required Prolific launch identifiers are missing.
+ *   - "invite_used" / "invalid_invite": an external invite link was already
+ *                used or is not recognised.
  *
  * Mirrors the calm, single-column look of the completion screen so a turned
  * -away participant still sees a polished, trustworthy page.
  */
 interface StudyClosedScreenProps {
-  variant: 'full' | 'closed' | 'already' | 'invalid_link'
+  variant: 'full' | 'closed' | 'already' | 'invalid_link' | 'invite_used' | 'invalid_invite'
 }
+
+const PROLIFIC_FOOTER = 'Please return to Prolific and return your submission.'
 
 const COPY: Record<
   StudyClosedScreenProps['variant'],
-  { testId: string; title: string; body: string }
+  { testId: string; title: string; body: string; footer: string | null }
 > = {
   full: {
     testId: 'screen-study-full',
     title: 'Study Full',
     body: 'Thank you for your interest. This study has already reached the number of participants we need, so no further responses can be collected right now.',
+    footer: PROLIFIC_FOOTER,
   },
   closed: {
     testId: 'screen-study-closed',
     title: 'Study Not Open',
     body: 'This study is not currently open for participation. Please return to Prolific — you have not started the task and will not be penalised.',
+    footer: PROLIFIC_FOOTER,
   },
   already: {
     testId: 'screen-already-participated',
     title: 'Already Completed',
     body: 'Our records show you have already taken part in this study, so it cannot be completed again. This does not affect any payment for your previous submission.',
+    footer: PROLIFIC_FOOTER,
   },
   invalid_link: {
     testId: 'screen-invalid-prolific-link',
     title: 'Invalid Study Link',
     body: 'We could not verify the Prolific information in this link, so the experiment did not start and no study place was reserved. Please reopen the study directly from Prolific.',
+    footer: PROLIFIC_FOOTER,
+  },
+  invite_used: {
+    testId: 'screen-invite-used',
+    title: 'Link Already Used',
+    body: 'This personal study link has already been used, so it cannot be opened again. If you believe this is a mistake, please contact the researcher who sent you the link.',
+    footer: null,
+  },
+  invalid_invite: {
+    testId: 'screen-invalid-invite',
+    title: 'Invalid Study Link',
+    body: 'We could not verify this study link, so the experiment did not start. Please check the link or contact the researcher who sent it to you.',
+    footer: null,
   },
 }
 
@@ -81,9 +101,9 @@ export default function StudyClosedScreen({ variant }: StudyClosedScreenProps) {
           {copy.body}
         </p>
 
-        <p className="mt-7 text-[13px] text-gray-400 font-medium">
-          Please return to Prolific and return your submission.
-        </p>
+        {copy.footer && (
+          <p className="mt-7 text-[13px] text-gray-400 font-medium">{copy.footer}</p>
+        )}
       </div>
     </ResearchPage>
   )
